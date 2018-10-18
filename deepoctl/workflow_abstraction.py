@@ -7,6 +7,12 @@ from deepomatic.exceptions import TaskTimeout, TaskError
 import deepoctl.common as common
 import deepoctl.input_data as input_data
 
+from worker_nn.client import Client, BINARY_IMAGE_PREFIX, has_labels, has_scalar, Result, CallbackCache
+from worker_nn.buffers.protobuf.nn.v07.Inputs_pb2 import ImageInput, Inputs
+from worker_nn.buffers.protobuf.common.Image_pb2 import BBox
+
+from google.protobuf.json_format import MessageToDict
+
 class AbstractWorkflow(object):
     class AbstractInferResult(object):
         def get(self):
@@ -63,13 +69,49 @@ class CloudRecognition(AbstractWorkflow):
 
 # ---------------------------------------------------------------------------- #
 
+class RpcRecognition(AbstractWorkflow):
+    class InferResult(AbstractWorkflow.AbstractInferResult):
+        def __init__(self, async_res):
+            self._async_res = async_res
+
+        def get(self):
+            outputs = self._async_res.get_parsed_result()
+            return {
+                'outputs': [{
+                    'labels': MessageToDict(output.labels, including_default_value_fields=True, preserving_proto_field_name=True)
+                } for output in outputs]
+            }
+
+    def __init__(self, recognition_version_id, amqp_url, routing_key):
+        super(RpcRecognition, self).__init__('r{}'.format(recognition_version_id))
+        self._id = recognition_version_id
+
+        self._amqp_url = amqp_url
+        self._routing_key = routing_key
+        self._client = Client(self._amqp_url, max_callback=4)
+        self._recognition = None
+        try:
+            recognition_version_id = int(recognition_version_id)
+            self._recognition = self._client.create_recognition(version_id=recognition_version_id)
+        except ValueError:
+            logging.warning("Cannot cast recognition ID into a number")
+
+    def infer(self, frame):
+        image = ImageInput(source=BINARY_IMAGE_PREFIX + frame, crop_uniform_background=False)
+        inputs = Inputs(inputs=[Inputs.InputMix(image=image)])
+        return self.InferResult(self._client.recognize(self._routing_key, self._recognition, inputs))
+
+# ---------------------------------------------------------------------------- #
+
 def get_workflow(args):
     mutually_exclusive_options = ['recognition_id']
     check_mutually_exclusive = sum([int(getattr(args, option) is not None) for option in mutually_exclusive_options])
     if check_mutually_exclusive != 1:
         raise common.DeepoCTLException('Exactly one of those options must be specified: {}'.format(', '.join(mutually_exclusive_options)))
 
-    if args.recognition_id is not None:
+    if args.amqp_url is not None and args.routing_key is not None and args.recognition_id is not None:
+        workflow = RpcRecognition(args.recognition_id, args.amqp_url, args.routing_key)
+    elif args.recognition_id is not None:
         workflow = CloudRecognition(args.recognition_id)
     else:
         raise Exception('This should not happen: hint for deepomatic developers: ')
