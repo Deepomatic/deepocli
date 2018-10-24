@@ -373,7 +373,7 @@ class DisplayOutputData(OutputData):
 
     def __call__(self, frame):
         cv2.imshow("Display window", frame)
-        if cv2.waitKey(25) & 0xFF == ord('q'):
+        if cv2.waitKey(self._fps) & 0xFF == ord('q'):
             return True
 
     def __enter__(self):
