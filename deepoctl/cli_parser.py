@@ -2,8 +2,6 @@ import argparse
 from deepoctl.cmds.infer import main as infer
 from deepoctl.cmds.draw import main as draw
 from deepoctl.cmds.blur import main as blur
-
-# from deepoctl.input_data import supported_image_formats, supported_video_formats
 from deepoctl.io_data import ImageInputData, VideoInputData, StreamInputData
 
 def parse_args(args):
