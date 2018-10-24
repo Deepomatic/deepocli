@@ -2,10 +2,11 @@ import os
 import logging
 import datetime
 import deepomatic
+import cv2
 from deepomatic.exceptions import TaskTimeout, TaskError
 
 import deepoctl.common as common
-import deepoctl.input_data as input_data
+# import deepoctl.input_data as input_data
 
 from worker_nn.client import Client, BINARY_IMAGE_PREFIX, has_labels, has_scalar, Result, CallbackCache
 from worker_nn.buffers.protobuf.nn.v07.Inputs_pb2 import ImageInput, Inputs
@@ -31,7 +32,7 @@ class AbstractWorkflow(object):
 
     def get_json_output_filename(self, file):
         dirname = os.path.dirname(file)
-        filename, ext = input_data.splitext(file)
+        filename, ext = os.path.splitext(file)
         return os.path.join(dirname, filename + '.{}.json'.format(self.display_id))
 
 
@@ -65,7 +66,8 @@ class CloudRecognition(AbstractWorkflow):
             self._model = self._client.RecognitionVersion.retrieve(recognition_version_id)
 
     def infer(self, frame):
-        return self.InferResult(self._model.inference(inputs=[deepomatic.ImageInput(frame, encoding="binary")], return_task=True, wait_task=False))
+        _, buf = cv2.imencode('.jpeg', frame)
+        return self.InferResult(self._model.inference(inputs=[deepomatic.ImageInput(buf.tobytes(), encoding="binary")], return_task=True, wait_task=False))
 
 # ---------------------------------------------------------------------------- #
 
@@ -97,22 +99,24 @@ class RpcRecognition(AbstractWorkflow):
             logging.warning("Cannot cast recognition ID into a number")
 
     def infer(self, frame):
-        image = ImageInput(source=BINARY_IMAGE_PREFIX + frame, crop_uniform_background=False)
+        _, buf = cv2.imencode('.jpeg', frame)
+        image = ImageInput(source=BINARY_IMAGE_PREFIX + buf.tobytes(), crop_uniform_background=False)
         inputs = Inputs(inputs=[Inputs.InputMix(image=image)])
         return self.InferResult(self._client.recognize(self._routing_key, self._recognition, inputs))
 
 # ---------------------------------------------------------------------------- #
 
 def get_workflow(args):
-    mutually_exclusive_options = ['recognition_id']
-    check_mutually_exclusive = sum([int(getattr(args, option) is not None) for option in mutually_exclusive_options])
-    if check_mutually_exclusive != 1:
-        raise common.DeepoCTLException('Exactly one of those options must be specified: {}'.format(', '.join(mutually_exclusive_options)))
+    # mutually_exclusive_options = ['recognition_id']
+    # check_mutually_exclusive = sum([int(getattr(args, option) is not None) for option in mutually_exclusive_options])
+    # if check_mutually_exclusive != 1:
+    #     raise common.DeepoCTLException('Exactly one of those options must be specified: {}'.format(', '.join(mutually_exclusive_options)))
 
     if args.amqp_url is not None and args.routing_key is not None and args.recognition_id is not None:
         workflow = RpcRecognition(args.recognition_id, args.amqp_url, args.routing_key)
     elif args.recognition_id is not None:
         workflow = CloudRecognition(args.recognition_id)
     else:
-        raise Exception('This should not happen: hint for deepomatic developers: ')
+        return None
+        # raise Exception('This should not happen: hint for deepomatic developers: ')
     return workflow

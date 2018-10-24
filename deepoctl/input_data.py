@@ -9,6 +9,8 @@ import deepoctl.common as common
 
 supported_image_formats = ['.bmp', '.jpeg', '.jpg', '.jpe', '.png']
 supported_video_formats = ['.avi', '.mp4']
+supported_protocols = ['rtsp']
+
 all_supported_formats = supported_image_formats + supported_video_formats
 
 def splitext(path):
@@ -40,6 +42,22 @@ def get_files(path):
         raise common.DeepoCTLException('Path not found: {}'.format(path))
     return files
 
+def get_streams(address):
+    return [address]
+
+def get_devices(device):
+    return [device]
+
+def get_inputs(path):
+    if (os.path.exists(path)):
+        return [('file', file) for file in get_files(path)]
+    elif ('://' in path):
+        return [('stream', stream) for stream in get_streams(path)]
+    elif (path.isdigit()):
+        return [('device', device) for device in get_devices(path)]
+    else:
+        raise Exception('Unsupported input')
+    
 
 # ---------------------------------------------------------------------------- #
 # ---------------------------------------------------------------------------- #
@@ -146,3 +164,13 @@ def open_file(path):
         return VideoInputData(path)
     else:
         raise Exception('This should not happen')
+
+def open_stream(address):
+    protocol, _ = address.split(':')
+    if (protocol in supported_protocols):
+        return VideoInputData(address)
+    else:
+        raise Exception('Cannot read input stream')
+
+def open_device(device):
+    return VideoInputData(device)

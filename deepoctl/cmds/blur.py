@@ -19,7 +19,7 @@ import deepoctl.workflow_abstraction as wa
 def main(args, force=False):
     workflow = wa.get_workflow(args)
     inputs = io_data.get_input(args.input)
-    draw = io_data.DrawOutputData()
+    blur = io_data.BlurOutputData()
 
     with io_data.get_output(args.output) as output:
         try:
@@ -29,8 +29,8 @@ def main(args, force=False):
                     detection = detection['outputs'][0]['labels']['predicted']
                 else:
                     detection = []
-                drawing = draw((frame, detection))
-                if (output(drawing)):
+                blurring = blur((frame, detection))
+                if (output(blurring)):
                     break
         except KeyboardInterrupt:
             pass
