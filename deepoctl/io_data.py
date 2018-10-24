@@ -171,7 +171,7 @@ class DirectoryInputData(InputData):
 
 
 class StreamInputData(VideoInputData):
-    supported_protocols = ['rtsp']
+    supported_protocols = ['rtsp', 'http']
 
     @classmethod
     def is_valid(cls, descriptor):
