@@ -9,7 +9,7 @@ def get_files(path, recursive=True):
     if os.path.isfile(path):
         if path.split('.')[-1].lower() in supported_image_formats:
             yield path
-    elif os.path.isdir(path) and recursive:
+    elif os.path.isdir(path):
         if recursive:
             for root, dirs, files in os.walk(path, topdown=False):
                 for name in files:
