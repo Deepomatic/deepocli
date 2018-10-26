@@ -10,15 +10,16 @@ def get_files(path, recursive=True):
         if path.split('.')[-1].lower() in supported_image_formats:
             yield path
     elif os.path.isdir(path) and recursive:
-        for root, dirs, files in os.walk(path, topdown=False):
-            for name in files:
-                if name.split('.')[-1].lower() in supported_image_formats:
-                    yield os.path.join(root, name)
-    elif os.path.isdir(path) and not recursive:
-        for file in os.listdir(path):
-            file_path = os.path.join(path, file)
-            if os.path.isfile(file_path) and file_path.split('.')[-1].lower() in supported_image_formats:
-                yield  file_path
+        if recursive:
+            for root, dirs, files in os.walk(path, topdown=False):
+                for name in files:
+                    if name.split('.')[-1].lower() in supported_image_formats:
+                        yield os.path.join(root, name)
+        else:
+            for file in os.listdir(path):
+                file_path = os.path.join(path, file)
+                if os.path.isfile(file_path) and file_path.split('.')[-1].lower() in supported_image_formats:
+                    yield  file_path
     else:
         raise RuntimeError("The path {} is neither a file nor a directory".format(path))
 
@@ -44,16 +45,15 @@ class Image(object):
             "cuuid": commit_pk,
             "dataset_name": dataset_name
         }
-        if type(path) is not list:
+        if not isinstance(path, list):
             path = [path]
-        if type(path) is list:
-            files = []
-            for elem in path:
-                for file in get_files(elem, recursive):
-                    files.append(('files', open(file, 'rb')))
-                    if len(files) > 25:  # arbitrary size
-                        self._task.retrieve(self._helper.post('action/', data=data, content_type='multipart/form', files=files)['task_id'])
-                        files = []
-            if len(files):
-                self._task.retrieve(self._helper.post('action/', data=data, content_type='multipart/form', files=files)['task_id'])
+        files = []
+        for elem in path:
+            for file in get_files(elem, recursive):
+                files.append(('files', open(file, 'rb')))
+                if len(files) > 25:  # arbitrary size
+                    self._task.retrieve(self._helper.post('action/', data=data, content_type='multipart/form', files=files)['task_id'])
+                    files = []
+        if len(files):
+            self._task.retrieve(self._helper.post('action/', data=data, content_type='multipart/form', files=files)['task_id'])
         return True
