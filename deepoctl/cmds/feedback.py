@@ -1,7 +1,7 @@
 import sys
-from studio_helpers.http_helper import HTTPHelper
-from studio_helpers.image import Image
-from studio_helpers.task import Task
+from .studio_helpers.http_helper import HTTPHelper
+from .studio_helpers.image import Image
+from .studio_helpers.task import Task
 
 ###############################################################################
 

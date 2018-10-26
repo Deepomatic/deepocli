@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import os
 import sys
-from task import Task
+from .task import Task
 
 supported_image_formats = ['bmp', 'jpeg', 'jpg', 'jpe', 'png']
 
