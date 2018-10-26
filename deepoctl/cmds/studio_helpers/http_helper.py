@@ -13,7 +13,7 @@ class HTTPHelper(object):
         Init the HTTP helper with API key and secret
         """
         if token is None:
-            token = os.getenv('DEEPOMATIC_TOKEN')
+            token = os.getenv('DEEPOMATIC_STUDIO_TOKEN')
         if token is None:
             raise RuntimeError("Please specify 'token'either by passing those values to the client or by defining the DEEPOMATIC_TOKEN environment variables.")
 

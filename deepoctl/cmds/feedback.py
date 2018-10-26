@@ -5,7 +5,7 @@ from studio_helpers.task import Task
 
 ###############################################################################
 
-API_HOST = 'https://staging.vesta.deepomatic.com/api/'
+API_HOST = 'https://studio.deepomatic.com/api/'
 
 
 ###############################################################################
