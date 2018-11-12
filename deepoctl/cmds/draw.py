@@ -14,8 +14,8 @@ import deepoctl.workflow_abstraction as wa
 from Queue import Queue, LifoQueue
     
 class DrawThread(infer.InferenceThread):
-    def __init__(self, queue, args=(), kwargs=None):
-        infer.InferenceThread.__init__(self, queue, args, kwargs)
+    def __init__(self, input_queue, output_queue, args=(), kwargs=None):
+        infer.InferenceThread.__init__(self, input_queue, output_queue, args, kwargs)
         self.draw = io_data.DrawOutputData()
 
     def processing(self, frame, detection):

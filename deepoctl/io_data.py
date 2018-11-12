@@ -2,6 +2,7 @@ import os
 import sys
 import json
 import cv2
+import threading
 from Queue import Queue, LifoQueue, Empty
 
 def get_input(descriptor):
@@ -43,21 +44,45 @@ def input_loop(args, worker_thread):
     inputs = get_input(args.input)
 
     # For realtime, queue should be LIFO
-    queue = LifoQueue() if inputs.is_infinite() else Queue()
+    input_queue = LifoQueue() if inputs.is_infinite() else Queue()
+    output_queue = LifoQueue() if inputs.is_infinite() else Queue()
 
-    worker = worker_thread(queue, args)
+    worker = worker_thread(input_queue, output_queue, args)
+    output_thread = OutputThread(output_queue, args)
+
     worker.start()
+    output_thread.start()
+
     for frame in inputs:
         if inputs.is_infinite():
             # Discard all previous inputs
-            while not queue.empty():
+            while not input_queue.empty():
                 try:
-                    queue.get(False)
+                    input_queue.get(False)
                 except Empty:
                     continue
-                queue.task_done()
-        queue.put(frame)
+                input_queue.task_done()
+        input_queue.put(frame)
+
     worker.join()
+    output_thread.join()
+
+class OutputThread(threading.Thread):
+    def __init__(self, queue, args=(), kwargs=None):
+        threading.Thread.__init__(self, args=(), kwargs=None)
+        self.queue = queue
+        self.args = args
+
+    def run(self):
+        with get_output(self.args.output) as output:
+            while True:
+                frame = self.queue.get()
+                if frame is None:
+                    return
+                should_stop = output(frame)
+                self.queue.task_done()
+                if should_stop:
+                    return
 
 class InputData(object):
     def __init__(self, descriptor):
