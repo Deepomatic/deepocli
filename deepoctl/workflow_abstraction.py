@@ -17,7 +17,7 @@ from google.protobuf.json_format import MessageToDict
 class AbstractWorkflow(object):
     class AbstractInferResult(object):
         def get(self):
-            raise NotImplemented
+            raise NotImplementedError
 
     def __init__(self, display_id):
         self._display_id = display_id

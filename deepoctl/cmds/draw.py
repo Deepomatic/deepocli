@@ -11,23 +11,21 @@ import deepoctl.cmds.infer as infer
 import deepoctl.io_data as io_data
 import deepoctl.workflow_abstraction as wa
 
-def main(args, force=False):
-    workflow = wa.get_workflow(args)
-    inputs = io_data.get_input(args.input)
-    draw = io_data.DrawOutputData()
+from Queue import Queue, LifoQueue
+    
+class DrawThread(infer.InferenceThread):
+    def __init__(self, queue, args=(), kwargs=None):
+        infer.InferenceThread.__init__(self, queue, args, kwargs)
+        self.draw = io_data.DrawOutputData()
 
-    with io_data.get_output(args.output) as output:
-        try:
-            for frame in inputs:
-                if (workflow is not None):
-                    detection = workflow.infer(frame).get()
-                    detection = detection['outputs'][0]['labels']['predicted']
-                else:
-                    detection = []
-                drawing = draw((frame, detection))
-                if (output(drawing)):
-                    break
-        except KeyboardInterrupt:
-            pass
-        except:
-            logging.error("Unexpected error: %s" % sys.exc_info()[0])
+    def processing(self, frame, detection):
+        return self.draw((frame, detection))
+
+
+def main(args, force=False):
+    try:
+        io_data.input_loop(args, DrawThread)
+    except KeyboardInterrupt:
+        pass
+    except:
+        logging.error("Unexpected error: %s" % sys.exc_info()[0])

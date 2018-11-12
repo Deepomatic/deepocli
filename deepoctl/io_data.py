@@ -2,6 +2,7 @@ import os
 import sys
 import json
 import cv2
+from Queue import Queue, LifoQueue, Empty
 
 def get_input(descriptor):
     if (os.path.exists(descriptor)):
@@ -38,6 +39,25 @@ def get_output(descriptor):
     else:
         return DisplayOutputData()
 
+def input_loop(args, worker_thread):
+    inputs = get_input(args.input)
+
+    # For realtime, queue should be LIFO
+    queue = LifoQueue() if inputs.is_infinite() else Queue()
+
+    worker = worker_thread(queue, args)
+    worker.start()
+    for frame in inputs:
+        if inputs.is_infinite():
+            # Discard all previous inputs
+            while not queue.empty():
+                try:
+                    queue.get(False)
+                except Empty:
+                    continue
+                queue.task_done()
+        queue.put(frame)
+    worker.join()
 
 class InputData(object):
     def __init__(self, descriptor):
@@ -50,10 +70,13 @@ class InputData(object):
         raise StopIteration()
 
     def get_fps(self):
-        raise NotImplemented
+        raise NotImplementedError
 
     def get_frame_number(self):
-        raise NotImplemented
+        raise NotImplementedError
+
+    def is_infinite(self):
+        raise NotImplementedError
 
 
 class ImageInputData(InputData):
@@ -85,9 +108,12 @@ class ImageInputData(InputData):
     def get_frame_number(self):
         return 1
 
+    def is_infinite(self):
+        return False
+
 
 class VideoInputData(InputData):
-    supported_formats = ['.avi', '.mp4']
+    supported_formats = ['.avi', '.mp4', '.webm']
 
     @classmethod
     def is_valid(cls, descriptor):
@@ -121,6 +147,8 @@ class VideoInputData(InputData):
     def get_frame_number(self):
         return self._cap.get(cv2.CAP_PROP_FRAME_COUNT)
 
+    def is_infinite(self):
+        return False
 
 class DirectoryInputData(InputData):
     @classmethod
@@ -169,6 +197,8 @@ class DirectoryInputData(InputData):
     def get_fps(self):
         return 1
 
+    def is_infinite(self):
+        return False
 
 class StreamInputData(VideoInputData):
     supported_protocols = ['rtsp', 'http']
@@ -180,6 +210,8 @@ class StreamInputData(VideoInputData):
     def __init__(self, descriptor):
         super(StreamInputData, self).__init__(descriptor)
 
+    def is_infinite(self):
+        return True
 
 class DeviceInputData(VideoInputData):
 
@@ -190,18 +222,20 @@ class DeviceInputData(VideoInputData):
     def __init__(self, descriptor):
         super(DeviceInputData, self).__init__(int(descriptor))
 
+    def is_infinite(self):
+        return True
 
 class OutputData(object):
     def __init__(self, descriptor):
         self._descriptor = descriptor
 
     def __enter__(self):
-        raise NotImplemented
+        raise NotImplementedError
     def __exit__(self, exception_type, exception_value, traceback):
-        raise NotImplemented
+        raise NotImplementedError
 
     def __call__(self, output):
-        raise NotImplemented
+        raise NotImplementedError
 
 
 class ImageOutputData(OutputData):
