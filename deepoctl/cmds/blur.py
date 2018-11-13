@@ -15,10 +15,10 @@ import deepoctl.workflow_abstraction as wa
 class BlurThread(infer.InferenceThread):
     def __init__(self, input_queue, output_queue, args=(), kwargs=None):
         infer.InferenceThread.__init__(self, input_queue, output_queue, args, kwargs)
-        self.draw = io_data.BlurOutputData()
+        self.process = io_data.BlurOutputData()
 
     def processing(self, frame, detection):
-        return self.draw((frame, detection))
+        return self.process((frame, detection))
 
 def main(args, force=False):
     try:
