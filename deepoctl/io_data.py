@@ -1,6 +1,7 @@
 import os
 import sys
 import json
+import imutils
 import cv2
 import threading
 from Queue import Queue, LifoQueue, Empty
@@ -25,20 +26,20 @@ def get_input(descriptor):
     else:
         raise 'Unknown input'
 
-def get_output(descriptor):
+def get_output(descriptor, args={}):
     if (descriptor is not None):
         if (os.path.isdir(descriptor)):
-            return DirectoryOutputData(descriptor)
+            return DirectoryOutputData(descriptor, args)
         elif (ImageOutputData.is_valid(descriptor)):
-            return ImageOutputData(descriptor)
+            return ImageOutputData(descriptor, args)
         elif (VideoOutputData.is_valid(descriptor)):
-            return VideoOutputData(descriptor)
+            return VideoOutputData(descriptor, args)
         elif (JsonOutputData.is_valid(descriptor)):
-            return VideoOutputData(descriptor)
+            return VideoOutputData(descriptor, args)
         else:
-            return StdOutputData()
+            return StdOutputData(args)
     else:
-        return DisplayOutputData()
+        return DisplayOutputData(args)
 
 def input_loop(args, worker_thread):
     inputs = get_input(args.input)
@@ -74,7 +75,7 @@ class OutputThread(threading.Thread):
         self.args = args
 
     def run(self):
-        with get_output(self.args.output) as output:
+        with get_output(self.args.output, self.args) as output:
             while True:
                 frame = self.queue.get()
                 if frame is None:
@@ -251,8 +252,9 @@ class DeviceInputData(VideoInputData):
         return True
 
 class OutputData(object):
-    def __init__(self, descriptor):
+    def __init__(self, descriptor, args):
         self._descriptor = descriptor
+        self._args = args
 
     def __enter__(self):
         raise NotImplementedError
@@ -271,8 +273,8 @@ class ImageOutputData(OutputData):
         _, ext = os.path.splitext(descriptor)
         return ext in cls.supported_formats
 
-    def __init__(self, descriptor):
-        super(ImageOutputData, self).__init__(descriptor)
+    def __init__(self, descriptor, args={}):
+        super(ImageOutputData, self).__init__(descriptor, args)
         self._i = 0
 
     def __enter__(self):
@@ -301,8 +303,8 @@ class VideoOutputData(OutputData):
         _, ext = os.path.splitext(descriptor)
         return ext in cls.supported_formats
 
-    def __init__(self, descriptor, fps = 25):
-        super(VideoOutputData, self).__init__(descriptor)
+    def __init__(self, descriptor, args={}):
+        super(VideoOutputData, self).__init__(descriptor, args)
         _, ext = os.path.splitext(descriptor)
         if ext is 'mp4':
             fourcc = cv2.VideoWriter_fourcc('M', 'P', '4', 'V')
@@ -311,7 +313,7 @@ class VideoOutputData(OutputData):
         else:
             fourcc = cv2.VideoWriter_fourcc('M', 'J', 'P', 'G')
         self._fourcc = fourcc
-        self._fps = fps
+        self._fps = args.output_fps
         self._writer = None
 
     def __enter__(self):
@@ -334,8 +336,9 @@ class VideoOutputData(OutputData):
 
 class DrawOutputData(OutputData):
 
-    def __init__(self):
-        super(DrawOutputData, self).__init__(None)
+    def __init__(self, args):
+        super(DrawOutputData, self).__init__(None, args)
+        self._draw_score = args.draw_score
 
     def __call__(self, frame_and_detection, font_scale=0.5):
         frame, detection = frame_and_detection
@@ -343,7 +346,8 @@ class DrawOutputData(OutputData):
         h = frame.shape[0]
         w = frame.shape[1]
         for predicted in detection:
-            label = predicted['label_name']
+            label = "%s %s" % (predicted['label_name'], str(predicted['score'])) if self._draw_score else predicted['label_name']
+    
             roi = predicted['roi']
             if (roi is None):
                 pass
@@ -369,10 +373,10 @@ class DrawOutputData(OutputData):
 
 class BlurOutputData(OutputData):
 
-    def __init__(self, method="pixel", strength=10):
-        super(BlurOutputData, self).__init__(None)
-        self._method = method
-        self._strength = strength
+    def __init__(self, args={}):
+        super(BlurOutputData, self).__init__(None, args)
+        self._method = args.blur_method
+        self._strength = args.blur_strength
 
     def __call__(self, frame_and_detection, font_scale=0.5):
         frame, detection = frame_and_detection
@@ -413,8 +417,8 @@ class StdOutputData(OutputData):
     """
         To use with vlc : python scripts/deepoctl draw -i 0 | vlc --demux=rawvideo --rawvid-fps=25 --rawvid-width=640 --rawvid-height=480 --rawvid-chroma=RV24 - --sout "#display"
     """
-    def __init__(self):
-        super(StdOutputData, self).__init__(None)
+    def __init__(self, args={}):
+        super(StdOutputData, self).__init__(None, args)
 
     def __call__(self, frame):
         data = frame[:, :, ::-1].tostring()
@@ -426,19 +430,35 @@ class StdOutputData(OutputData):
         pass
 
 class DisplayOutputData(OutputData):
-    def __init__(self, fps=25):
-        super(DisplayOutputData, self).__init__(None)
-        self._fps = fps
+    def __init__(self, args={}):
+        super(DisplayOutputData, self).__init__(None, args)
+        self._fps = args.output_fps
+        self._window_name = "Deepomatic feed"
+        self._fullscreen = args.fullscreen
+
+        if self._fullscreen:
+            cv2.namedWindow(self._window_name, cv2.WINDOW_NORMAL)
+            if imutils.is_cv2():
+                prop_value = cv2.cv.CV_WINDOW_FULLSCREEN
+            elif imutils.is_cv3():
+                prop_value = cv2.WINDOW_FULLSCREEN
+            else:
+                assert("Unsupported opencv version")
+            cv2.setWindowProperty(self._window_name,
+                                  cv2.WND_PROP_FULLSCREEN,
+                                  prop_value)
 
     def __call__(self, frame):
-        cv2.imshow("Display window", frame)
+        cv2.imshow(self._window_name, frame)
         if cv2.waitKey(self._fps) & 0xFF == ord('q'):
             return True
+
 
     def __enter__(self):
         return self
     def __exit__(self, exception_type, exception_value, traceback):
-        pass   
+        pass
+
 class JsonOutputData(OutputData):
     supported_formats = ['.json']
 
@@ -447,8 +467,8 @@ class JsonOutputData(OutputData):
         _, ext = os.path.splitext(descriptor)
         return ext in cls.supported_formats
 
-    def __init__(self, descriptor):
-        super(JsonOutputData, self).__init__(descriptor)
+    def __init__(self, descriptor, args={}):
+        super(JsonOutputData, self).__init__(descriptor, args)
         self._i = 0
 
     def __enter__(self):
