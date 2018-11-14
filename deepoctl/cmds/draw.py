@@ -16,7 +16,7 @@ from Queue import Queue, LifoQueue
 class DrawThread(infer.InferenceThread):
     def __init__(self, input_queue, output_queue, args=(), kwargs=None):
         infer.InferenceThread.__init__(self, input_queue, output_queue, args, kwargs)
-        self.process = io_data.DrawOutputData()
+        self.process = io_data.DrawOutputData(args)
 
     def processing(self, frame, detection):
         return self.process((frame, detection))
