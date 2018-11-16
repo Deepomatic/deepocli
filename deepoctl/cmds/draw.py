@@ -14,15 +14,16 @@ import deepoctl.workflow_abstraction as wa
 from Queue import Queue, LifoQueue
 
 class DrawThread(infer.InferenceThread):
-    def __init__(self, input_queue, output_queue, args=(), kwargs=None):
-        infer.InferenceThread.__init__(self, input_queue, output_queue, args, kwargs)
-        self.process = io_data.DrawOutputData(args)
+    def __init__(self, input_queue, output_queue, **kwargs):
+        super(DrawThread, self).__init__(input_queue, output_queue, **kwargs)
+        self.process = io_data.DrawOutputData(**kwargs)
 
     def processing(self, frame, detection):
         return self.process((frame, detection))
 
 
 def main(args, force=False):
+    io_data.input_loop(args, DrawThread)
     try:
         io_data.input_loop(args, DrawThread)
     except KeyboardInterrupt:

@@ -25,7 +25,7 @@ def parse_args(args):
         parser.add_argument('-r', '--recognition_id', help="Recognition version ID")
         parser.add_argument('-u', '--amqp_url', help="AMQP url")
         parser.add_argument('-k', '--routing_key', help="Recognition routing key")
-        parser.add_argument('-t', '--threshold', help="Threshold under which inference result should be ignored")
+        parser.add_argument('-t', '--threshold', help="Threshold under which inference result should be ignored", default=0.7)
         parser.add_argument('--output_fps', help="Output fps", default=25)
         parser.add_argument('--draw_score', help="Draw score if draw output", action="store_true")
         parser.add_argument('--blur_method', help="Blur method if blur output", default="pixel")
@@ -36,4 +36,4 @@ def parse_args(args):
 
 def run(args):
     args = parse_args(args)
-    args.func(args)
+    args.func(vars(args))

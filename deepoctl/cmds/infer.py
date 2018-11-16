@@ -10,13 +10,13 @@ import deepoctl.io_data as io_data
 import deepoctl.workflow_abstraction as wa
 
 class InferenceThread(threading.Thread):
-    def __init__(self, input_queue, output_queue, args=(), kwargs=None):
+    def __init__(self, input_queue, output_queue, **kwargs):
         threading.Thread.__init__(self, args=(), kwargs=None)
         self.input_queue = input_queue
         self.output_queue = output_queue
         self.daemon = True
-        self.workflow = wa.get_workflow(args)
-        self.args = args
+        self.workflow = wa.get_workflow(kwargs)
+        self.args = kwargs
     
     def run(self):
         while True:
@@ -24,7 +24,7 @@ class InferenceThread(threading.Thread):
             if frame is None:
                 return
 
-            if (self.workflow is not None):
+            if self.workflow is not None:
                 detection = self.workflow.infer(frame).get()
                 detection = detection['outputs'][0]['labels']['predicted']
             else:
