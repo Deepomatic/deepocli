@@ -11,18 +11,18 @@ import deepoctl.cmds.infer as infer
 import deepoctl.io_data as io_data
 import deepoctl.workflow_abstraction as wa
 
-class DrawThread(infer.InferenceThread):
+
+class BlurThread(infer.InferenceThread):
     def __init__(self, input_queue, output_queue, **kwargs):
-        super(DrawThread, self).__init__(input_queue, output_queue, **kwargs)
-        self.process = io_data.DrawOutputData(**kwargs)
+        super(BlurThread, self).__init__(input_queue, output_queue, **kwargs)
+        self.process = io_data.BlurOutputData(**kwargs)
 
     def processing(self, frame, prediction):
         return self.process(frame, prediction)
 
-
 def main(args, force=False):
     try:
-        io_data.input_loop(args, DrawThread)
+        io_data.input_loop(args, BlurThread)
     except KeyboardInterrupt:
         pass
     except:
