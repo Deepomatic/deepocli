@@ -97,6 +97,17 @@ The `--blur_method` flag lets you specify the blur method
     pixel, gaussian, black
 
 
+### `feedback`: Deepomatic Studio support
+
+You can send images to Deepomatic Studio using the `feedback` command.
+The input can be specified using the `path` flag, which can be either one or more files and one or more directories. The dataset and organisation should also be specified using the `--dataset_name` and `--org_slug` flags.
+
+```sh
+deepoctl feedback --path your/path/to/a/file/or/directory --org_slug your_org_slug --dataset_name your_dataset_name
+```
+With the `--recursive` flag, the command will look for the files in all subdirectories.
+
+
 ## Bugs
 
 Please send bug reports to support@deepomatic.com
