@@ -346,7 +346,6 @@ class DrawOutputData(OutputData):
 
     def __init__(self, **kwargs):
         super(DrawOutputData, self).__init__(None, **kwargs)
-        self._threshold = kwargs.get('threshold', 0.7)
         self._draw_labels = kwargs.get('draw_labels', False)
         self._draw_scores = kwargs.get('draw_scores', False)
 
@@ -365,8 +364,6 @@ class DrawOutputData(OutputData):
 
             roi = predicted['roi']
             if roi is None:
-                pass
-            elif float(predicted['score']) < float(self._threshold):
                 pass
             else:
                 bbox = roi['bbox']
@@ -391,7 +388,6 @@ class BlurOutputData(OutputData):
 
     def __init__(self, **kwargs):
         super(BlurOutputData, self).__init__(None, **kwargs)
-        self._threshold = float(kwargs.get('threshold', 0.7))
         self._method = kwargs.get('blur_method', 'pixel')
         self._strength = kwargs.get('blur_strength', 10)
 
@@ -403,8 +399,6 @@ class BlurOutputData(OutputData):
             label = predicted['label_name']
             roi = predicted['roi']
             if (roi is None):
-                pass
-            elif predicted['score'] < self._threshold:
                 pass
             else:
                 bbox = roi['bbox']

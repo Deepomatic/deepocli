@@ -17,6 +17,7 @@ class InferenceThread(threading.Thread):
         self.daemon = True
         self.workflow = wa.get_workflow(kwargs)
         self.args = kwargs
+        self._threshold = kwargs.get('threshold', 0.7)
     
     def run(self):
         while True:
@@ -29,7 +30,9 @@ class InferenceThread(threading.Thread):
 
             if self.workflow is not None:
                 prediction = self.workflow.infer(frame).get()
-                prediction = prediction['outputs'][0]['labels']['predicted']
+                prediction = [predicted
+                    for predicted in prediction['outputs'][0]['labels']['predicted']
+                    if float(predicted['score']) >= float(self._threshold)]
             else:
                 prediction = []
             
