@@ -17,20 +17,16 @@ def test_outputs(input):
     path = os.path.join(tmpdir, os.path.basename(input))
 
     def test_output(output):
-        args = ['draw', '-i', image_path, '--recognition_id', 'fashion-v4', '-o']
+        args = ['blur', '-i', image_path, '--recognition_id', 'fashion-v4', '-o']
         args.extend(output)
         print('test %s' % args)
         run(args)
 
     outputs = [
-        ['stdout'],
     #    ['stdout', '--output_frame'],
-        ['/tmp/test.json'],
         ['/tmp/test.jpeg'],
-        ['/tmp/test_scores.jpeg', '--draw_scores'],
-        ['/tmp/test_labels.jpeg', '--draw_labels'],
-        ['/tmp/test_scores_labels.jpeg', '--draw_scores', '--draw_labels'],
-        ['/tmp/test_%05d.jpeg'],
+        ['/tmp/test_pixel.jpeg', '--blur_method', 'pixel'],
+        ['/tmp/test_pixel_4.jpeg', '--blur_strength',  '4'],
         ['window']
     ]
 
