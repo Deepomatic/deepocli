@@ -1,6 +1,6 @@
-# Deepomatic Controler
+# Deepomatic Controller
 
-This controler have been made in order to help you interacting with our services via the command line.
+This controller has been made in order to help you interact with our services via the command line.
 
 [![Build Status](https://travis-ci.com/Deepomatic/deepoctl.svg?branch=master)](https://travis-ci.com/Deepomatic/deepoctl)
 
@@ -8,13 +8,18 @@ This controler have been made in order to help you interacting with our services
 
 Requirements: Python 2.7+ or 3.4+
 
-```
+```sh
 pip install git+https://github.com/deepomatic/deepoctl@v0.1 --process-dependency-links
 ```
 
 ## Setup
 
 In order to use models which are deployed in our cloud, you will need to set your application ID and API key in `DEEPOMATIC_APP_ID` and `DEEPOMATIC_API_KEY` environment variables, respectively.
+
+```sh
+export DEEPOMATIC_APP_ID=xxxxxxxxxxxx
+export DEEPOMATIC_API_KEY=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+```
 
 ## Inputs
 
@@ -50,6 +55,7 @@ Valid outputs are:
 
 If the -o flag is omitted, the output is shown in a window (full screen if the `--fullscreen` flag is present).
 The output fps can be set using the `--output_fps` followed by a valid number.
+
 
 ## Commands
 

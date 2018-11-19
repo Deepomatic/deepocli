@@ -40,7 +40,6 @@ class InferenceThread(threading.Thread):
     def processing(self, frame, prediction):
         return frame, prediction
 
-
 def main(args, force=False):
     try:
         io_data.input_loop(args, InferenceThread)
