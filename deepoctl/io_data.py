@@ -91,6 +91,7 @@ class OutputThread(threading.Thread):
             while True:
                 data = self.queue.get()
                 if data is None:
+                    self.queue.task_done()
                     return
                 frame, detection = data
                 output(frame, detection)
@@ -102,6 +103,9 @@ class InputData(object):
 
     def __iter__(self):
         return self
+
+    def __next__(self):
+        return self.next()
 
     def next(self):
         raise StopIteration

@@ -23,6 +23,7 @@ class InferenceThread(threading.Thread):
             frame = self.input_queue.get()
 
             if frame is None:
+                self.input_queue.task_done()
                 self.output_queue.put(None)
                 return
 
