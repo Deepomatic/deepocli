@@ -7,6 +7,18 @@ from deepomatic.exceptions import TaskTimeout, TaskError
 
 import deepoctl.common as common
 
+
+can_use_rpc = True
+
+try:
+    from worker_nn.client import Client, BINARY_IMAGE_PREFIX, has_labels, has_scalar, Result, CallbackCache
+    from worker_nn.buffers.protobuf.nn.v07.Inputs_pb2 import ImageInput, Inputs
+    from worker_nn.buffers.protobuf.common.Image_pb2 import BBox
+    from google.protobuf.json_format import MessageToDict
+except ImportError:
+    can_use_rpc = False
+
+
 class AbstractWorkflow(object):
     class AbstractInferResult(object):
         def get(self):
@@ -65,12 +77,8 @@ class CloudRecognition(AbstractWorkflow):
 # ---------------------------------------------------------------------------- #
 
 class RpcRecognition(AbstractWorkflow):
-    from worker_nn.client import Client, BINARY_IMAGE_PREFIX, has_labels, has_scalar, Result, CallbackCache
-    from worker_nn.buffers.protobuf.nn.v07.Inputs_pb2 import ImageInput, Inputs
-    from worker_nn.buffers.protobuf.common.Image_pb2 import BBox
 
     class InferResult(AbstractWorkflow.AbstractInferResult):
-        from google.protobuf.json_format import MessageToDict
 
         def __init__(self, async_res):
             self._async_res = async_res
@@ -79,7 +87,7 @@ class RpcRecognition(AbstractWorkflow):
             outputs = self._async_res.get_parsed_result()
             return {
                 'outputs': [{
-                    'labels': self.MessageToDict(output.labels, including_default_value_fields=True, preserving_proto_field_name=True)
+                    'labels': MessageToDict(output.labels, including_default_value_fields=True, preserving_proto_field_name=True)
                 } for output in outputs]
             }
 
@@ -89,20 +97,26 @@ class RpcRecognition(AbstractWorkflow):
 
         self._amqp_url = amqp_url
         self._routing_key = routing_key
-        self._client = self.Client(self._amqp_url, max_callback=4)
-        self._recognition = None
-        try:
-            recognition_version_id = int(recognition_version_id)
-            self._recognition = self._client.create_recognition(version_id=recognition_version_id)
-        except ValueError:
-            logging.warning("Cannot cast recognition ID into a number")
+
+        if can_use_rpc:
+            self._client = Client(self._amqp_url, max_callback=4)
+            self._recognition = None
+            try:
+                recognition_version_id = int(recognition_version_id)
+                self._recognition = self._client.create_recognition(version_id=recognition_version_id)
+            except ValueError:
+                logging.warning("Cannot cast recognition ID into a number")
 
     def infer(self, frame):
-        _, buf = cv2.imencode('.jpeg', frame)
-        image = self.ImageInput(source=self.BINARY_IMAGE_PREFIX + buf.tobytes(), crop_uniform_background=False)
-        inputs = self.Inputs(inputs=[self.Inputs.InputMix(image=image)])
-        return self.InferResult(self._client.recognize(self._routing_key, self._recognition, inputs))
-
+        if (self._client is not None and frame is not None):
+            _, buf = cv2.imencode('.jpeg', frame)
+            image = ImageInput(source=BINARY_IMAGE_PREFIX + buf.tobytes(), crop_uniform_background=False)
+            inputs = Inputs(inputs=[Inputs.InputMix(image=image)])
+            return self.InferResult(self._client.recognize(self._routing_key, self._recognition, inputs))
+        else:
+            return {
+                'outputs': []
+            }
 # ---------------------------------------------------------------------------- #
 
 def get_workflow(args):
