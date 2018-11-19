@@ -12,20 +12,21 @@ def download(url):
         f.write(r.content)
     return path
 
-def test_outputs_for_image():
-    image_url = 'https://storage.googleapis.com/dp-vulcan/tests/deepoctl/test.jpg'
-    image_path = download(image_url)
+image_url = 'https://storage.googleapis.com/dp-vulcan/tests/deepoctl/test.jpg'
+image_path = download(image_url)
 
-    def test_output(output):
-        args = ['infer', '-i', image_path, '--recognition_id', 'fashion-v4', '-o']
-        args.extend(output)
-        print('test %s' % args)
-        run(args)
+video_url = 'https://storage.googleapis.com/dp-vulcan/tests/deepoctl/test.mp4'
+video_path = download(video_url)
 
-    outputs = [
-        ['stdout'],
-        ['/tmp/test.json'],
-        ['/tmp/test_%05d.json'],
-    ]
 
-    [test_output(output) for output in outputs]
+def test_e2e_image_infer_stdout():
+    run(['infer', '-i', image_path, '--recognition_id', 'fashion-v4', '-o', 'stdout'])
+
+def test_e2e_image_infer_json():
+    run(['infer', '-i', image_path, '--recognition_id', 'fashion-v4', '-o', '/tmp/test_%05d.json'])
+
+def test_e2e_video_infer_stdout():
+    run(['infer', '-i', video_path, '--recognition_id', 'fashion-v4', '-o', 'stdout'])
+
+def test_e2e_video_infer_json():
+    run(['infer', '-i', video_path, '--recognition_id', 'fashion-v4', '-o', '/tmp/test_%05d.json'])

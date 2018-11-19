@@ -12,43 +12,35 @@ def download(url):
         f.write(r.content)
     return path
 
-def test_e2e_outputs_for_image():
-    image_url = 'https://storage.googleapis.com/dp-vulcan/tests/deepoctl/test.jpg'
-    image_path = download(image_url)
+image_url = 'https://storage.googleapis.com/dp-vulcan/tests/deepoctl/test.jpg'
+image_path = download(image_url)
 
-    def test_output(output):
-        args = ['draw', '-i', image_path, '--recognition_id', 'fashion-v4', '-o']
-        args.extend(output)
-        print('test %s' % args)
-        run(args)
+video_url = 'https://storage.googleapis.com/dp-vulcan/tests/deepoctl/test.mp4'
+video_path = download(video_url)
 
-    outputs = [
-    #    ['stdout', '--output_frame'],
-        ['/tmp/test.json'],
-        ['/tmp/test.jpeg'],
-        ['/tmp/test_scores.jpeg', '--draw_scores'],
-        ['/tmp/test_labels.jpeg', '--draw_labels'],
-        ['/tmp/test_scores_labels.jpeg', '--draw_scores', '--draw_labels'],
-        ['/tmp/test_%05d.jpeg'],
-    #    ['window']
-    ]
 
-    [test_output(output) for output in outputs]
+def test_e2e_image_draw_image():
+    run(['draw', '-i', image_path, '--recognition_id', 'fashion-v4', '-o', '/tmp/test.jpeg'])
 
-def test_e2e_outputs_for_video():
-    video_url = 'https://storage.googleapis.com/dp-vulcan/tests/deepoctl/test.mp4'
-    video_path = download(video_url)
+def test_e2e_image_draw_image_scores():
+    run(['draw', '-i', image_path, '--recognition_id', 'fashion-v4', '-o', '/tmp/test_scores.jpeg', '--draw_scores'])
 
-    def test_output(output):
-        args = ['draw', '-i', video_path, '--recognition_id', 'fashion-v4', '-o']
-        args.extend(output)
-        print('test %s' % args)
-        run(args)
+def test_e2e_image_draw_image_labels():
+    run(['draw', '-i', image_path, '--recognition_id', 'fashion-v4', '-o', '/tmp/test_labels.jpeg', '--draw_labels'])
 
-    outputs = [
-        ['/tmp/test_%05d.jpeg', '--draw_scores', '--draw_labels'],
-        ['/tmp/test.mp4'],
-        ['window']
-    ]
+def test_e2e_image_draw_image_labels_and_scores():
+    run(['draw', '-i', image_path, '--recognition_id', 'fashion-v4', '-o', '/tmp/test_labels.jpeg', '--draw_scores', '--draw_labels'])
 
-    [test_output(output) for output in outputs]
+def test_e2e_video_draw_video():
+    run(['draw', '-i', video_path, '--recognition_id', 'fashion-v4', '-o', '/tmp/test.mp4'])
+
+def test_e2e_video_draw_image():
+    run(['draw', '-i', video_path, '--recognition_id', 'fashion-v4', '-o', '/tmp/test_%05d.jpeg'])
+
+def test_e2e_video_draw_stdout():
+    return
+    run(['draw', '-i', video_path, '--recognition_id', 'fashion-v4', '-o', 'stdout', '--output_frame'])
+
+def test_e2e_video_draw_window():
+    return
+    run(['draw', '-i', video_path, '--recognition_id', 'fashion-v4', '-o', 'window'])
