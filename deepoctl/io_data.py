@@ -471,6 +471,7 @@ class DisplayOutputData(OutputData):
 
     def __enter__(self):
         return self
+
     def __exit__(self, exception_type, exception_value, traceback):
         if cv2.waitKey(0) & 0xFF == ord('q'):
             cv2.destroyAllWindows()
