@@ -11,11 +11,6 @@ import deepoctl.cmds.infer as infer
 import deepoctl.io_data as io_data
 import deepoctl.workflow_abstraction as wa
 
-try: 
-    from Queue import Queue, LifoQueue
-except ImportError:
-    from queue import Queue, LifoQueue
-
 class DrawThread(infer.InferenceThread):
     def __init__(self, input_queue, output_queue, **kwargs):
         super(DrawThread, self).__init__(input_queue, output_queue, **kwargs)

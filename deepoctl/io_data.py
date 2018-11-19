@@ -4,7 +4,10 @@ import json
 import imutils
 import cv2
 import threading
-from Queue import Queue, LifoQueue, Empty
+try: 
+    from Queue import Queue, LifoQueue, Empty
+except ImportError:
+    from queue import Queue, LifoQueue, Empty
 
 def get_input(descriptor):
     if (descriptor is None):
