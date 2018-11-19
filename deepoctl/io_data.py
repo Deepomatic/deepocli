@@ -389,7 +389,7 @@ class BlurOutputData(OutputData):
     def __init__(self, **kwargs):
         super(BlurOutputData, self).__init__(None, **kwargs)
         self._method = kwargs.get('blur_method', 'pixel')
-        self._strength = kwargs.get('blur_strength', 10)
+        self._strength = int(kwargs.get('blur_strength', 10))
 
     def __call__(self, frame, prediction, font_scale=0.5):
         frame = frame.copy()
@@ -412,7 +412,7 @@ class BlurOutputData(OutputData):
                 else:
                     face = frame[ymin:ymax, xmin:xmax]
                     if (self._method == 'gaussian'):
-                        face = cv2.GaussianBlur(face,(15, 15), self._strength)
+                        face = cv2.GaussianBlur(face, (15, 15), self._strength)
                     elif (self._method == 'pixel'):
                         small = cv2.resize(face, (0,0), fx=1./min((xmax - xmin), self._strength), fy=1./min((ymax - ymin), self._strength))
                         face = cv2.resize(small, ((xmax - xmin), (ymax - ymin)), interpolation=cv2.INTER_NEAREST)
