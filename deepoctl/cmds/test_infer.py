@@ -23,7 +23,7 @@ def test_e2e_image_infer_stdout():
     run(['infer', '-i', image_path, '--recognition_id', 'fashion-v4', '-o', 'stdout'])
 
 def test_e2e_image_infer_json():
-    run(['infer', '-i', image_path, '--recognition_id', 'fashion-v4', '-o', '/tmp/test_%05d.json'])
+    run(['infer', '-i', image_path, '--recognition_id', 'fashion-v4', '-o', '/tmp/test.json'])
 
 def test_e2e_video_infer_stdout():
     run(['infer', '-i', video_path, '--recognition_id', 'fashion-v4', '-o', 'stdout'])
