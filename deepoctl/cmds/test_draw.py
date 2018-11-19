@@ -12,9 +12,9 @@ def download(url):
         f.write(r.content)
     return path
 
-def test_outputs(input):
-    tmpdir = tempfile.mkdtemp()
-    path = os.path.join(tmpdir, os.path.basename(input))
+def test_e2e_outputs_for_image():
+    image_url = 'https://storage.googleapis.com/dp-vulcan/tests/deepoctl/test.jpg'
+    image_path = download(image_url)
 
     def test_output(output):
         args = ['draw', '-i', image_path, '--recognition_id', 'fashion-v4', '-o']
@@ -23,7 +23,6 @@ def test_outputs(input):
         run(args)
 
     outputs = [
-        ['stdout'],
     #    ['stdout', '--output_frame'],
         ['/tmp/test.json'],
         ['/tmp/test.jpeg'],
@@ -31,17 +30,25 @@ def test_outputs(input):
         ['/tmp/test_labels.jpeg', '--draw_labels'],
         ['/tmp/test_scores_labels.jpeg', '--draw_scores', '--draw_labels'],
         ['/tmp/test_%05d.jpeg'],
-        ['window']
+    #    ['window']
     ]
 
     [test_output(output) for output in outputs]
 
-
-
-if __name__ == "__main__":
-    image_url = 'https://storage.googleapis.com/dp-vulcan/tests/deepoctl/test.jpg'
+def test_e2e_outputs_for_video():
     video_url = 'https://storage.googleapis.com/dp-vulcan/tests/deepoctl/test.mp4'
-    
-    image_path = download(image_url)
+    video_path = download(video_url)
 
-    test_outputs(image_path)
+    def test_output(output):
+        args = ['draw', '-i', video_path, '--recognition_id', 'fashion-v4', '-o']
+        args.extend(output)
+        print('test %s' % args)
+        run(args)
+
+    outputs = [
+        ['/tmp/test_%05d.jpeg', '--draw_scores', '--draw_labels'],
+        ['/tmp/test.mp4'],
+        ['window']
+    ]
+
+    [test_output(output) for output in outputs]

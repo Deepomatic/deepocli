@@ -12,9 +12,9 @@ def download(url):
         f.write(r.content)
     return path
 
-def test_outputs(input):
-    tmpdir = tempfile.mkdtemp()
-    path = os.path.join(tmpdir, os.path.basename(input))
+def test_outputs_for_image():
+    image_url = 'https://storage.googleapis.com/dp-vulcan/tests/deepoctl/test.jpg'
+    image_path = download(image_url)
 
     def test_output(output):
         args = ['infer', '-i', image_path, '--recognition_id', 'fashion-v4', '-o']
@@ -29,13 +29,3 @@ def test_outputs(input):
     ]
 
     [test_output(output) for output in outputs]
-
-
-
-if __name__ == "__main__":
-    image_url = 'https://storage.googleapis.com/dp-vulcan/tests/deepoctl/test.jpg'
-    video_url = 'https://storage.googleapis.com/dp-vulcan/tests/deepoctl/test.mp4'
-    
-    image_path = download(image_url)
-
-    test_outputs(image_path)
