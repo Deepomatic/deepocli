@@ -106,6 +106,8 @@ class RpcRecognition(AbstractWorkflow):
                 self._recognition = self._client.create_recognition(version_id=recognition_version_id)
             except ValueError:
                 logging.warning("Cannot cast recognition ID into a number")
+        else:
+            logging.error('RPC not available, you should ask Deepomatic')
 
     def infer(self, frame):
         if (self._client is not None and frame is not None):
@@ -114,6 +116,7 @@ class RpcRecognition(AbstractWorkflow):
             inputs = Inputs(inputs=[Inputs.InputMix(image=image)])
             return self.InferResult(self._client.recognize(self._routing_key, self._recognition, inputs))
         else:
+            logging.error('RPC not available, you should ask Deepomatic')
             return {
                 'outputs': []
             }
