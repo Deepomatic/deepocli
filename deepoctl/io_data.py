@@ -150,7 +150,7 @@ class ImageInputData(InputData):
 
 
 class VideoInputData(InputData):
-    supported_formats = ['.avi', '.mp4', '.webm']
+    supported_formats = ['.avi', '.mp4', '.webm', '.mjpg']
 
     @classmethod
     def is_valid(cls, descriptor):
