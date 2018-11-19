@@ -37,9 +37,11 @@ def get_output(descriptor, args):
         elif VideoOutputData.is_valid(descriptor):
             return VideoOutputData(descriptor, **args)
         elif JsonOutputData.is_valid(descriptor):
-            return VideoOutputData(descriptor, **args)
+            return JsonOutputData(descriptor, **args)
         elif descriptor == 'stdout':
             return StdOutputData(**args)
+        elif descriptor == 'window':
+            return DisplayOutputData(**args)
         else:
             raise NameError('Unknown output')
     else:
@@ -69,6 +71,9 @@ def input_loop(args, worker_thread):
                 input_queue.task_done()
         input_queue.put(frame)
 
+    # notify worker_thread that input stream is over
+    input_queue.put(None)
+    
     worker.join()
     output_thread.join()
 
@@ -81,13 +86,12 @@ class OutputThread(threading.Thread):
     def run(self):
         with get_output(self.args.get('output', None), self.args) as output:
             while True:
-                frame = self.queue.get()
-                if frame is None:
+                data = self.queue.get()
+                if data is None:
                     return
-                should_stop = output(frame)
+                frame, detection = data
+                output(frame, detection)
                 self.queue.task_done()
-                if should_stop:
-                    return
 
 class InputData(object):
     def __init__(self, descriptor):
@@ -258,7 +262,7 @@ class OutputData(object):
     def __exit__(self, exception_type, exception_value, traceback):
         raise NotImplementedError
 
-    def __call__(self, output):
+    def __call__(self, frame, prediction):
         raise NotImplementedError
 
 
@@ -281,7 +285,7 @@ class ImageOutputData(OutputData):
     def __exit__(self, exception_type, exception_value, traceback):
         pass
 
-    def __call__(self, frame):
+    def __call__(self, frame, prediction):
         path = self._descriptor
         try:
             path = path % self._i
@@ -318,9 +322,11 @@ class VideoOutputData(OutputData):
         return self
     
     def __exit__(self, exception_type, exception_value, traceback):
-        self._writer.release()
+        if (self._writer is not None):
+            self._writer.release()
+        self._writer = None
 
-    def __call__(self, frame):
+    def __call__(self, frame, prediction):
         if (self._writer is None):
             self._writer = cv2.VideoWriter(self._descriptor, 
                 self._fourcc,
@@ -333,28 +339,27 @@ class DrawOutputData(OutputData):
 
     def __init__(self, **kwargs):
         super(DrawOutputData, self).__init__(None, **kwargs)
-        self._threshold = float(kwargs.get('threshold', 0.7))
-        self._draw_label = kwargs.get('draw_label', False)
-        self._draw_score = kwargs.get('draw_score', False)
+        self._threshold = kwargs.get('threshold', 0.7)
+        self._draw_labels = kwargs.get('draw_labels', False)
+        self._draw_scores = kwargs.get('draw_scores', False)
 
-    def __call__(self, frame_and_detection, font_scale=0.5):
-        frame, detection = frame_and_detection
+    def __call__(self, frame, prediction, font_scale=0.5):
         frame = frame.copy()
         h = frame.shape[0]
         w = frame.shape[1]
-        for predicted in detection:
+        for predicted in prediction:
             label = ""
-            if self._draw_label:
+            if self._draw_labels:
                 label += predicted['label_name']
-            if self._draw_label and self._draw_score:
+            if self._draw_labels and self._draw_scores:
                 label += " "
-            if self._draw_score:
-                label += predicted['score']
+            if self._draw_scores:
+                label += str(predicted['score'])
 
             roi = predicted['roi']
             if roi is None:
                 pass
-            elif predicted['score'] < self._threshold:
+            elif float(predicted['score']) < float(self._threshold):
                 pass
             else:
                 bbox = roi['bbox']
@@ -368,7 +373,7 @@ class DrawOutputData(OutputData):
                 ret, baseline = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, font_scale, 1)
                 cv2.rectangle(frame, (xmin, ymax - ret[1] - baseline), (xmin + ret[0], ymax), (0, 0, 255), -1)
                 cv2.putText(frame, label, (xmin, ymax - baseline), cv2.FONT_HERSHEY_SIMPLEX, font_scale, (255, 255, 255), 1)
-        return frame
+        return frame, prediction
 
     def __enter__(self):
         return self
@@ -383,12 +388,11 @@ class BlurOutputData(OutputData):
         self._method = kwargs.get('blur_method', 'pixel')
         self._strength = kwargs.get('blur_strength', 10)
 
-    def __call__(self, frame_and_detection, font_scale=0.5):
-        frame, detection = frame_and_detection
+    def __call__(self, frame, prediction, font_scale=0.5):
         frame = frame.copy()
         h = frame.shape[0]
         w = frame.shape[1]
-        for predicted in detection:
+        for predicted in prediction:
             label = predicted['label_name']
             roi = predicted['roi']
             if (roi is None):
@@ -412,7 +416,7 @@ class BlurOutputData(OutputData):
                         small = cv2.resize(face, (0,0), fx=1./min((xmax - xmin), self._strength), fy=1./min((ymax - ymin), self._strength))
                         face = cv2.resize(small, ((xmax - xmin), (ymax - ymin)), interpolation=cv2.INTER_NEAREST)
                     frame[ymin:ymax, xmin:xmax] = face
-        return frame
+        return frame, prediction
 
     def __enter__(self):
         return self
@@ -425,9 +429,10 @@ class StdOutputData(OutputData):
     """
     def __init__(self, **kwargs):
         super(StdOutputData, self).__init__(None, **kwargs)
+        self._output_frame = kwargs.get('output_frame', False)
 
-    def __call__(self, frame):
-        data = frame[:, :, ::-1].tostring()
+    def __call__(self, frame, prediction):
+        data = frame[:, :, ::-1].tostring() if self._output_frame else json.dumps(prediction)
         sys.stdout.write(data)
 
     def __enter__(self):
@@ -439,7 +444,7 @@ class DisplayOutputData(OutputData):
     def __init__(self, **kwargs):
         super(DisplayOutputData, self).__init__(None, **kwargs)
         self._fps = kwargs.get('output_fps', 25)
-        self._window_name = "Deepomatic feed"
+        self._window_name = "Deepomatic"
         self._fullscreen = kwargs.get('fullscreen', False)
 
         if self._fullscreen:
@@ -454,16 +459,19 @@ class DisplayOutputData(OutputData):
                                   cv2.WND_PROP_FULLSCREEN,
                                   prop_value)
 
-    def __call__(self, frame):
+    def __call__(self, frame, prediction):
         cv2.imshow(self._window_name, frame)
         if cv2.waitKey(self._fps) & 0xFF == ord('q'):
-            return True
-
+            cv2.destroyAllWindows()
+            cv2.waitKey(1)
+            sys.exit()
 
     def __enter__(self):
         return self
     def __exit__(self, exception_type, exception_value, traceback):
-        pass
+        if cv2.waitKey(0) & 0xFF == ord('q'):
+            cv2.destroyAllWindows()
+            cv2.waitKey(1)
 
 class JsonOutputData(OutputData):
     supported_formats = ['.json']
@@ -484,7 +492,7 @@ class JsonOutputData(OutputData):
     def __exit__(self, exception_type, exception_value, traceback):
         pass
 
-    def __call__(self, detection):
+    def __call__(self, frame, prediction):
         path = self._descriptor
         try:
             path = path % self._i
@@ -493,4 +501,4 @@ class JsonOutputData(OutputData):
         finally:
             self._i += 1
             with open(path, 'w') as file:
-                json.dump(file, detection)
+                json.dump(prediction, file)

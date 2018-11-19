@@ -17,8 +17,8 @@ class BlurThread(infer.InferenceThread):
         super(BlurThread, self).__init__(input_queue, output_queue, **kwargs)
         self.process = io_data.BlurOutputData(**kwargs)
 
-    def processing(self, frame, detection):
-        return self.process((frame, detection))
+    def processing(self, frame, prediction):
+        return self.process(frame, prediction)
 
 def main(args, force=False):
     try:

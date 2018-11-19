@@ -21,21 +21,23 @@ class InferenceThread(threading.Thread):
     def run(self):
         while True:
             frame = self.input_queue.get()
+
             if frame is None:
+                self.output_queue.put(None)
                 return
 
             if self.workflow is not None:
-                detection = self.workflow.infer(frame).get()
-                detection = detection['outputs'][0]['labels']['predicted']
+                prediction = self.workflow.infer(frame).get()
+                prediction = prediction['outputs'][0]['labels']['predicted']
             else:
-                detection = []
+                prediction = []
             
-            result = self.processing(frame, detection)
+            result = self.processing(frame, prediction)
             self.input_queue.task_done()
             self.output_queue.put(result)
 
-    def processing(self, frame, detection):
-        return frame
+    def processing(self, frame, prediction):
+        return frame, prediction
 
 
 def main(args, force=False):
