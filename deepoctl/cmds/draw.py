@@ -23,7 +23,6 @@ class DrawThread(infer.InferenceThread):
 
 
 def main(args, force=False):
-    io_data.input_loop(args, DrawThread)
     try:
         io_data.input_loop(args, DrawThread)
     except KeyboardInterrupt:
