@@ -9,7 +9,7 @@ This controller has been made in order to help you interact with our services vi
 Requirements: Python 2.7+ or 3.4+
 
 ```sh
-pip install git+https://github.com/deepomatic/deepoctl@v0.1 --process-dependency-links
+pip install git+https://github.com/deepomatic/deepoctl@v0.2.0 --process-dependency-links
 ```
 
 ## Setup
