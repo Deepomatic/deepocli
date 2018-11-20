@@ -22,6 +22,6 @@ class Client(object):
 
 def main(args):
     clt = Client()
-    for path in args.path:
-        clt.image.post_images(args.dataset_name, path, args.org_slug, args.recursive)
+    for path in args.get('path', []):
+        clt.image.post_images(args.get('dataset_name', ''), path, args.get('org_slug', ''), args.get('recursive', False))
     print("Done")
