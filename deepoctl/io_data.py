@@ -66,22 +66,31 @@ def input_loop(args, worker_thread):
     worker.start()
     output_thread.start()
 
-    for frame in inputs:
-        if inputs.is_infinite():
-            # Discard all previous inputs
-            while not input_queue.empty():
-                try:
-                    input_queue.get(False)
-                except Empty:
-                    continue
-                input_queue.task_done()
-        input_queue.put(frame)
-
-    # notify worker_thread that input stream is over
-    input_queue.put(None)
+    max_value = inputs.get_frame_count()
+    if max_value < 0:
+        max_value = UnknownLength
     
-    worker.join()
-    output_thread.join()
+    with ProgressBar(max_value=max_value) as bar:
+        try:
+            for i, frame in enumerate(inputs):
+                if inputs.is_infinite():
+                    # Discard all previous inputs
+                    while not input_queue.empty():
+                        try:
+                            input_queue.get(False)
+                        except Empty:
+                            continue
+                        input_queue.task_done()
+                input_queue.put(frame)
+                bar.update(i)
+        except KeyboardInterrupt:
+            logging.info('Stopping input')
+        finally:
+            # notify worker_thread that input stream is over
+            input_queue.put(None)
+
+            worker.join()
+            output_thread.join()
 
 class OutputThread(threading.Thread):
     def __init__(self, queue, **kwargs):
