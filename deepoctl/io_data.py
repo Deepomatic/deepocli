@@ -5,7 +5,7 @@ import imutils
 import logging
 import cv2
 import threading
-from progressbar import UnknownLength, progressbar
+from progressbar import UnknownLength, ProgressBar
 
 try: 
     from Queue import Queue, LifoQueue, Empty
@@ -76,25 +76,27 @@ def input_loop(args, worker_thread):
     if max_value < 0:
         max_value = UnknownLength
 
-    try:
-        for i, frame in progressbar(enumerate(inputs), redirect_stdout=True):
-            if inputs.is_infinite():
-                # Discard all previous inputs
-                while not input_queue.empty():
-                    try:
-                        input_queue.get(False)
-                    except Empty:
-                        continue
-                    input_queue.task_done()
-            input_queue.put(frame)
-    except KeyboardInterrupt:
-        logging.info('Stopping input')
-    finally:
-        # notify worker_thread that input stream is over
-        input_queue.put(None)
+    with ProgressBar(max_value=max_value, redirect_stdout=True) as bar:
+        try:
+            for i, frame in enumerate(inputs):
+                bar.update(i)
+                if inputs.is_infinite():
+                    # Discard all previous inputs
+                    while not input_queue.empty():
+                        try:
+                            input_queue.get(False)
+                        except Empty:
+                            continue
+                        input_queue.task_done()
+                input_queue.put(frame)
+        except KeyboardInterrupt:
+            logging.info('Stopping input')
+        finally:
+            # notify worker_thread that input stream is over
+            input_queue.put(None)
 
-        worker.join()
-        output_thread.join()
+            worker.join()
+            output_thread.join()
 
 class OutputThread(threading.Thread):
     def __init__(self, queue, **kwargs):
@@ -199,6 +201,7 @@ class VideoInputData(InputData):
         self._cap = None
         self._i = 0
         self._name = '%s_%s_%s' % (self._name, '%05d', self._reco)
+        self._cap = cv2.VideoCapture(self._descriptor)
 
     def __iter__(self):
         if self._cap is not None:
@@ -220,13 +223,15 @@ class VideoInputData(InputData):
         raise StopIteration
 
     def get_fps(self):
-        return self._cap.get(cv2.CAP_PROP_FPS)
+        if (self._cap is not None):
+            return self._cap.get(cv2.CAP_PROP_FPS)
 
     def get_frame_index(self):
         return self._i
 
     def get_frame_count(self):
-        return self._cap.get(cv2.CAP_PROP_FRAME_COUNT)
+        if (self._cap is not None):
+            return self._cap.get(cv2.CAP_PROP_FRAME_COUNT)
 
     def is_infinite(self):
         return False
@@ -521,8 +526,11 @@ class StdOutputData(OutputData):
         super(StdOutputData, self).__init__(None, **kwargs)
 
     def __call__(self, name, frame, prediction):
-        data = frame[:, :, ::-1].tostring() if frame is not None else json.dumps(prediction)
-        sys.stdout.write(data)
+        if frame is None:
+            print(json.dumps(prediction))
+        else:
+            sys.stdout.write(frame[:, :, ::-1].tostring())
+
 
     def __enter__(self):
         return self
