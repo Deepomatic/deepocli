@@ -95,13 +95,12 @@ def input_loop(kwargs, worker_thread):
                     time.sleep(1)
 
                 input_queue.put(frame)
+
             # notify worker_thread that input stream is over
             input_queue.put(None)
 
-            while worker.isAlive():
-                worker.join(1)
-            while output_thread.isAlive():
-                output_thread.join(1)
+            worker.join()
+            output_thread.join()
 
         except KeyboardInterrupt:
             logging.info('Stopping input')
@@ -298,10 +297,7 @@ class DirectoryInputData(InputData):
         return self
 
     def next(self):
-        try:
-            return next(self.gen)
-        except StopIteration:
-            return None
+        return next(self.gen)
 
     def get_frame_index(self):
         return self._i
