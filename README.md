@@ -15,10 +15,12 @@ pip install git+https://github.com/deepomatic/deepoctl@v0.2.0 --process-dependen
 ## Setup
 
 In order to use models which are deployed in our cloud, you will need to set your application ID and API key in `DEEPOMATIC_APP_ID` and `DEEPOMATIC_API_KEY` environment variables, respectively.
+In order to add images to a rpoject in Deepomatic Studio, you will need to set your Deepomatic Studio Token in `DEEPOMATIC_STUDIO_TOKEN` environment variable.
 
 ```sh
 export DEEPOMATIC_APP_ID=xxxxxxxxxxxx
 export DEEPOMATIC_API_KEY=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+export DEEPOMATIC_STUDIO_TOKEN=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 ```
 
 ## Inputs
