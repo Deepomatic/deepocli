@@ -34,7 +34,6 @@ class InferenceThread(threading.Thread):
                     return
 
                 name, frame = data
-
                 if self.workflow is not None:
                     prediction = self.workflow.infer(frame).get()
                     prediction = [predicted

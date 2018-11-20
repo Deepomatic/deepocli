@@ -4,6 +4,7 @@ import json
 import imutils
 import logging
 import cv2
+import time
 import threading
 from progressbar import UnknownLength, ProgressBar
 
@@ -12,6 +13,7 @@ try:
 except ImportError:
     from queue import Queue, LifoQueue, Empty
 
+INPUT_QUEUE_MAX_SIZE = 50
 
 def print_log(log):
     sys.stdout.write("\033[F") 
@@ -88,7 +90,19 @@ def input_loop(kwargs, worker_thread):
                             input_queue.task_done()
                         except Empty:
                             break
+
+                while input_queue.qsize() > INPUT_QUEUE_MAX_SIZE:
+                    time.sleep(1)
+
                 input_queue.put(frame)
+            # notify worker_thread that input stream is over
+            input_queue.put(None)
+
+            while worker.isAlive():
+                worker.join(1)
+            while output_thread.isAlive():
+                output_thread.join(1)
+
         except KeyboardInterrupt:
             logging.info('Stopping input')
             while not input_queue.empty():
@@ -97,8 +111,6 @@ def input_loop(kwargs, worker_thread):
                     input_queue.task_done()
                 except Empty:
                     break
-        finally:
-            # notify worker_thread that input stream is over
             input_queue.put(None)
 
             worker.join()
