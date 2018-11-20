@@ -21,12 +21,14 @@ class InferenceThread(threading.Thread):
     
     def run(self):
         while True:
-            frame = self.input_queue.get()
+            data = self.input_queue.get()
 
-            if frame is None:
+            if data is None:
                 self.input_queue.task_done()
                 self.output_queue.put(None)
                 return
+
+            name, frame = data
 
             if self.workflow is not None:
                 prediction = self.workflow.infer(frame).get()
@@ -36,14 +38,15 @@ class InferenceThread(threading.Thread):
             else:
                 prediction = []
             
-            result = self.processing(frame, prediction)
+            result = self.processing(name, frame, prediction)
             self.input_queue.task_done()
             self.output_queue.put(result)
 
-    def processing(self, frame, prediction):
-        return frame, prediction
+    def processing(self, name, frame, prediction):
+        return name, None, prediction
 
 def main(args, force=False):
+    io_data.input_loop(args, InferenceThread)
     try:
         io_data.input_loop(args, InferenceThread)
     except KeyboardInterrupt:

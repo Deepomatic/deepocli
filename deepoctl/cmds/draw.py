@@ -16,8 +16,8 @@ class DrawThread(infer.InferenceThread):
         super(DrawThread, self).__init__(input_queue, output_queue, **kwargs)
         self.process = io_data.DrawOutputData(**kwargs)
 
-    def processing(self, frame, prediction):
-        return self.process(frame, prediction)
+    def processing(self, name, frame, prediction):
+        return self.process(name, frame, prediction)
 
 
 def main(args, force=False):
