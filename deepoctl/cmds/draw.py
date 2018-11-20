@@ -25,5 +25,3 @@ def main(args, force=False):
         io_data.input_loop(args, DrawThread)
     except KeyboardInterrupt:
         pass
-    except:
-        logging.error("Unexpected error: %s" % sys.exc_info()[0])

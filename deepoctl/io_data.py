@@ -18,49 +18,49 @@ def print_log(log):
     sys.stdout.write("\033[K")
     print(log)
 
-def get_input(descriptor, args):
+def get_input(descriptor, kwargs):
     if (descriptor is None):
         raise NameError('No input specified. use -i flag')
     elif os.path.exists(descriptor):
         if os.path.isfile(descriptor):
             if ImageInputData.is_valid(descriptor):
-                return ImageInputData(descriptor, **args)
+                return ImageInputData(descriptor, **kwargs)
             elif VideoInputData.is_valid(descriptor):
-                return VideoInputData(descriptor, **args)
+                return VideoInputData(descriptor, **kwargs)
             else:
                 raise NameError('Unsupported input file type')
         elif os.path.isdir(descriptor):
-            return DirectoryInputData(descriptor, **args)
+            return DirectoryInputData(descriptor, **kwargs)
         else:
             raise NameError('Unknown input path')
     elif descriptor.isdigit():
-        return DeviceInputData(descriptor, **args)
+        return DeviceInputData(descriptor, **kwargs)
     elif StreamInputData.is_valid(descriptor):
-        return StreamInputData(descriptor, **args)
+        return StreamInputData(descriptor, **kwargs)
     else:
         raise NameError('Unknown input')
 
-def get_output(descriptor, args):
+def get_output(descriptor, kwargs):
     if descriptor is not None:
         if os.path.isdir(descriptor):
-            return DirectoryOutputData(descriptor, **args)
+            return DirectoryOutputData(descriptor, **kwargs)
         elif ImageOutputData.is_valid(descriptor):
-            return ImageOutputData(descriptor, **args)
+            return ImageOutputData(descriptor, **kwargs)
         elif VideoOutputData.is_valid(descriptor):
-            return VideoOutputData(descriptor, **args)
+            return VideoOutputData(descriptor, **kwargs)
         elif JsonOutputData.is_valid(descriptor):
-            return JsonOutputData(descriptor, **args)
+            return JsonOutputData(descriptor, **kwargs)
         elif descriptor == 'stdout':
-            return StdOutputData(**args)
+            return StdOutputData(**kwargs)
         elif descriptor == 'window':
-            return DisplayOutputData(**args)
+            return DisplayOutputData(**kwargs)
         else:
             raise NameError('Unknown output')
     else:
-        return DisplayOutputData(**args)
+        return DisplayOutputData(**kwargs)
 
-def input_loop(args, worker_thread):
-    inputs = get_input(args.get('input', 0), args)
+def input_loop(kwargs, worker_thread):
+    inputs = get_input(kwargs.get('input', 0), kwargs)
 
 
     max_value = inputs.get_frame_count()
@@ -72,8 +72,8 @@ def input_loop(args, worker_thread):
         input_queue = LifoQueue() if inputs.is_infinite() else Queue()
         output_queue = LifoQueue() if inputs.is_infinite() else Queue()
 
-        worker = worker_thread(input_queue, output_queue, **args)
-        output_thread = OutputThread(output_queue, on_progress=lambda i: bar.update(i), **args)
+        worker = worker_thread(input_queue, output_queue, **kwargs)
+        output_thread = OutputThread(output_queue, on_progress=lambda i: bar.update(i), **kwargs)
 
         worker.start()
         output_thread.start()
@@ -85,13 +85,18 @@ def input_loop(args, worker_thread):
                     while not input_queue.empty():
                         try:
                             input_queue.get(False)
+                            input_queue.task_done()
                         except Empty:
-                            continue
-                        input_queue.task_done()
-
+                            break
                 input_queue.put(frame)
         except KeyboardInterrupt:
             logging.info('Stopping input')
+            while not input_queue.empty():
+                try:
+                    input_queue.get(False)
+                    input_queue.task_done()
+                except Empty:
+                    break
         finally:
             # notify worker_thread that input stream is over
             input_queue.put(None)
@@ -109,17 +114,20 @@ class OutputThread(threading.Thread):
     def run(self):
         i = 0
         with get_output(self.args.get('output', None), self.args) as output:
-            while True:
-                i += 1
-                data = self.queue.get()
-                if data is None:
-                    self.queue.task_done()
-                    return
+            try:
+                while True:
+                    i += 1
+                    data = self.queue.get()
+                    if data is None:
+                        self.queue.task_done()
+                        return
 
-                output(*data)
-                if (self.on_progress is not None):
-                    self.on_progress(i)
-                self.queue.task_done()
+                    output(*data)
+                    if (self.on_progress is not None):
+                        self.on_progress(i)
+                    self.queue.task_done()
+            except KeyboardInterrupt:
+                pass
 
 class InputData(object):
     def __init__(self, descriptor,  **kwargs):
@@ -185,7 +193,7 @@ class ImageInputData(InputData):
         return self._name
 
     def get_frame_index(self):
-        return 0 if self.first else 1
+        return 0 if self._first else 1
 
     def get_frame_count(self):
         return 1
@@ -261,8 +269,8 @@ class DirectoryInputData(InputData):
         if self.is_valid(descriptor):
             _paths = [os.path.join(descriptor, name) for name in os.listdir(descriptor)]
             _files = [
-                ImageInputData(path) if ImageInputData.is_valid(path) else
-                VideoInputData(path) if VideoInputData.is_valid(path) else
+                ImageInputData(path, **kwargs) if ImageInputData.is_valid(path) else
+                VideoInputData(path, **kwargs) if VideoInputData.is_valid(path) else
                 None for path in _paths if os.path.isfile(path)]
             self._inputs = [_input for _input in _files if _input is not None]
 
