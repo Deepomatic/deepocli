@@ -5,12 +5,18 @@ import imutils
 import logging
 import cv2
 import threading
-from progressbar import UnknownLength, ProgressBar
+from progressbar import UnknownLength, progressbar
 
 try: 
     from Queue import Queue, LifoQueue, Empty
 except ImportError:
     from queue import Queue, LifoQueue, Empty
+
+
+def print_log(log):
+    sys.stdout.write("\033[F") 
+    sys.stdout.write("\033[K")
+    print(log)
 
 def get_input(descriptor, args):
     if (descriptor is None):
@@ -69,28 +75,26 @@ def input_loop(args, worker_thread):
     max_value = inputs.get_frame_count()
     if max_value < 0:
         max_value = UnknownLength
-    
-    with ProgressBar(max_value=max_value) as bar:
-        try:
-            for i, frame in enumerate(inputs):
-                if inputs.is_infinite():
-                    # Discard all previous inputs
-                    while not input_queue.empty():
-                        try:
-                            input_queue.get(False)
-                        except Empty:
-                            continue
-                        input_queue.task_done()
-                input_queue.put(frame)
-                bar.update(i)
-        except KeyboardInterrupt:
-            logging.info('Stopping input')
-        finally:
-            # notify worker_thread that input stream is over
-            input_queue.put(None)
 
-            worker.join()
-            output_thread.join()
+    try:
+        for i, frame in progressbar(enumerate(inputs), redirect_stdout=True):
+            if inputs.is_infinite():
+                # Discard all previous inputs
+                while not input_queue.empty():
+                    try:
+                        input_queue.get(False)
+                    except Empty:
+                        continue
+                    input_queue.task_done()
+            input_queue.put(frame)
+    except KeyboardInterrupt:
+        logging.info('Stopping input')
+    finally:
+        # notify worker_thread that input stream is over
+        input_queue.put(None)
+
+        worker.join()
+        output_thread.join()
 
 class OutputThread(threading.Thread):
     def __init__(self, queue, **kwargs):
@@ -115,7 +119,7 @@ class InputData(object):
         self._args = kwargs
         self._name, _ = os.path.splitext(os.path.basename(str(descriptor)))
         recognition_id = kwargs.get('recognition_id', '')
-        self._reco = '' if recognition_id is None else self._reco
+        self._reco = '' if recognition_id is None else recognition_id
 
     def __iter__(self):
         return self
@@ -153,7 +157,7 @@ class ImageInputData(InputData):
     def __init__(self, descriptor, **kwargs):
         super(ImageInputData, self).__init__(descriptor, **kwargs)
         self._first = None
-        self._name = "%s_%s" % (self._name, self._reco)
+        self._name = '%s_%s' % (self._name, self._reco)
 
     def __iter__(self):
         self._first = True
@@ -170,7 +174,7 @@ class ImageInputData(InputData):
         return 0
 
     def get_frame_name(self):
-        return 
+        return self._name
 
     def get_frame_index(self):
         return 0 if self.first else 1
@@ -194,7 +198,7 @@ class VideoInputData(InputData):
         super(VideoInputData, self).__init__(descriptor, **kwargs)
         self._cap = None
         self._i = 0
-        self._name = "%s_%s_%s" % (self._name, '%05d', self._reco)
+        self._name = '%s_%s_%s' % (self._name, '%05d', self._reco)
 
     def __iter__(self):
         if self._cap is not None:
@@ -285,7 +289,7 @@ class StreamInputData(VideoInputData):
 
     def __init__(self, descriptor, **kwargs):
         super(StreamInputData, self).__init__(descriptor, **kwargs)
-        self._name = "stream_%s_%s" % ('%05d', self._reco)
+        self._name = 'stream_%s_%s' % ('%05d', self._reco)
 
     def get_frame_count(self):
         return -1
@@ -301,7 +305,7 @@ class DeviceInputData(VideoInputData):
 
     def __init__(self, descriptor, **kwargs):
         super(DeviceInputData, self).__init__(int(descriptor), **kwargs)
-        self._name = "device%s_%s_%s" % (descriptor, '%05d', self._reco)
+        self._name = 'device%s_%s_%s' % (descriptor, '%05d', self._reco)
 
     def get_frame_count(self):
         return -1
@@ -351,7 +355,11 @@ class ImageOutputData(OutputData):
             pass
         finally:
             self._i += 1
-            cv2.imwrite(path, frame)
+            if (frame is None):
+                logging.warning('No frame to output.')
+            else:
+                print_log('Writing %s' % path)
+                cv2.imwrite(path, frame)
 
 
 class VideoOutputData(OutputData):
@@ -374,23 +382,27 @@ class VideoOutputData(OutputData):
         self._writer = None
 
     def __enter__(self):
-        if (self._writer is not None):
+        if self._writer is not None:
             self._writer.release()
         self._writer = None
         return self
     
     def __exit__(self, exception_type, exception_value, traceback):
-        if (self._writer is not None):
+        if self._writer is not None:
             self._writer.release()
         self._writer = None
 
     def __call__(self, name, frame, prediction):
-        if (self._writer is None):
-            self._writer = cv2.VideoWriter(self._descriptor, 
-                self._fourcc,
-                self._fps,
-                (frame.shape[1], frame.shape[0]))
-        self._writer.write(frame)
+        if frame is None:
+            logging.warning('No frame to output.')
+        else:
+            if self._writer is None:
+                print_log('Writing %s' % self._descriptor)
+                self._writer = cv2.VideoWriter(self._descriptor, 
+                    self._fourcc,
+                    self._fps,
+                    (frame.shape[1], frame.shape[0]))
+            self._writer.write(frame)
 
 class DirectoryOutputData(OutputData):
     @classmethod
@@ -412,10 +424,12 @@ class DirectoryOutputData(OutputData):
             if (prediction is None):
                 pass
             else:
-                with open("%s.json" % path, 'w') as file:
+                with open('%s.json' % path, 'w') as file:
+                    print_log('Writing %s.json' % path)
                     json.dump(prediction, file)
         else:
-            cv2.imwrite("%s.jpeg" % path, frame)
+            print_log('Writing %s.jpeg' % path)
+            cv2.imwrite('%s.jpeg' % path, frame)
 
 class DrawOutputData(OutputData):
 
@@ -429,11 +443,11 @@ class DrawOutputData(OutputData):
         h = frame.shape[0]
         w = frame.shape[1]
         for predicted in prediction:
-            label = ""
+            label = ''
             if self._draw_labels:
                 label += predicted['label_name']
             if self._draw_labels and self._draw_scores:
-                label += " "
+                label += ' '
             if self._draw_scores:
                 label += str(predicted['score'])
 
@@ -500,15 +514,14 @@ class BlurOutputData(OutputData):
         pass
 
 class StdOutputData(OutputData):
-    """
-        To use with vlc : python scripts/deepoctl draw -i 0 -o stdout | vlc --demux=rawvideo --rawvid-fps=25 --rawvid-width=640 --rawvid-height=480 --rawvid-chroma=RV24 - --sout "#display"
-    """
+    '''
+        To use with vlc : python scripts/deepoctl draw -i 0 -o stdout | vlc --demux=rawvideo --rawvid-fps=25 --rawvid-width=640 --rawvid-height=480 --rawvid-chroma=RV24 - --sout '#display'
+    '''
     def __init__(self, **kwargs):
         super(StdOutputData, self).__init__(None, **kwargs)
-        self._output_frame = kwargs.get('output_frame', False)
 
     def __call__(self, name, frame, prediction):
-        data = frame[:, :, ::-1].tostring() if self._output_frame else json.dumps(prediction)
+        data = frame[:, :, ::-1].tostring() if frame is not None else json.dumps(prediction)
         sys.stdout.write(data)
 
     def __enter__(self):
@@ -520,7 +533,7 @@ class DisplayOutputData(OutputData):
     def __init__(self, **kwargs):
         super(DisplayOutputData, self).__init__(None, **kwargs)
         self._fps = kwargs.get('output_fps', 25)
-        self._window_name = "Deepomatic"
+        self._window_name = 'Deepomatic'
         self._fullscreen = kwargs.get('fullscreen', False)
 
         if self._fullscreen:
@@ -530,17 +543,20 @@ class DisplayOutputData(OutputData):
             elif imutils.is_cv3():
                 prop_value = cv2.WINDOW_FULLSCREEN
             else:
-                assert("Unsupported opencv version")
+                assert('Unsupported opencv version')
             cv2.setWindowProperty(self._window_name,
                                   cv2.WND_PROP_FULLSCREEN,
                                   prop_value)
 
     def __call__(self, name, frame, prediction):
-        cv2.imshow(self._window_name, frame)
-        if cv2.waitKey(self._fps) & 0xFF == ord('q'):
-            cv2.destroyAllWindows()
-            cv2.waitKey(1)
-            sys.exit()
+        if frame is None:
+            logging.warning('No frame to output.')
+        else:
+            cv2.imshow(self._window_name, frame)
+            if cv2.waitKey(self._fps) & 0xFF == ord('q'):
+                cv2.destroyAllWindows()
+                cv2.waitKey(1)
+                sys.exit()
 
     def __enter__(self):
         return self
@@ -578,4 +594,5 @@ class JsonOutputData(OutputData):
         finally:
             self._i += 1
             with open(path, 'w') as file:
+                print_log('Writing %s' % path)
                 json.dump(prediction, file)

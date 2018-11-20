@@ -46,7 +46,6 @@ class InferenceThread(threading.Thread):
         return name, None, prediction
 
 def main(args, force=False):
-    io_data.input_loop(args, InferenceThread)
     try:
         io_data.input_loop(args, InferenceThread)
     except KeyboardInterrupt:
