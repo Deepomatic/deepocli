@@ -62,24 +62,24 @@ def get_output(descriptor, args):
 def input_loop(args, worker_thread):
     inputs = get_input(args.get('input', 0), args)
 
-    # For realtime, queue should be LIFO
-    input_queue = LifoQueue() if inputs.is_infinite() else Queue()
-    output_queue = LifoQueue() if inputs.is_infinite() else Queue()
-
-    worker = worker_thread(input_queue, output_queue, **args)
-    output_thread = OutputThread(output_queue, **args)
-
-    worker.start()
-    output_thread.start()
 
     max_value = inputs.get_frame_count()
     if max_value < 0:
         max_value = UnknownLength
 
     with ProgressBar(max_value=max_value, redirect_stdout=True) as bar:
+        # For realtime, queue should be LIFO
+        input_queue = LifoQueue() if inputs.is_infinite() else Queue()
+        output_queue = LifoQueue() if inputs.is_infinite() else Queue()
+
+        worker = worker_thread(input_queue, output_queue, **args)
+        output_thread = OutputThread(output_queue, on_progress=lambda i: bar.update(i), **args)
+
+        worker.start()
+        output_thread.start()
+
         try:
-            for i, frame in enumerate(inputs):
-                bar.update(i)
+            for frame in inputs:
                 if inputs.is_infinite():
                     # Discard all previous inputs
                     while not input_queue.empty():
@@ -88,6 +88,7 @@ def input_loop(args, worker_thread):
                         except Empty:
                             continue
                         input_queue.task_done()
+
                 input_queue.put(frame)
         except KeyboardInterrupt:
             logging.info('Stopping input')
@@ -99,20 +100,25 @@ def input_loop(args, worker_thread):
             output_thread.join()
 
 class OutputThread(threading.Thread):
-    def __init__(self, queue, **kwargs):
+    def __init__(self, queue, on_progress=None, **kwargs):
         threading.Thread.__init__(self, args=(), kwargs=None)
         self.queue = queue
         self.args = kwargs
+        self.on_progress = on_progress
 
     def run(self):
+        i = 0
         with get_output(self.args.get('output', None), self.args) as output:
             while True:
+                i += 1
                 data = self.queue.get()
                 if data is None:
                     self.queue.task_done()
                     return
 
                 output(*data)
+                if (self.on_progress is not None):
+                    self.on_progress(i)
                 self.queue.task_done()
 
 class InputData(object):
