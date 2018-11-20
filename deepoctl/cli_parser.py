@@ -31,15 +31,14 @@ def parse_args(args):
         parser.add_argument('-u', '--amqp_url', help="AMQP url")
         parser.add_argument('-k', '--routing_key', help="Recognition routing key")
         parser.add_argument('-t', '--threshold', help="Threshold under which inference result should be ignored", default=0.7)
-        parser.add_argument('--output_frame', help="Output frame data if std output", action="store_true")
         parser.add_argument('--output_fps', help="Output fps", default=25)
         parser.add_argument('--fullscreen', help="Fullscreen if window output", action="store_true")
 
-    draw_parser.add_argument('--draw_scores', help="Draw scores if draw output", action="store_true")
-    draw_parser.add_argument('--draw_labels', help="Draw labels if draw output", action="store_true")
+    draw_parser.add_argument('--draw_scores', help="Overlay the prediction scores", action="store_true")
+    draw_parser.add_argument('--draw_labels', help="Overlay the prediction labels", action="store_true")
 
-    blur_parser.add_argument('--blur_method', help="Blur method if blur output", default="pixel")
-    blur_parser.add_argument('--blur_strength', help="Blur method if blur output", default=10)
+    blur_parser.add_argument('--blur_method', help="Blur method to apply", default="pixel")
+    blur_parser.add_argument('--blur_strength', help="Blur strength", default=10)
 
     feedback_parser.add_argument('dataset_name', type=str, help='the name of the dataset')
     feedback_parser.add_argument('org_slug', type=str, help='the slug of your organization')
