@@ -106,8 +106,9 @@ class RpcRecognition(AbstractWorkflow):
                 self._recognition = self._client.create_recognition(version_id=recognition_version_id)
             except ValueError:
                 logging.error("Cannot cast recognition ID into a number")
-            except:
-                logging.error("Error creating RPC client")
+            except Exception:
+                logging.exception("Error creating RPC client")
+
         else:
             self._client = None
             logging.error('RPC not available')

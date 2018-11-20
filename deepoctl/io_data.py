@@ -136,22 +136,22 @@ class InputData(object):
         return self.next()
 
     def next(self):
-        raise StopIteration
+        raise StopIteration()
 
     def get_fps(self):
-        raise NotImplementedError
+        raise NotImplementedError()
 
     def get_frame_name(self):
-        raise NotImplementedError
+        raise NotImplementedError()
 
     def get_frame_index(self):
-        raise NotImplementedError
+        raise NotImplementedError()
 
     def get_frame_count(self):
-        raise NotImplementedError
+        raise NotImplementedError()
 
     def is_infinite(self):
-        raise NotImplementedError
+        raise NotImplementedError()
 
 
 class ImageInputData(InputData):
@@ -176,7 +176,7 @@ class ImageInputData(InputData):
             self._first = False
             return self._name, cv2.imread(self._descriptor, 1)
         else:
-            raise StopIteration
+            raise StopIteration()
 
     def get_fps(self):
         return 0
@@ -221,16 +221,18 @@ class VideoInputData(InputData):
             _, frame = self._cap.read()
             if frame is None:
                 self._cap.release()
-                raise StopIteration
+                raise StopIteration()
             else:
                 self._i += 1
                 return self._name % self._i, frame
         self._cap.release()
-        raise StopIteration
+        raise StopIteration()
 
     def get_fps(self):
         if (self._cap is not None):
             return self._cap.get(cv2.CAP_PROP_FPS)
+        else:
+            return None
 
     def get_frame_index(self):
         return self._i
@@ -238,6 +240,8 @@ class VideoInputData(InputData):
     def get_frame_count(self):
         if (self._cap is not None):
             return self._cap.get(cv2.CAP_PROP_FRAME_COUNT)
+        else:
+            return None
 
     def is_infinite(self):
         return False
@@ -276,7 +280,7 @@ class DirectoryInputData(InputData):
     def next(self):
         try:
             return next(self.gen)
-        except StopIteration:
+        except StopIteration():
             return None
 
     def get_frame_index(self):
@@ -330,13 +334,13 @@ class OutputData(object):
         self._args = kwargs
 
     def __enter__(self):
-        raise NotImplementedError
+        raise NotImplementedError()
 
     def __exit__(self, exception_type, exception_value, traceback):
-        raise NotImplementedError
+        raise NotImplementedError()
 
     def __call__(self, name, frame, prediction):
-        raise NotImplementedError
+        raise NotImplementedError()
 
 
 class ImageOutputData(OutputData):
