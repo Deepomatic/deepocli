@@ -545,9 +545,6 @@ class BlurOutputData(OutputData):
         pass
 
 class StdOutputData(OutputData):
-    '''
-        To use with vlc : python scripts/deepocli draw -i 0 -o stdout | vlc --demux=rawvideo --rawvid-fps=25 --rawvid-width=640 --rawvid-height=480 --rawvid-chroma=RV24 - --sout '#display'
-    '''
     def __init__(self, **kwargs):
         super(StdOutputData, self).__init__(None, **kwargs)
 

@@ -7,7 +7,7 @@ from deepocli.io_data import ImageInputData, VideoInputData, StreamInputData
 
 
 def parse_args(args):
-    argparser = argparse.ArgumentParser(prog='deepocli')
+    argparser = argparse.ArgumentParser(prog='deepo')
     subparsers = argparser.add_subparsers(dest='command')
     subparsers.required = True
 
