@@ -32,12 +32,12 @@ class Image(object):
 
 
     def post_images(self, dataset_name, path, org_slug, recursive=False):
-        for dataset in self._helper.get('datasets/')['results']:
-            if dataset['name'].lower() == dataset_name.lower():  # name is unique, realname is not
-                commit_pk = dataset['commits'][0]['uuid']
-                break
-        else:
+        try:
+            ret = self._helper.get('datasets/' + dataset_name + '/')
+        except RuntimeError as err:
             raise RuntimeError("Can't find the dataset {}".format(dataset_name))
+
+        commit_pk = ret['commits'][0]['uuid']
 
         data = {
             "task": "import_images",

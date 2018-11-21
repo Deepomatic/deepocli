@@ -15,7 +15,7 @@ class HTTPHelper(object):
         if token is None:
             token = os.getenv('DEEPOMATIC_STUDIO_TOKEN')
         if token is None:
-            raise RuntimeError("Please specify 'token'either by passing those values to the client or by defining the DEEPOMATIC_TOKEN environment variables.")
+            raise RuntimeError("Please specify 'token'either by passing those values to the client or by defining the DEEPOMATIC_STUDIO_TOKEN environment variables.")
 
         if not host.endswith('/'):
             host += '/'
