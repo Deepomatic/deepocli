@@ -1,0 +1,3 @@
+
+class DeepoCLIException(Exception):
+    pass

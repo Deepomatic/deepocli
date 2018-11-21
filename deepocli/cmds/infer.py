@@ -10,8 +10,8 @@ try:
 except ImportError:
     from queue import Empty
 
-import deepoctl.io_data as io_data
-import deepoctl.workflow_abstraction as wa
+import deepocli.io_data as io_data
+import deepocli.workflow_abstraction as wa
 
 class InferenceThread(threading.Thread):
     def __init__(self, input_queue, output_queue, **kwargs):

@@ -3,7 +3,7 @@ import sys
 import progressbar
 import logging
 
-from deepoctl.cli_parser import run
+from deepocli.cli_parser import run
 
 progressbar.streams.wrap_stderr()
 logging.basicConfig(level=logging.INFO)

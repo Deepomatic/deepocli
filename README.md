@@ -2,14 +2,14 @@
 
 This controller has been made in order to help you interact with our services via the command line.
 
-[![Build Status](https://travis-ci.com/Deepomatic/deepoctl.svg?branch=master)](https://travis-ci.com/Deepomatic/deepoctl)
+[![Build Status](https://travis-ci.com/Deepomatic/deepocli.svg?branch=master)](https://travis-ci.com/Deepomatic/deepocli)
 
 ## Installation
 
 Requirements: Python 2.7+ or 3.4+
 
 ```sh
-pip install git+https://github.com/deepomatic/deepoctl@v0.2.0 --process-dependency-links
+pip install git+https://github.com/deepomatic/deepocli@v0.2.0 --process-dependency-links
 ```
 
 ## Setup
@@ -50,7 +50,7 @@ Valid outputs are:
 - stdout: write the frame in the process' standard output, which can be piped to another process, e.g. vlc
     
     ```sh
-    deepoctl draw -i 0 -o stdout | vlc --demux=rawvideo --rawvid-fps=25 --rawvid-width=640 --rawvid-height=480 --rawvid-chroma=RV24 - --sout "#display"
+    deepocli draw -i 0 -o stdout | vlc --demux=rawvideo --rawvid-fps=25 --rawvid-width=640 --rawvid-height=480 --rawvid-chroma=RV24 - --sout "#display"
     ```
 
 If the -o flag is omitted, the output is shown in a window (full screen if the `--fullscreen` flag is present).
@@ -66,13 +66,13 @@ The output fps can be set using the `--output_fps` followed by a valid number.
 To use the deepomatic API, you need to provide the version ID of the recognition that you have trained:
 
 ```sh
-deepoctl infer -i your/path/to/a/file/or/directory -o /tmp/output%05d.json --recognition_id 123
+deepocli infer -i your/path/to/a/file/or/directory -o /tmp/output%05d.json --recognition_id 123
 ```
 
 To use the deepomatic SDK, if you are an on-premises customer, you also need to provide the network address of the message queue as well as the routing key used for the exchange.
 
 ```sh
-deepoctl infer -i your/path/to/a/file/or/directory -o /output%05d.json --recognition_id 123 --routing_key key --amqp_url amqp://address
+deepocli infer -i your/path/to/a/file/or/directory -o /output%05d.json --recognition_id 123 --routing_key key --amqp_url amqp://address
 ```
 
 ### `draw`: Drawing bounding boxes
@@ -80,7 +80,7 @@ deepoctl infer -i your/path/to/a/file/or/directory -o /output%05d.json --recogni
 You can also call the `draw` command to additionally generate images and videos with tags and bounding boxes overlayed.
 
 ```sh
-deepoctl draw -i your/path/to/a/file/or/directory -o /tmp/output%05d.json --recognition_id 123
+deepocli draw -i your/path/to/a/file/or/directory -o /tmp/output%05d.json --recognition_id 123
 ```
 The `--draw_score` flag adds each bounding box score to the overlay
 
@@ -90,7 +90,7 @@ The `--draw_score` flag adds each bounding box score to the overlay
 You can also call the `blur` command to anonymize the input by blurring the detected boxes.
 
 ```sh
-deepoctl blur -i your/path/to/a/file/or/directory -o /tmp/output%05d.json --recognition_id 123
+deepocli blur -i your/path/to/a/file/or/directory -o /tmp/output%05d.json --recognition_id 123
 ```
 The `--blur_method` flag lets you specify the blur method
 
@@ -103,7 +103,7 @@ You can send images to Deepomatic Studio using the `feedback` command.
 The input can be specified using the `path` flag, which can be either one or more files and one or more directories. The dataset and organisation should also be specified using the `--dataset_name` and `--org_slug` flags.
 
 ```sh
-deepoctl feedback --path your/path/to/a/file/or/directory --org_slug your_org_slug --dataset_name your_dataset_name
+deepocli feedback --path your/path/to/a/file/or/directory --org_slug your_org_slug --dataset_name your_dataset_name
 ```
 With the `--recursive` flag, the command will look for the files in all subdirectories.
 

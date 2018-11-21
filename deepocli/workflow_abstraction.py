@@ -5,7 +5,7 @@ import deepomatic
 import cv2
 from deepomatic.exceptions import TaskTimeout, TaskError
 
-import deepoctl.common as common
+import deepocli.common as common
 
 
 can_use_rpc = True
@@ -61,7 +61,7 @@ class CloudRecognition(AbstractWorkflow):
         if app_id is None or api_key is None:
             error = 'Please define the environment variables DEEPOMATIC_APP_ID and DEEPOMATIC_API_KEY to use cloud-based recognition models.'
             logging.error(error)
-            raise common.DeepoCTLException(error)
+            raise common.DeepoCLIException(error)
         self._client = deepomatic.Client(app_id, api_key)
         self._model = None
         try:

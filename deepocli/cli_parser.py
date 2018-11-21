@@ -1,13 +1,13 @@
 import argparse
-from deepoctl.cmds.infer import main as infer
-from deepoctl.cmds.draw import main as draw
-from deepoctl.cmds.feedback import main as feedback
-from deepoctl.cmds.blur import main as blur
-from deepoctl.io_data import ImageInputData, VideoInputData, StreamInputData
+from deepocli.cmds.infer import main as infer
+from deepocli.cmds.draw import main as draw
+from deepocli.cmds.feedback import main as feedback
+from deepocli.cmds.blur import main as blur
+from deepocli.io_data import ImageInputData, VideoInputData, StreamInputData
 
 
 def parse_args(args):
-    argparser = argparse.ArgumentParser(prog='deepoctl')
+    argparser = argparse.ArgumentParser(prog='deepocli')
     subparsers = argparser.add_subparsers(dest='command')
     subparsers.required = True
 

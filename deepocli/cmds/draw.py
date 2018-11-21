@@ -7,21 +7,21 @@ import logging
 import progressbar
 import numpy as np
 
-import deepoctl.cmds.infer as infer
-import deepoctl.io_data as io_data
-import deepoctl.workflow_abstraction as wa
+import deepocli.cmds.infer as infer
+import deepocli.io_data as io_data
+import deepocli.workflow_abstraction as wa
 
-
-class BlurThread(infer.InferenceThread):
+class DrawThread(infer.InferenceThread):
     def __init__(self, input_queue, output_queue, **kwargs):
-        super(BlurThread, self).__init__(input_queue, output_queue, **kwargs)
-        self.process = io_data.BlurOutputData(**kwargs)
+        super(DrawThread, self).__init__(input_queue, output_queue, **kwargs)
+        self.process = io_data.DrawOutputData(**kwargs)
 
     def processing(self, name, frame, prediction):
         return self.process(name, frame, prediction)
 
+
 def main(args, force=False):
     try:
-        io_data.input_loop(args, BlurThread)
+        io_data.input_loop(args, DrawThread)
     except KeyboardInterrupt:
         pass

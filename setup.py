@@ -6,7 +6,7 @@ try:  # for pip >= 10
 except ImportError:  # for pip <= 9.0.3
     from pip.req import parse_requirements
 
-from deepoctl import __VERSION__
+from deepocli import __VERSION__
 
 with open(os.path.join(os.path.dirname(__file__), 'README.md')) as readme:
     README = readme.read()
@@ -29,12 +29,12 @@ for req in parse_requirements('requirements.txt', session='hack'):
         install_requires.append(str(req.req))
 
 setup(
-    name='deepoctl',
+    name='deepocli',
     version=__VERSION__,
-    scripts=['scripts/deepoctl'],
+    scripts=['scripts/deepocli'],
     packages=find_packages(),
     package_dir={
-        'deepoctl': 'deepoctl',
+        'deepocli': 'deepocli',
     },
     include_package_data=True,
     package_data={

@@ -2,7 +2,7 @@ import os
 import tempfile
 import requests
 
-from deepoctl.cli_parser import run
+from deepocli.cli_parser import run
 
 input_dir = tempfile.mkdtemp()
 output_dir = tempfile.mkdtemp()
@@ -15,10 +15,10 @@ def download(url):
         f.write(r.content)
     return path
 
-image_url = 'https://storage.googleapis.com/dp-vulcan/tests/deepoctl/test.jpg'
+image_url = 'https://storage.googleapis.com/dp-vulcan/tests/deepocli/test.jpg'
 image_path = download(image_url)
 
-video_url = 'https://storage.googleapis.com/dp-vulcan/tests/deepoctl/test.mp4'
+video_url = 'https://storage.googleapis.com/dp-vulcan/tests/deepocli/test.mp4'
 video_path = download(video_url)
 
 
