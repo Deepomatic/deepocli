@@ -31,7 +31,7 @@ for req in parse_requirements('requirements.txt', session='hack'):
 setup(
     name='deepocli',
     version=__VERSION__,
-    scripts=['scripts/deepocli'],
+    scripts=['scripts/deepo'],
     packages=find_packages(),
     package_dir={
         'deepocli': 'deepocli',
@@ -40,7 +40,7 @@ setup(
     package_data={
         '': ['*.ttf'],
     },
-    description='Deepomatic Controler',
+    description='Deepomatic CLI',
     long_description=README,
     author='deepomatic',
     author_email='support@deepomatic.com',
