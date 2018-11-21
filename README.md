@@ -50,7 +50,7 @@ Valid outputs are:
 - stdout: write the frame in the process' standard output, which can be piped to another process, e.g. vlc
     
     ```sh
-    deepocli draw -i 0 -o stdout | vlc --demux=rawvideo --rawvid-fps=25 --rawvid-width=640 --rawvid-height=480 --rawvid-chroma=RV24 - --sout "#display"
+    deepo draw -i 0 -o stdout | vlc --demux=rawvideo --rawvid-fps=25 --rawvid-width=640 --rawvid-height=480 --rawvid-chroma=RV24 - --sout "#display"
     ```
 
 If the -o flag is omitted, the output is shown in a window (full screen if the `--fullscreen` flag is present).
@@ -66,13 +66,13 @@ The output fps can be set using the `--output_fps` followed by a valid number.
 To use the deepomatic API, you need to provide the version ID of the recognition that you have trained:
 
 ```sh
-deepocli infer -i your/path/to/a/file/or/directory -o /tmp/output%05d.json --recognition_id 123
+deepo infer -i your/path/to/a/file/or/directory -o /tmp/output%05d.json --recognition_id 123
 ```
 
 To use the deepomatic SDK, if you are an on-premises customer, you also need to provide the network address of the message queue as well as the routing key used for the exchange.
 
 ```sh
-deepocli infer -i your/path/to/a/file/or/directory -o /output%05d.json --recognition_id 123 --routing_key key --amqp_url amqp://address
+deepo infer -i your/path/to/a/file/or/directory -o /output%05d.json --recognition_id 123 --routing_key key --amqp_url amqp://address
 ```
 
 ### `draw`: Drawing bounding boxes
@@ -80,7 +80,7 @@ deepocli infer -i your/path/to/a/file/or/directory -o /output%05d.json --recogni
 You can also call the `draw` command to additionally generate images and videos with tags and bounding boxes overlayed.
 
 ```sh
-deepocli draw -i your/path/to/a/file/or/directory -o /tmp/output%05d.json --recognition_id 123
+deepo draw -i your/path/to/a/file/or/directory -o /tmp/output%05d.json --recognition_id 123
 ```
 The `--draw_score` flag adds each bounding box score to the overlay
 
@@ -90,7 +90,7 @@ The `--draw_score` flag adds each bounding box score to the overlay
 You can also call the `blur` command to anonymize the input by blurring the detected boxes.
 
 ```sh
-deepocli blur -i your/path/to/a/file/or/directory -o /tmp/output%05d.json --recognition_id 123
+deepo blur -i your/path/to/a/file/or/directory -o /tmp/output%05d.json --recognition_id 123
 ```
 The `--blur_method` flag lets you specify the blur method
 
@@ -103,7 +103,7 @@ You can send images to Deepomatic Studio using the `feedback` command.
 The input can be specified using the `path` flag, which can be either one or more files and one or more directories. The dataset and organisation should also be specified using the `--dataset_name` and `--org_slug` flags.
 
 ```sh
-deepocli feedback --path your/path/to/a/file/or/directory --org_slug your_org_slug --dataset_name your_dataset_name
+deepo feedback --path your/path/to/a/file/or/directory --org_slug your_org_slug --dataset_name your_dataset_name
 ```
 With the `--recursive` flag, the command will look for the files in all subdirectories.
 
