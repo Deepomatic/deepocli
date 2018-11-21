@@ -15,10 +15,10 @@ def download(url):
         f.write(r.content)
     return path
 
-image_url = 'https://storage.googleapis.com/dp-vulcan/tests/deepocli/test.jpg'
+image_url = 'https://s3-eu-west-1.amazonaws.com/deepo-tests/vulcain/images/test.jpg'
 image_path = download(image_url)
 
-video_url = 'https://storage.googleapis.com/dp-vulcan/tests/deepocli/test.mp4'
+video_url = 'https://s3-eu-west-1.amazonaws.com/deepo-tests/vulcain/videos/test.mp4'
 video_path = download(video_url)
 
 
