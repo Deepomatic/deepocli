@@ -36,6 +36,11 @@ setup(
     package_dir={
         'deepocli': 'deepocli',
     },
+    entry_points={
+        'console_scripts': [
+            'deepo = deepocli.__main__:main'
+        ]
+    },
     include_package_data=True,
     package_data={
         '': ['*.ttf'],
