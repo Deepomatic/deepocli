@@ -67,7 +67,6 @@ def input_loop(kwargs, worker_thread):
     max_value = inputs.get_frame_count()
     if max_value < 0:
         max_value = None
-    print(max_value)
 
     with tqdm(total=max_value) as pbar:
         # For realtime, queue should be LIFO
