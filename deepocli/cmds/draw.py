@@ -4,7 +4,6 @@ import io
 import json
 import cv2
 import logging
-import progressbar
 import numpy as np
 
 import deepocli.cmds.infer as infer

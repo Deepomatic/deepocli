@@ -6,7 +6,7 @@ import logging
 import cv2
 import time
 import threading
-from progressbar import UnknownLength, ProgressBar
+from tqdm import tqdm
 
 try: 
     from Queue import Queue, LifoQueue, Empty
@@ -64,18 +64,18 @@ def get_output(descriptor, kwargs):
 def input_loop(kwargs, worker_thread):
     inputs = get_input(kwargs.get('input', 0), kwargs)
 
-
     max_value = inputs.get_frame_count()
     if max_value < 0:
-        max_value = UnknownLength
+        max_value = None
+    print(max_value)
 
-    with ProgressBar(max_value=max_value, redirect_stdout=True) as bar:
+    with tqdm(total=max_value) as pbar:
         # For realtime, queue should be LIFO
         input_queue = LifoQueue() if inputs.is_infinite() else Queue()
         output_queue = LifoQueue() if inputs.is_infinite() else Queue()
 
         worker = worker_thread(input_queue, output_queue, **kwargs)
-        output_thread = OutputThread(output_queue, on_progress=lambda i: bar.update(i), **kwargs)
+        output_thread = OutputThread(output_queue, on_progress=lambda i: pbar.update(1), **kwargs)
 
         worker.start()
         output_thread.start()

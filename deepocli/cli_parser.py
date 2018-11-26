@@ -44,6 +44,10 @@ def parse_args(args):
     feedback_parser.add_argument('org_slug', type=str, help='the slug of your organization')
     feedback_parser.add_argument('path', type=str, nargs='+', help='path to a file or a folder')
     feedback_parser.add_argument('--recursive', dest='recursive', action='store_true', help='all files in subdirectory')
+    
+    # If no arguments were provided, display the help
+    if len(args)==0:
+        argparser.print_help()
 
     return argparser.parse_args(args)
 

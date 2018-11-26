@@ -4,7 +4,6 @@ import json
 import threading
 import logging
 import datetime
-import progressbar
 try: 
     from Queue import Empty
 except ImportError:
