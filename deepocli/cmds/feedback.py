@@ -1,11 +1,12 @@
 import sys
+import os
 from .studio_helpers.http_helper import HTTPHelper
 from .studio_helpers.image import Image
 from .studio_helpers.task import Task
 
 ###############################################################################
 
-API_HOST = 'https://studio.deepomatic.com/api/'
+API_HOST = os.getenv('STUDIO_URL', 'https://studio.deepomatic.com/api/')
 
 
 ###############################################################################
@@ -23,5 +24,5 @@ class Client(object):
 def main(args):
     clt = Client()
     for path in args.get('path', []):
-        clt.image.post_images(args.get('dataset_name', ''), path, args.get('org_slug', ''), args.get('recursive', False))
+        clt.image.post_images(args.get('dataset_name', ''), path, args.get('org_slug', ''), args.get('recursive', False), args.get('json_file', False))
     print("Done")

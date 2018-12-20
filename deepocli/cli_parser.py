@@ -44,6 +44,7 @@ def parse_args(args):
     feedback_parser.add_argument('org_slug', type=str, help='the slug of your organization')
     feedback_parser.add_argument('path', type=str, nargs='+', help='path to a file or a folder')
     feedback_parser.add_argument('--recursive', dest='recursive', action='store_true', help='all files in subdirectory')
+    feedback_parser.add_argument('--json', dest='json_file', action='store_true', help='dataset described by json files')
 
     return argparser.parse_args(args)
 
