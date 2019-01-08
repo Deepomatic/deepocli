@@ -6,7 +6,6 @@ class Task(object):
         self._helper = helper
 
     def retrieve(self, task_id, wait=True):
-        print(task_id)
         ret = self._helper.get('manage/tasks/{}/'.format(task_id))
         if not wait:
             return ret

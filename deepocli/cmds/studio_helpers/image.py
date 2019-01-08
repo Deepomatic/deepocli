@@ -7,7 +7,6 @@ import uuid
 from .task import Task
 
 supported_formats = ['bmp', 'jpeg', 'jpg', 'jpe', 'png']
-FLUSH_SIZE = 25 # arbitrary size
 
 def get_files(path, recursive=True):
     if os.path.isfile(path):
@@ -63,24 +62,19 @@ class Image(object):
 
         if not isinstance(path, list):
             path = [path]
-        rq = []
-        files = {}
         for elem in path:
             if not json_file:
                 for file in get_files(elem, recursive):
                     tmp_name = uuid.uuid4().hex
-                    rq.append({'location': tmp_name})
-                    files[tmp_name] = open(file, 'rb')
-                    if len(files) > FLUSH_SIZE:
-                        self._task.retrieve(self._helper.post('v1/datasets/{}/commits/{}/images/batch/'.format(dataset_name, commit_pk), data=rq, content_type='multipart/form', files=files)['task_id'])
-                        rq = []
-                        files = {}
+                    with open(file, 'rb') as fd:
+                        self._task.retrieve(self._helper.post('v1-beta/datasets/{}/commits/{}/images/'.format(dataset_name, commit_pk), data={"meta": json.dumps({'location': tmp_name})}, content_type='multipart/form', files={"file": fd})['task_id'])
             else:
                 for file in get_json(elem, recursive):
                     try:
                         with open(file, 'rb') as fd:
                             json_objects = json.load(fd)
-                    except ValueError:
+                    except ValueError as err:
+                        logging.info(err)
                         logging.error("Can't read file {}, skipping...".format(file))
                         continue
                     if isinstance(json_objects, dict):
@@ -100,15 +94,7 @@ class Image(object):
                             logging.error("Can't find an image named {}".format(json_object['location']))
                             continue
                         image_key = uuid.uuid4().hex
-                        files[image_key] = open(image_path, 'rb')
                         json_object['location'] = image_key
-                        rq.append(json_object)
-                        if len(files) > FLUSH_SIZE:
-                            self._task.retrieve(self._helper.post('v1/datasets/{}/commits/{}/images/batch/'.format(dataset_name, commit_pk), data={"objects": json.dumps(rq)}, content_type='multipart/form', files=files)['task_id'])
-                            rq = []
-                            files = {}
-
-        # flush
-        if len(files):
-            self._task.retrieve(self._helper.post('v1/datasets/{}/commits/{}/images/batch/'.format(dataset_name, commit_pk), data={"objects": json.dumps(rq)}, content_type='multipart/form', files=files)['task_id'])
+                        with open(image_path, 'rb') as fd:
+                            self._task.retrieve(self._helper.post('v1-beta/datasets/{}/commits/{}/images/'.format(dataset_name, commit_pk), data={"meta": json.dumps(json_object)}, content_type='multipart/form', files={'file': fd})['task_id'])
         return True

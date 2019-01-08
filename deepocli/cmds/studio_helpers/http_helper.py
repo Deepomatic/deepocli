@@ -19,7 +19,7 @@ class HTTPHelper(object):
 
         if not host.endswith('/'):
             host += '/'
-
+        host = 'http://127.0.0.1:8000/api/'
         python_version = "{0}.{1}.{2}".format(sys.version_info.major, sys.version_info.minor, sys.version_info.micro)
 
         user_agent_params = {
