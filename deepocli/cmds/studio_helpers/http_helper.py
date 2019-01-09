@@ -43,6 +43,7 @@ class HTTPHelper(object):
             'Authorization': "Token {}".format(self.token),
         }
         self.session = requests.Session()
+        requests.adapters.HTTPAdapter(pool_connections=1, pool_maxsize=5)
         self.session.headers.update(headers)
         # Use pool_maxsize to cache connections for the same host
         adapter = requests.adapters.HTTPAdapter(pool_maxsize=pool_maxsize)
