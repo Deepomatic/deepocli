@@ -5,7 +5,12 @@ import json
 import logging
 import uuid
 import threading
-import Queue
+import sys
+
+if sys.version_info >= (3,0):
+    import queue as Queue
+else:
+    import Queue
 from .task import Task
 import logging
 import time
