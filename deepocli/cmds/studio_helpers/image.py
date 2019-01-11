@@ -45,7 +45,7 @@ def worker(self):
                     rq = self._helper.post(url, data={"meta": data}, content_type='multipart/form', files={"file": fd})
                 self._task.retrieve(rq['task_id'])
             except RuntimeError:
-                pass
+                print('Annotation format for image named {} is incorrect'.format(file))
             q.task_done()
             lock.acquire()
             count += 1
