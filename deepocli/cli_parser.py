@@ -40,6 +40,8 @@ def parse_args(args):
 
     draw_parser.add_argument('--draw_scores', help="Overlay the prediction scores", action="store_true")
     draw_parser.add_argument('--draw_labels', help="Overlay the prediction labels", action="store_true")
+    
+    tracking_parser.add_argument('--draw_tracks', help="Overlay the prediction track id", action="store_true")
 
     blur_parser.add_argument('--blur_method', help="Blur method to apply", default="pixel")
     blur_parser.add_argument('--blur_strength', help="Blur strength", default=10)

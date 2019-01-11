@@ -466,6 +466,7 @@ class DrawOutputData(OutputData):
 
     def __init__(self, **kwargs):
         super(DrawOutputData, self).__init__(None, **kwargs)
+        self._draw_tracks = kwargs.get('draw_tracks', False)
         self._draw_labels = kwargs.get('draw_labels', False)
         self._draw_scores = kwargs.get('draw_scores', False)
 
@@ -481,6 +482,8 @@ class DrawOutputData(OutputData):
                 label += ' '
             if self._draw_scores:
                 label += str(predicted['score'])
+            if self._draw_tracks:
+                label += str(predicted['roi']['region_id'])
 
             roi = predicted['roi']
             if roi is None:
