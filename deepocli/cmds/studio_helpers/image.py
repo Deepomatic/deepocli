@@ -45,13 +45,13 @@ def worker(self):
                     rq = self._helper.post(url, data={"meta": data}, content_type='multipart/form', files={"file": fd})
                 self._task.retrieve(rq['task_id'])
             except RuntimeError:
-                print('Annotation format for image named {} is incorrect'.format(file))
+                logging.error('Annotation format for image named {} is incorrect'.format(file))
             q.task_done()
             lock.acquire()
             count += 1
             lock.release()
             if count % 10 == 0:
-                print('{} files uploaded'.format(count))
+                logging.info('{} files uploaded'.format(count))
         except Queue.Empty:
             pass
 
