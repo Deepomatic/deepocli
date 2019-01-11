@@ -40,9 +40,12 @@ def worker(self):
     while run:
         try:
             url, data, file = q.get(timeout=2)
-            with open(file, 'rb') as fd:
-                rq = self._helper.post(url, data={"meta": data}, content_type='multipart/form', files={"file": fd})
-            self._task.retrieve(rq['task_id'])
+            try:
+                with open(file, 'rb') as fd:
+                    rq = self._helper.post(url, data={"meta": data}, content_type='multipart/form', files={"file": fd})
+                self._task.retrieve(rq['task_id'])
+            except RuntimeError:
+                pass
             q.task_done()
             lock.acquire()
             count += 1
