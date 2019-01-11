@@ -85,8 +85,10 @@ class RpcRecognition(AbstractWorkflow):
         def __init__(self, async_res):
             self._async_res = async_res
 
-        def get(self):
-            outputs = self._async_res.get_parsed_result()
+        def get(self, *args, **kwargs):
+            outputs = self._async_res.get_parsed_result(*args, **kwargs)
+            if outputs is None:
+                return None
             return {
                 'outputs': [{
                     'labels': MessageToDict(output.labels, including_default_value_fields=True, preserving_proto_field_name=True)
