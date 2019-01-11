@@ -3,6 +3,7 @@ from deepocli.cmds.infer import main as infer
 from deepocli.cmds.draw import main as draw
 from deepocli.cmds.feedback import main as feedback
 from deepocli.cmds.blur import main as blur
+from deepocli.cmds.tracking import main as tracking
 from deepocli.io_data import ImageInputData, VideoInputData, StreamInputData
 
 
@@ -20,10 +21,13 @@ def parse_args(args):
     blur_parser = subparsers.add_parser('blur', help="Generate new images and videos with inference results blurred out. Runs inference if JSON has not yet been generated.")
     blur_parser.set_defaults(func=blur)
 
+    tracking_parser = subparsers.add_parser('tracking', help="Generate new images and videos with inference results with tracking. Runs inference if JSON has not yet been generated.")
+    tracking_parser.set_defaults(func=tracking)
+
     feedback_parser = subparsers.add_parser('feedback', help='Send images from a folder to deepomatic studio')
     feedback_parser.set_defaults(func=feedback, recursive=False)
 
-    parsers = [infer_parser, draw_parser, blur_parser]
+    parsers = [infer_parser, draw_parser, blur_parser, tracking_parser]
     for parser in parsers:
         parser.add_argument('-i', '--input', help="Path on which inference should be run. It can be an image (supported formats: *{}), a video (supported formats: *{}) or a directory. If the given path is a directory, it will recursively run inference on all the supported files in this directory.".format(', *'.join(ImageInputData.supported_formats), ', *'.join(VideoInputData.supported_formats)))
         parser.add_argument('-o', '--output', help="Path in which output should be written. It can be an image (supported formats: *{}), a video (supported formats: *{}) or a directory.".format(', *'.join(ImageInputData.supported_formats), ', *'.join(VideoInputData.supported_formats)))
