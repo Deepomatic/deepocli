@@ -265,6 +265,8 @@ class BetterTracking(Tracking):
     def _predict(self, tracks, frame, start, finish):
         assert(start <= finish)
         t0 = start
+        h = frame.shape[0]
+        w = frame.shape[1]
         # iterate from start to finish
         while t0 < finish:
             t1 = self.timestamps[t0]
@@ -280,7 +282,10 @@ class BetterTracking(Tracking):
             for new, old in zip(good_new, good_old):
                 x0, y0 = new.ravel()
                 x1, y1 = old.ravel()
-
+                x0 /= w
+                x1 /= w
+                y0 /= h
+                y1 /= h
                 for movement, track in zip(movements, tracks):
                     bbox = track['roi']['bbox']
                     xmin, ymin = bbox['xmin'], bbox['ymin']
