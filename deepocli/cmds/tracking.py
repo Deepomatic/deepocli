@@ -70,6 +70,8 @@ class TrackingThread(infer.InferenceThread):
                         if self.workflow is not None and frame is not None and detection_timestamp < timestamp:
                             detection = self.workflow.infer(frame)
                             detection_timestamp = timestamp
+                        else:
+                            detection = None
                 else:
                     # Start a new detection
                     if frame is not None:
