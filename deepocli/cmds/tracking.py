@@ -19,7 +19,6 @@ import deepocli.cmds.infer as infer
 import deepocli.io_data as io_data
 import deepocli.workflow_abstraction as wa
 
-
 class TrackingThread(infer.InferenceThread):
     def __init__(self, input_queue, output_queue, **kwargs):
         super(TrackingThread, self).__init__(
@@ -31,7 +30,7 @@ class TrackingThread(infer.InferenceThread):
             timestamp = -1
             detection = None
             frame = None
-            detection_timestamp = 0
+            detection_timestamp = -1
             tracking = BetterTracking()
             while True:
                 tracks = None
@@ -74,7 +73,7 @@ class TrackingThread(infer.InferenceThread):
                             detection = None
                 else:
                     # Start a new detection
-                    if frame is not None:
+                    if self.workflow is not None and frame is not None and detection_timestamp < timestamp:
                         detection = self.workflow.infer(frame)
                         detection_timestamp = timestamp
 
@@ -230,11 +229,11 @@ class BetterTracking(Tracking):
             detection, frame, timestamp)
         # cleanup: no need to keep data from before the last detection timestamp
         self.timestamps = {k: v for k,
-                           v in self.timestamps.items() if k > timestamp}
-        self.corners = {k: v for k, v in self.corners.items() if k > timestamp}
+                           v in self.timestamps.items() if k >= timestamp}
+        self.corners = {k: v for k, v in self.corners.items() if k >= timestamp}
         self.optical_flow = {(t0, t1): v for (
-            t0, t1), v in self.optical_flow.items() if t0 > timestamp}
-        self.frames = {k: v for k, v in self.frames.items() if k > timestamp}
+            t0, t1), v in self.optical_flow.items() if t0 >= timestamp}
+        self.frames = {k: v for k, v in self.frames.items() if k >= timestamp}
 
         return tracks
 
