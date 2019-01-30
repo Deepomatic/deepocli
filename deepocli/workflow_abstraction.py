@@ -12,10 +12,11 @@ import deepocli.common as common
 can_use_rpc = True
 
 try:
+    import deepomatic.rpc
     import deepomatic.rpc.client
-    from deepomatic.rpc.buffers.protobuf.nn.v07.Inputs_pb2 import ImageInput as RPCImageInput
-    from deepomatic.rpc.buffers.protobuf.nn.v07.Inputs_pb2 import Inputs as RPCInputs
-    from deepomatic.rpc.buffers.protobuf.common.Image_pb2 import BBox as RPCBBox
+    from deepomatic.rpc import v07_ImageInput
+    from deepomatic.rpc.response import wait
+    from deepomatic.rpc.helpers.v07_proto import (create_images_input_mix, create_recognition_command_mix)
     from google.protobuf.json_format import MessageToDict
 except ImportError:
     can_use_rpc = False
@@ -84,11 +85,13 @@ class RpcRecognition(AbstractWorkflow):
 
     class InferResult(AbstractWorkflow.AbstractInferResult):
 
-        def __init__(self, async_res):
-            self._async_res = async_res
+        def __init__(self, correlation_id, consumer):
+            self._correlation_id = correlation_id
+            self._consumer = consumer
 
         def get(self):
-            outputs = self._async_res.get_parsed_result()
+            response = wait(self._consumer, self._correlation_id)
+            outputs = response.to_parsed_buffer_result()
             return {
                 'outputs': [{
                     'labels': MessageToDict(output.labels, including_default_value_fields=True, preserving_proto_field_name=True)
@@ -101,13 +104,15 @@ class RpcRecognition(AbstractWorkflow):
 
         self._amqp_url = amqp_url
         self._routing_key = routing_key
+        self._response_routing_key = routing_key + '.responses'
 
         if can_use_rpc:
-            self._client = deepomatic.rpc.client.Client(self._amqp_url, max_callback=4)
+            self._client = deepomatic.rpc.client.Client(self._amqp_url)
             self._recognition = None
             try:
                 recognition_version_id = int(recognition_version_id)
-                self._recognition = self._client.create_recognition(version_id=recognition_version_id)
+                self._command_mix = create_recognition_command_mix(recognition_version_id)
+                command_queue, response_queue, self._consumer = self._client.add_rpc_queues(routing_key, response_queue_name=self._response_routing_key)
             except ValueError:
                 logging.error("Cannot cast recognition ID into a number")
             except Exception:
@@ -120,9 +125,10 @@ class RpcRecognition(AbstractWorkflow):
     def infer(self, frame):
         if (self._client is not None and frame is not None):
             _, buf = cv2.imencode('.jpeg', frame)
-            image = RPCImageInput(source=deepomatic.rpc.client.BINARY_IMAGE_PREFIX + buf.tobytes(), crop_uniform_background=False)
-            inputs = RPCInputs(inputs=[RPCInputs.InputMix(image=image)])
-            return self.InferResult(self._client.recognize(self._routing_key, self._recognition, inputs))
+            image_input = v07_ImageInput(source=deepomatic.rpc.BINARY_IMAGE_PREFIX + buf.tobytes())
+            input_mix = create_images_input_mix([image_input])
+            correlation_id = self._client.command(self._routing_key, self._command_mix, input_mix, [self._response_routing_key])
+            return self.InferResult(correlation_id, self._consumer)
         else:
             logging.error('RPC not available')
             return {
