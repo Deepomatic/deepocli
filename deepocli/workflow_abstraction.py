@@ -90,7 +90,7 @@ class RpcRecognition(AbstractWorkflow):
             self._consumer = consumer
 
         def get(self):
-            response = wait(self._consumer, self._correlation_id)
+            response = wait(self._consumer, self._correlation_id, timeout=60)
             outputs = response.to_parsed_buffer_result()
             return {
                 'outputs': [{
