@@ -91,7 +91,7 @@ class RpcRecognition(AbstractWorkflow):
 
         def get(self):
             response = wait(self._consumer, self._correlation_id, timeout=60)
-            outputs = response.to_parsed_buffer_result()
+            outputs = response.to_parsed_result_buffer()
             return {
                 'outputs': [{
                     'labels': MessageToDict(output.labels, including_default_value_fields=True, preserving_proto_field_name=True)
