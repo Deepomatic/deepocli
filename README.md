@@ -9,7 +9,7 @@ This command line interface has been made to help you interact with our services
 Requirements: Python 2.7+ or 3.4+
 
 ```sh
-pip install git+https://github.com/deepomatic/deepocli@v0.2.1
+pip install git+https://github.com/deepomatic/deepocli@v0.2.2
 ```
 
 ## Setup
