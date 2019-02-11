@@ -1,10 +1,10 @@
 import argparse
+from deepocli.cmds.check import check_requirements
 from deepocli.cmds.infer import main as infer
 from deepocli.cmds.draw import main as draw
 from deepocli.cmds.feedback import main as feedback
 from deepocli.cmds.blur import main as blur
 from deepocli.io_data import ImageInputData, VideoInputData, StreamInputData
-
 
 def parse_args(args):
     argparser = argparse.ArgumentParser(prog='deepo')
@@ -22,6 +22,9 @@ def parse_args(args):
 
     feedback_parser = subparsers.add_parser('feedback', help='Send images from a folder to deepomatic studio')
     feedback_parser.set_defaults(func=feedback, recursive=False)
+
+    check_requirements_parser = subparsers.add_parser('check', help='Check requirements for on-premises deployment')
+    check_requirements_parser.set_defaults(func=check_requirements, recursive=False)
 
     parsers = [infer_parser, draw_parser, blur_parser]
     for parser in parsers:
