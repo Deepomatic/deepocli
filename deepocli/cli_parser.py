@@ -1,4 +1,5 @@
 import argparse
+from deepocli.cmds.deploy import deploy
 from deepocli.cmds.infer import main as infer
 from deepocli.cmds.draw import main as draw
 from deepocli.cmds.feedback import main as feedback
@@ -22,6 +23,11 @@ def parse_args(args):
 
     feedback_parser = subparsers.add_parser('feedback', help='Send images from a folder to deepomatic studio')
     feedback_parser.set_defaults(func=feedback, recursive=False)
+
+    deploy_parser = subparsers.add_parser('deploy', help='Deploy an app')
+    deploy_parser.set_defaults(func=deploy, recursive=False)
+    deploy_parser.add_argument('--site_id', help='Site to deploy')
+    deploy_parser.add_argument('--expose', help='Exposed port for non custom service usage (e.g. deepocli)', default=None)
 
     parsers = [infer_parser, draw_parser, blur_parser]
     for parser in parsers:
