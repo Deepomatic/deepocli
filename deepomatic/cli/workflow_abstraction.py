@@ -6,7 +6,7 @@ import deepomatic.api.client
 import deepomatic.api.inputs
 import deepomatic.api.exceptions
 
-import deepocli.common as common
+import deepomatic.cli.common as common
 
 
 can_use_rpc = True

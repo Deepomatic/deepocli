@@ -1,7 +1,7 @@
 import sys
 import logging
 
-from deepocli.cli_parser import run
+from deepomatic.cli.cli_parser import run
 
 def main(args=None):
     logging.basicConfig(level=logging.INFO)

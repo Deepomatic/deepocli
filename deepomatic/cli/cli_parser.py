@@ -1,10 +1,10 @@
 import sys
 import argparse
-from deepocli.cmds.infer import main as infer
-from deepocli.cmds.draw import main as draw
-from deepocli.cmds.feedback import main as feedback
-from deepocli.cmds.blur import main as blur
-from deepocli.io_data import ImageInputData, VideoInputData, StreamInputData
+from deepomatic.cli.cmds.infer import main as infer
+from deepomatic.cli.cmds.draw import main as draw
+from deepomatic.cli.cmds.feedback import main as feedback
+from deepomatic.cli.cmds.blur import main as blur
+from deepomatic.cli.io_data import ImageInputData, VideoInputData, StreamInputData
 
 
 class ParserWithHelpOnError(argparse.ArgumentParser):

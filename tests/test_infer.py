@@ -2,7 +2,7 @@ import os
 import tempfile
 import requests
 
-from deepocli.cli_parser import run
+from deepomatic.cli.cli_parser import run
 
 input_dir = tempfile.mkdtemp()
 output_dir = tempfile.mkdtemp()

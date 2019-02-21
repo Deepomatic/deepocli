@@ -6,9 +6,9 @@ import cv2
 import logging
 import numpy as np
 
-import deepocli.cmds.infer as infer
-import deepocli.io_data as io_data
-import deepocli.workflow_abstraction as wa
+import deepomatic.cli.cmds.infer as infer
+import deepomatic.cli.io_data as io_data
+import deepomatic.cli.workflow_abstraction as wa
 
 class DrawThread(infer.InferenceThread):
     def __init__(self, input_queue, output_queue, **kwargs):
