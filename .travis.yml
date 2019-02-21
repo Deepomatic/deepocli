@@ -8,8 +8,10 @@ python:
 # command to install dependencies
 install:
   - pip install -r requirements.txt
-  - pip install -e .
+  - python setup.py bdist_wheel
+  - pip install dist/deepomatic_cli-*.whl
   - pip install pytest
+
 
 # command to run tests
 script:
