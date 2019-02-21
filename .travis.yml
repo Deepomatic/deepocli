@@ -8,8 +8,9 @@ python:
 # command to install dependencies
 install:
   - pip install -r requirements.txt
+  - pip install -e .
   - pip install pytest
 
 # command to run tests
 script:
-  - python -m pytest tests  # ensures deepomatic.cli is in the path
+  - pytest
