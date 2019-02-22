@@ -373,6 +373,7 @@ class ImageOutputData(OutputData):
     def __init__(self, descriptor, **kwargs):
         super(ImageOutputData, self).__init__(descriptor, **kwargs)
         self._i = 0
+        self._json = kwargs.get('json', False)
 
     def __enter__(self):
         self._i = 0
@@ -394,7 +395,11 @@ class ImageOutputData(OutputData):
             else:
                 print_log('Writing %s' % path)
                 cv2.imwrite(path, frame)
-
+                if self._json:
+                    json_path = os.path.splitext(path)[0]
+                    with open('%s.json' % json_path, 'w') as file:
+                            print_log('Writing %s.json' % json_path)
+                            json.dump(prediction, file)
 
 class VideoOutputData(OutputData):
     supported_formats = ['.avi', '.mp4']
@@ -414,6 +419,8 @@ class VideoOutputData(OutputData):
         self._fourcc = fourcc
         self._fps = kwargs.get('output_fps', 25)
         self._writer = None
+        self._json = kwargs.get('json', False)
+        self._all_predictions = []
 
     def __enter__(self):
         if self._writer is not None:
@@ -422,6 +429,11 @@ class VideoOutputData(OutputData):
         return self
 
     def __exit__(self, exception_type, exception_value, traceback):
+        if self._json:
+            json_path = os.path.splitext(self._descriptor)[0]
+            with open('%s.json' % json_path, 'w') as file:
+                print_log('Writing %s.json' % json_path)
+                json.dump(self._all_predictions, file)
         if self._writer is not None:
             self._writer.release()
         self._writer = None
@@ -436,6 +448,9 @@ class VideoOutputData(OutputData):
                     self._fourcc,
                     self._fps,
                     (frame.shape[1], frame.shape[0]))
+            if self._json:
+                pred = {"outputs": [{"labels": {"discarded":[], "predicted": prediction}}], "location": name}
+                self._all_predictions.append(pred)
             self._writer.write(frame)
 
 class DirectoryOutputData(OutputData):
@@ -445,7 +460,7 @@ class DirectoryOutputData(OutputData):
 
     def __init__(self, descriptor, **kwargs):
         super(DirectoryOutputData, self).__init__(descriptor, **kwargs)
-
+        self._json = kwargs.get('json', False)
     def __enter__(self):
         return self
 
@@ -464,6 +479,10 @@ class DirectoryOutputData(OutputData):
         else:
             print_log('Writing %s.jpeg' % path)
             cv2.imwrite('%s.jpeg' % path, frame)
+            if self._json:
+                with open('%s.json' % path, 'w') as file:
+                    print_log('Writing %s.json' % path)
+                    json.dump(prediction, file)
 
 class DrawOutputData(OutputData):
 

@@ -47,9 +47,11 @@ def argparser_init():
 
     draw_parser.add_argument('--draw_scores', help="Overlays the prediction scores.", action="store_true")
     draw_parser.add_argument('--draw_labels', help="Overlays the prediction labels.", action="store_true")
+    draw_parser.add_argument('--json', help="Save the corresponding prediction in a json file.", action="store_true")
 
     blur_parser.add_argument('--blur_method', help="Blur method to apply, either 'pixel', 'gaussian' or 'black', defaults to 'pixel'.", default='pixel', choices=['pixel', 'gaussian', 'black'])
     blur_parser.add_argument('--blur_strength', help="Blur strength, defaults to 10.", default=10)
+    blur_parser.add_argument('--json', help="Save the corresponding prediction in a json file.", action="store_true")
 
     feedback_parser.add_argument('-d', '--dataset', required=True, help="Deepomatic Studio dataset name.", type=str)
     feedback_parser.add_argument('-o', '--organization', required=True, help="Deepomatic Studio organization slug.", type=str)
