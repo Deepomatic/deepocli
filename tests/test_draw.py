@@ -44,3 +44,9 @@ def test_e2e_video_draw_stdout():
 def test_e2e_video_draw_window():
     return
     run(['draw', '-i', video_path, '--recognition_id', 'fashion-v4', '-o', 'window'])
+
+def test_e2e_image_draw_json_flag():
+    run(['draw', '-i', image_path, '--recognition_id', 'fashion-v4', '-o', '/tmp/test_json_flag.jpeg', '--json'])
+
+def test_e2e_video_draw_json_flag():
+    run(['draw', '-i', video_path, '--recognition_id', 'fashion-v4', '-o', '/tmp/test_json_flag.mp4', '--json'])

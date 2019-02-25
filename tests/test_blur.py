@@ -30,3 +30,9 @@ def test_e2e_image_blur_image_strength():
 
 def test_e2e_video_blur_video():
     run(['blur', '-i', video_path, '--recognition_id', 'fashion-v4', '-o', '/tmp/test.mp4'])
+
+def test_e2e_image_blur_json_flag():
+    run(['blur', '-i', image_path, '--recognition_id', 'fashion-v4', '-o', '/tmp/test_json_flag.jpeg', '--json'])
+
+def test_e2e_video_blur_json_flag():
+    run(['blur', '-i', video_path, '--recognition_id', 'fashion-v4', '-o', '/tmp/test_json_flag.mp4', '--json'])
