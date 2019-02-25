@@ -51,7 +51,7 @@ def argparser_init():
 
     blur_parser.add_argument('--blur_method', help="Blur method to apply, either 'pixel', 'gaussian' or 'black', defaults to 'pixel'.", default='pixel', choices=['pixel', 'gaussian', 'black'])
     blur_parser.add_argument('--blur_strength', help="Blur strength, defaults to 10.", default=10)
-    blur_parser.add_argument('--json', help="Save the corresponding prediction in a json file.", action="store_true")
+    blur_parser.add_argument('--json', help="Saves predictions in a json file.", action="store_true")
 
     feedback_parser.add_argument('-d', '--dataset', required=True, help="Deepomatic Studio dataset name.", type=str)
     feedback_parser.add_argument('-o', '--organization', required=True, help="Deepomatic Studio organization slug.", type=str)
