@@ -25,7 +25,7 @@ def save_json_to_file(json_data, json_path):
             print_log('Writing %s.json' % json_path)
             json.dump(json_data, file)
     except:
-        logging.error("Could not save file {json_path} in json format.")
+        logging.error("Could not save file {} in json format.".format(json_path))
         raise
 
     return
