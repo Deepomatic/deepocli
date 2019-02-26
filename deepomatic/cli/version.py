@@ -1,0 +1,7 @@
+__title__ = 'deepomatic-cli'
+__description__ = 'Deepomatic CLI'
+__version__ = '0.3.0'
+__author__ = 'deepomatic'
+__author_email__ = 'support@deepomatic.com'
+__url__ = 'https://github.com/Deepomatic/deepocli'
+__license__ = 'MIT License'

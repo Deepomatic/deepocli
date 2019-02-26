@@ -1,5 +1,5 @@
-from deepocli.cmds import infer
-from deepocli.io_data import io_data
+from deepomatic.cli.cmds import infer
+from deepomatic.cli import io_data
 
 
 class DrawThread(infer.InferenceThread):

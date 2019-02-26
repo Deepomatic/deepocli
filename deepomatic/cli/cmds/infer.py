@@ -1,12 +1,14 @@
 import threading
 import logging
+
 try:
     from Queue import Empty
 except ImportError:
     from queue import Empty
 
-import deepocli.io_data as io_data
-from deepocli.workflow import get_workflow
+
+from deepomatic.cli import io_data
+from deepomatic.cli.workflow import get_workflow
 
 
 class InferenceThread(threading.Thread):

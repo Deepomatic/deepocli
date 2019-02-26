@@ -1,5 +1,5 @@
-from deepocli.cmds import infer
-from deepocli import io_data
+from deepomatic.cli.cmds import infer
+from deepomatic.cli import io_data
 
 
 class BlurThread(infer.InferenceThread):
