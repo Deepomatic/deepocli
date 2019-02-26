@@ -1,15 +1,6 @@
-import os
-import sys
-import io
-import json
-import cv2
-import logging
-import progressbar
-import numpy as np
+from deepocli.cmds import infer
+from deepocli.io_data import io_data
 
-import deepocli.cmds.infer as infer
-import deepocli.io_data as io_data
-import deepocli.workflow_abstraction as wa
 
 class DrawThread(infer.InferenceThread):
     def __init__(self, input_queue, output_queue, **kwargs):

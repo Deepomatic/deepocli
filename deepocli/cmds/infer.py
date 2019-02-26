@@ -1,17 +1,13 @@
-import os
-import sys
-import json
 import threading
 import logging
-import datetime
-import progressbar
-try: 
+try:
     from Queue import Empty
 except ImportError:
     from queue import Empty
 
 import deepocli.io_data as io_data
-import deepocli.workflow_abstraction as wa
+from deepocli.workflow import get_workflow
+
 
 class InferenceThread(threading.Thread):
     def __init__(self, input_queue, output_queue, **kwargs):
@@ -19,10 +15,10 @@ class InferenceThread(threading.Thread):
         self.input_queue = input_queue
         self.output_queue = output_queue
         self.daemon = True
-        self.workflow = wa.get_workflow(kwargs)
+        self.workflow = get_workflow(kwargs)
         self.args = kwargs
         self._threshold = kwargs.get('threshold', 0.7)
-    
+
     def run(self):
         try:
             while True:
@@ -41,7 +37,7 @@ class InferenceThread(threading.Thread):
                         if float(predicted['score']) >= float(self._threshold)]
                 else:
                     prediction = []
-                
+
                 result = self.processing(name, frame, prediction)
                 self.input_queue.task_done()
                 self.output_queue.put(result)

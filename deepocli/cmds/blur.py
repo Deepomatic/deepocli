@@ -1,15 +1,5 @@
-import os
-import sys
-import io
-import json
-import cv2
-import logging
-import progressbar
-import numpy as np
-
-import deepocli.cmds.infer as infer
-import deepocli.io_data as io_data
-import deepocli.workflow_abstraction as wa
+from deepocli.cmds import infer
+from deepocli import io_data
 
 
 class BlurThread(infer.InferenceThread):
@@ -19,6 +9,7 @@ class BlurThread(infer.InferenceThread):
 
     def processing(self, name, frame, prediction):
         return self.process(name, frame, prediction)
+
 
 def main(args, force=False):
     try:
