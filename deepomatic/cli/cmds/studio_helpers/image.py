@@ -45,8 +45,7 @@ def worker(self):
                 except RuntimeError as e:
                     tqdm.write('Something when wrong with {}, skipping this file...'.format(file['path']), file=sys.stderr)
             try:
-                with open(file['path'], 'rb') as fd:
-                    rq = self._helper.post(url, data={"objects": json.dumps(meta)}, content_type='multipart/form', files=files)
+                rq = self._helper.post(url, data={"objects": json.dumps(meta)}, content_type='multipart/form', files=files)
                 self._task.retrieve(rq['task_id'])
             except RuntimeError as e:
                 tqdm.write('Annotation format for image named {} is incorrect'.format(file), file=sys.stderr)
@@ -130,7 +129,6 @@ class Image(object):
         if len(tmp):
             q.put((url, tmp))
             total_images += len(tmp)
-
 
         # Initialize progressbar before starting workers
         print("Uploading images...")
