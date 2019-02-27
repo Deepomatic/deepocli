@@ -40,17 +40,17 @@ def worker(self):
             for file in batch:
                 try:
                     files.update({file['key']: open(file['path'], 'rb')})
-                    meta.update({file['key']: file['meta']})
+                    if 'meta' in file:
+                        meta.update({file['key']: file['meta']})
                 except RuntimeError as e:
                     tqdm.write('Something when wrong with {}, skipping this file...'.format(file['path']), file=sys.stderr)
-            for file in batch:
-                try:
-                    with open(file['path'], 'rb') as fd:
-                        rq = self._helper.post(url, data={"objects": json.dumps(meta)}, content_type='multipart/form', files=files)
-                    self._task.retrieve(rq['task_id'])
-                except RuntimeError as e:
-                    tqdm.write('Annotation format for image named {} is incorrect'.format(file), file=sys.stderr)
-            pbar.update(1)
+            try:
+                with open(file['path'], 'rb') as fd:
+                    rq = self._helper.post(url, data={"objects": json.dumps(meta)}, content_type='multipart/form', files=files)
+                self._task.retrieve(rq['task_id'])
+            except RuntimeError as e:
+                tqdm.write('Annotation format for image named {} is incorrect'.format(file), file=sys.stderr)
+            pbar.update(len(files))
             q.task_done()
             lock.acquire()
             count += len(files)
@@ -78,12 +78,16 @@ class Image(object):
         url = 'v1-beta/datasets/{}/commits/{}/images/batch/'.format(dataset_name, commit_pk)
         # Build the queue
         total_images = 0
+        tmp = []
         for file in files:
             # If it's an image, add it to the queue
             if file.split('.')[-1].lower() != 'json':
-                tmp_name = uuid.uuid4().hex
-                q.put(('v1-beta/datasets/{}/commits/{}/images/'.format(dataset_name, commit_pk), json.dumps({'location': tmp_name}), file))
-                total_images += 1
+                image_key = uuid.uuid4().hex
+                tmp.append({"key": image_key, "path": file})
+                if len(tmp) > BATCH_SIZE:
+                    q.put((url, tmp))
+                    total_images += len(tmp)
+                    tmp = []
             # If it's a json, deal with it accordingly
             else:
                 # Verify json validity
@@ -110,7 +114,6 @@ class Image(object):
                 if 'location' in json_objects:
                     json_objects = {'images': [json_objects]}
 
-                tmp = []
                 for i, img_json in enumerate(json_objects['images']):
                     img_loc = img_json['location']
                     image_path = os.path.join(os.path.dirname(file), img_loc)
@@ -119,14 +122,15 @@ class Image(object):
                         continue
                     image_key = uuid.uuid4().hex
                     img_json['location'] = image_key
-                    tmp.append({"meta": img_json, "key": image_key, "fd": image_path})
-                    if len(tmp > BATCH_SIZE):
+                    tmp.append({"meta": img_json, "key": image_key, "path": image_path})
+                    if len(tmp) > BATCH_SIZE:
                         q.put((url, tmp))
-                        tmp = []
                         total_images += BATCH_SIZE
-                if len(tmp):
-                    q.put((url, tmp))
-                    total_images += len(tmp)
+                        tmp = []
+        if len(tmp):
+            q.put((url, tmp))
+            total_images += len(tmp)
+
 
         # Initialize progressbar before starting workers
         print("Uploading images...")
