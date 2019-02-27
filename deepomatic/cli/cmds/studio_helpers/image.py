@@ -84,7 +84,7 @@ class Image(object):
             if file.split('.')[-1].lower() != 'json':
                 image_key = uuid.uuid4().hex
                 tmp.append({"key": image_key, "path": file})
-                if len(tmp) > BATCH_SIZE:
+                if len(tmp) >= BATCH_SIZE:
                     q.put((url, tmp))
                     total_images += len(tmp)
                     tmp = []
@@ -123,9 +123,9 @@ class Image(object):
                     image_key = uuid.uuid4().hex
                     img_json['location'] = image_key
                     tmp.append({"meta": img_json, "key": image_key, "path": image_path})
-                    if len(tmp) > BATCH_SIZE:
+                    if len(tmp) >= BATCH_SIZE:
                         q.put((url, tmp))
-                        total_images += BATCH_SIZE
+                        total_images += len(tmp)
                         tmp = []
         if len(tmp):
             q.put((url, tmp))
