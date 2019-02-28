@@ -5,7 +5,7 @@ import sys
 import json
 import logging
 from .studio_helpers.http_helper import HTTPHelper
-from .studio_helpers.image import Image
+from .studio_helpers.file import File
 from .studio_helpers.task import Task
 
 ###############################################################################
@@ -21,7 +21,7 @@ class Client(object):
             host = API_HOST
 
         self.http_helper = HTTPHelper(token, verify_ssl, host, check_query_parameters, user_agent_suffix, pool_maxsize)
-        self.image = Image(self.http_helper)
+        self.image = File(self.http_helper)
         self.task = Task(self.http_helper)
 
 
@@ -72,4 +72,4 @@ def main(args):
     files = get_all_files(paths=paths, find_json=json_file, recursive=recursive)
 
     # Start uploading
-    clt.image.post_images(files=files, dataset_name=dataset_name, org_slug=org_slug, is_json=json_file)
+    clt.image.post_files(files=files, dataset_name=dataset_name, org_slug=org_slug, is_json=json_file)
