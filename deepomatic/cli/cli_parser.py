@@ -31,7 +31,9 @@ def argparser_init():
     blur_parser = subparsers.add_parser('blur', help="Generates new images and videos with predictions results blurred on them. Computes prediction if JSON has not yet been generated.")
     blur_parser.set_defaults(func=blur)
 
-    feedback_parser = subparsers.add_parser('feedback', help='Uploads images from the local machine to Deepomatic Studio.')
+    studio_parser = subparsers.add_parser('studio', help='Deepomatic Studio related commands')
+    studio_subparser = studio_parser.add_subparsers(dest='studio_command', help='')
+    feedback_parser = studio_subparser.add_parser('add_images', help='Uploads images from the local machine to Deepomatic Studio.')
     feedback_parser.set_defaults(func=feedback, recursive=False)
 
     parsers = [infer_parser, draw_parser, blur_parser]
