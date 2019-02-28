@@ -33,13 +33,13 @@ json_pth = download(tmpdir, 'https://s3-eu-west-1.amazonaws.com/deepo-tests/vulc
 img_dir_pth = os.path.dirname(img1_pth)
 
 def test_2e2_upload_single_image():
-    run(['feedback', '-d', 'deepocli-feedback-test-detection', '-o', 'travis-deepocli', single_img_pth])
+    run(['studio', 'add_images', '-d', 'deepocli-feedback-test-detection', '-o', 'travis-deepocli', single_img_pth])
 
 def test_2e2_upload_image_dir():
-    run(['feedback', '-d', 'deepocli-feedback-test-detection', '-o', 'travis-deepocli', img_dir_pth])
+    run(['studio', 'add_images', '-d', 'deepocli-feedback-test-detection', '-o', 'travis-deepocli', img_dir_pth])
 
 def test_2e2_upload_image_dir_recursive():
-    run(['feedback', '-d', 'deepocli-feedback-test-detection', '-o', 'travis-deepocli', img_dir_pth, '--recursive'])
+    run(['studio', 'add_images', '-d', 'deepocli-feedback-test-detection', '-o', 'travis-deepocli', img_dir_pth, '--recursive'])
 
 def test_2e2_upload_studio_json():
-    run(['feedback', '-d', 'deepocli-feedback-test-detection', '-o', 'travis-deepocli', json_pth, '--json'])
+    run(['studio', 'add_images', '-d', 'deepocli-feedback-test-detection', '-o', 'travis-deepocli', json_pth, '--json'])
