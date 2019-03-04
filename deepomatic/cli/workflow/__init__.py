@@ -1,5 +1,5 @@
-from cloud_workflow import CloudRecognition
-from rpc_workflow import RpcRecognition
+from deepomatic.cli.workflow.cloud_workflow import CloudRecognition
+from deepomatic.cli.workflow.rpc_workflow import RpcRecognition
 
 
 def get_workflow(args):

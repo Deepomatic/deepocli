@@ -9,6 +9,9 @@ class AbstractWorkflow(object):
     def __init__(self, display_id):
         self._display_id = display_id
 
+    def close(self):
+        pass
+
     @property
     def display_id(self):
         return self._display_id

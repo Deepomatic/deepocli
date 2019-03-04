@@ -29,11 +29,14 @@ class InferenceThread(threading.Thread):
                 if data is None:
                     self.input_queue.task_done()
                     self.output_queue.put(None)
+                    self.workflow.close()
                     return
 
                 name, frame = data
-                if self.workflow is not None:
+                if self.workflow is not None and frame is not None:
                     prediction = self.workflow.infer(frame).get()
+                    # NOTE: if a higher threshold than self._threshold is set at the recognition version level, we will have less results.
+                    # If we want all of them, we need to set show_discarded=True and filter the one in prediction['discarded'] as well
                     prediction = [predicted
                         for predicted in prediction['outputs'][0]['labels']['predicted']
                         if float(predicted['score']) >= float(self._threshold)]
@@ -52,9 +55,11 @@ class InferenceThread(threading.Thread):
                     break
                 self.output_queue.task_done()
             self.output_queue.put(None)
+            self.workflow.close()
 
     def processing(self, name, frame, prediction):
         return name, None, prediction
+
 
 def main(args, force=False):
     try:
