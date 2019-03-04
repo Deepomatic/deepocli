@@ -39,6 +39,8 @@ def get_input(descriptor, kwargs):
                 return ImageInputData(descriptor, **kwargs)
             elif VideoInputData.is_valid(descriptor):
                 return VideoInputData(descriptor, **kwargs)
+            elif JsonInputData.is_valid(descriptor):
+                return JsonInputData(descriptor, **kwargs)
             else:
                 raise NameError('Unsupported input file type')
         elif os.path.isdir(descriptor):
@@ -357,6 +359,84 @@ class DeviceInputData(VideoInputData):
 
     def is_infinite(self):
         return True
+
+class JsonInputData(InputData):
+
+    @classmethod
+    def is_valid(cls, descriptor):
+        # Check that the file exists
+        if not os.path.exists(descriptor):
+            return False
+
+        # Check that file is a json
+        if not os.path.splitext(descriptor)[1].lower() == '.json':
+            return False
+
+        # Check if json is a dictionnary
+        try:
+            with open(descriptor) as json_file:
+                json_data = json.load(json_file)
+        except:
+            raise NameError('File {} is not a valid json'.format(descriptor))
+
+        # Check that the json follows the minimum Studio format
+        studio_format_error = 'File {} is not a valid Studio json'.format(descriptor)
+        if not 'images' in json_data:
+            raise NameError(studio_format_error)
+        elif not isinstance(json_data['images'], list):
+            raise NameError(studio_format_error)
+        else:
+            for img in json_data['images']:
+                if not isinstance(img, dict):
+                    raise NameError(studio_format_error)
+                elif not 'location' in img:
+                    raise NameError(studio_format_error)
+                elif not ImageInputData.is_valid(img['location']):
+                    raise NameError('File {} is not valid'.format(img['location']))
+        return True
+
+    def __init__(self, descriptor, **kwargs):
+        super(JsonInputData, self).__init__(descriptor, **kwargs)
+        self._current = None
+        self._files = []
+        self._inputs = []
+        self._i = 0
+
+        if self.is_valid(descriptor):
+            with open(descriptor) as json_file:
+                json_data = json.load(json_file)
+                _paths = [img['location'] for img in json_data['images']]
+                _files = [
+                    ImageInputData(path, **kwargs) if ImageInputData.is_valid(path) else
+                    VideoInputData(path, **kwargs) if VideoInputData.is_valid(path) else
+                    None for path in _paths if os.path.isfile(path)]
+                self._inputs = [_input for _input in _files if _input is not None]
+
+    def _gen(self):
+        for source in self._inputs:
+            for frame in source:
+                self._i += 1
+                yield frame
+
+    def __iter__(self):
+        self.gen = self._gen()
+        self._i = 0
+        return self
+
+    def next(self):
+        return next(self.gen)
+
+    def get_frame_index(self):
+        return self._i
+
+    def get_frame_count(self):
+        return sum([_input.get_frame_count() for _input in self._inputs])
+
+    def get_fps(self):
+        return 1
+
+    def is_infinite(self):
+        return False
 
 class OutputData(object):
     def __init__(self, descriptor, **kwargs):
