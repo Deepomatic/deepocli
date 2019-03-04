@@ -1,38 +1,67 @@
 import os
-import tempfile
-import requests
-
+from download_files import init_files_setup
 from deepomatic.cli.cli_parser import run
 
-input_dir = tempfile.mkdtemp()
-output_dir = tempfile.mkdtemp()
+
+# ------- Files setup ------------------------------------------------------------------------------------------------ #
+
+# Input to test: Image, Video, Directory, Json
+image_input, video_input, directory_input, json_input, dir_output = init_files_setup()
+# Output to test: Stdout, Json, Directory
+std_output = 'stdout'
+json_output = os.path.join(dir_output, 'test_output%4d.json')
+directory_output = dir_output
 
 
-def download(url):
-    path = os.path.join(input_dir, os.path.basename(url))
-    r = requests.get(url)
-    with open(path, 'wb') as f:
-        f.write(r.content)
-    return path
+# ------- Image Input Tests ------------------------------------------------------------------------------------------ #
 
-image_url = 'https://s3-eu-west-1.amazonaws.com/deepo-tests/vulcain/images/test.jpg'
-image_path = download(image_url)
+def test_e2e_image_infer_stdout(test_input=image_input, test_output=std_output):
+    run(['infer', '-i', test_input, '-o', test_output, '-r', 'fashion-v4'])
 
-video_url = 'https://s3-eu-west-1.amazonaws.com/deepo-tests/vulcain/videos/test.mp4'
-video_path = download(video_url)
+def test_e2e_image_infer_json(test_input=image_input, test_output=json_output):
+    run(['infer', '-i', test_input, '-o', test_output, '-r', 'fashion-v4'])
+
+def test_e2e_image_infer_directory(test_input=image_input, test_output=directory_output):
+    run(['infer', '-i', test_input, '-o', test_output, '-r', 'fashion-v4'])
 
 
-def test_e2e_image_infer_stdout():
-    run(['infer', '-i', image_path, '--recognition_id', 'fashion-v4', '-o', 'stdout'])
+# ------- Video Input Tests ------------------------------------------------------------------------------------------ #
 
-def test_e2e_image_infer_json():
-    run(['infer', '-i', image_path, '--recognition_id', 'fashion-v4', '-o', os.path.join(output_dir, 'test.json')])
+def test_e2e_video_infer_stdout(test_input=video_input, test_output=std_output):
+    run(['infer', '-i', test_input, '-o', test_output, '-r', 'fashion-v4'])
 
-def test_e2e_video_infer_stdout():
-    run(['infer', '-i', video_path, '--recognition_id', 'fashion-v4', '-o', 'stdout'])
+def test_e2e_video_infer_json(test_input=video_input, test_output=json_output):
+    run(['infer', '-i', test_input, '-o', test_output, '-r', 'fashion-v4'])
 
-def test_e2e_video_infer_json():
-    run(['infer', '-i', video_path, '--recognition_id', 'fashion-v4', '-o', os.path.join(output_dir, 'test_%05d.json')])
+def test_e2e_video_infer_directory(test_input=video_input, test_output=directory_output):
+    run(['infer', '-i', test_input, '-o', test_output, '-r', 'fashion-v4'])
 
-def test_e2e_directory_infer_directory():
-    run(['infer', '-i', input_dir, '--recognition_id', 'fashion-v4', '-o', output_dir])
+
+# ------- Directory Input Tests -------------------------------------------------------------------------------------- #
+
+def test_e2e_directory_infer_stdout(test_input=directory_input, test_output=std_output):
+    run(['infer', '-i', test_input, '-o', test_output, '-r', 'fashion-v4'])
+
+def test_e2e_directory_infer_json(test_input=directory_input, test_output=json_output):
+    run(['infer', '-i', test_input, '-o', test_output, '-r', 'fashion-v4'])
+
+def test_e2e_directory_infer_directory(test_input=directory_input, test_output=directory_output):
+    run(['infer', '-i', test_input, '-o', test_output, '-r', 'fashion-v4'])
+
+
+# ------- Json Input Tests ------------------------------------------------------------------------------------------- #
+
+def test_e2e_json_infer_stdout(test_input=json_input, test_output=std_output):
+    run(['infer', '-i', test_input, '-o', test_output, '-r', 'fashion-v4'])
+
+def test_e2e_json_infer_json(test_input=json_input, test_output=json_output):
+    run(['infer', '-i', test_input, '-o', test_output, '-r', 'fashion-v4'])
+
+def test_e2e_json_infer_directory(test_input=json_input, test_output=directory_output):
+    run(['infer', '-i', test_input, '-o', test_output, '-r', 'fashion-v4'])
+
+
+# ------- Special Options Tests -------------------------------------------------------------------------------------- #
+
+def test_e2e_image_infer_json_threshold(test_input=image_input, test_output=json_output):
+    run(['infer', '-i', test_input, '-o', test_output, '-r', 'fashion-v4', '-t', '0.5'])
