@@ -54,7 +54,7 @@ class RpcRecognition(AbstractWorkflow):
 
             self._command_mix = create_recognition_command_mix(recognition_version_id,
                                                                **recognition_cmd_kwargs)
-            # We want to handle retrieve the response in the order we want
+            # We want to retrieve responses in the order we want
             self._stream = self._client.new_stream(self._routing_key, keep_response_order=False)
 
         else:
