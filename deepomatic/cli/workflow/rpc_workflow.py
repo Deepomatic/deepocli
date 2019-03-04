@@ -43,7 +43,6 @@ class RpcRecognition(AbstractWorkflow):
 
         recognition_cmd_kwargs = recognition_cmd_kwargs or {}
 
-        print(can_use_rpc)
         if can_use_rpc:
             self._client = Client(amqp_url)
             self._recognition = None
