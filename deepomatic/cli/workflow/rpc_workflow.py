@@ -1,6 +1,6 @@
 import logging
 import cv2
-from deepocli.workflow.workflow_abstraction import AbstractWorkflow
+from deepomatic.cli.workflow_abstraction import AbstractWorkflow
 
 can_use_rpc = True
 

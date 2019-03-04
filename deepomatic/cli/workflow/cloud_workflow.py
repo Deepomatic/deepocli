@@ -1,8 +1,8 @@
 import os
 import logging
 import cv2
-from deepocli.workflow.workflow_abstraction import AbstractWorkflow
-from deepocli import common
+from deepomatic.cli.workflow_abstraction import AbstractWorkflow
+from deepomatic.cli import common
 import deepomatic.api.client
 import deepomatic.api.inputs
 import deepomatic.api.exceptions
