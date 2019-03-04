@@ -392,7 +392,7 @@ class JsonInputData(InputData):
                 elif not 'location' in img:
                     raise NameError(studio_format_error)
                 elif not ImageInputData.is_valid(img['location']):
-                    raise NameError(studio_format_error)
+                    raise NameError('File {} is not valid'.format(img['location']))
         return True
 
     def __init__(self, descriptor, **kwargs):
