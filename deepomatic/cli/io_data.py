@@ -56,7 +56,7 @@ def get_input(descriptor, kwargs):
 
 def get_output(descriptor, kwargs):
     if descriptor is not None:
-        if os.path.isdir(descriptor):
+        if DirectoryOutputData.is_valid(descriptor):
             return DirectoryOutputData(descriptor, **kwargs)
         elif ImageOutputData.is_valid(descriptor):
             return ImageOutputData(descriptor, **kwargs)
@@ -733,4 +733,5 @@ class JsonOutputData(OutputData):
             self._i += 1
             with open(path, 'w') as file:
                 print_log('Writing %s' % path)
+                print(prediction)
                 json.dump(prediction, file)
