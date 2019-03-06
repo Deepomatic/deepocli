@@ -537,7 +537,7 @@ class VideoOutputData(OutputData):
                     self._fps,
                     (frame.shape[1], frame.shape[0]))
             if self._json:
-                self._all_predictions['images'].append(prediction['images'])
+                self._all_predictions['images'] += prediction['images']
                 self._all_predictions['tags'] = list(set(self._all_predictions['tags'] + prediction['tags']))
             self._writer.write(frame)
 
