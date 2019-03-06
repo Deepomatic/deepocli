@@ -10,7 +10,6 @@ import deepomatic.cli.cmds.infer as infer
 import deepomatic.cli.io_data as io_data
 import deepomatic.cli.workflow_abstraction as wa
 
-
 class BlurThread(infer.InferenceThread):
     def __init__(self, input_queue, output_queue, **kwargs):
         super(BlurThread, self).__init__(input_queue, output_queue, **kwargs)

@@ -42,7 +42,7 @@ def argparser_init():
         parser.add_argument('-r', '--recognition_id', required=True, help="Neural network recognition version ID.")
         parser.add_argument('-u', '--amqp_url', help="AMQP url for on-premises deployments.")
         parser.add_argument('-k', '--routing_key', help="Recognition routing key for on-premises deployments.")
-        parser.add_argument('-t', '--threshold', type=float, help="Threshold above which a prediction is considered valid.", default=0.7)
+        parser.add_argument('-t', '--threshold', type=float, help="Threshold above which a prediction is considered valid.", default=None)
 
     for parser in [draw_parser, blur_parser]:
         parser.add_argument('--output_fps', help="In case of video output, video frame rate.", default=25)

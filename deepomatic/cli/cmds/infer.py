@@ -1,6 +1,7 @@
 import os
 import sys
 import json
+import copy
 import threading
 import logging
 import datetime
@@ -9,6 +10,7 @@ try:
 except ImportError:
     from queue import Empty
 
+from deepomatic.cli.cmds.studio_helpers.vulcan2studio import transform_json_from_vulcan_to_studio
 import deepomatic.cli.io_data as io_data
 import deepomatic.cli.workflow_abstraction as wa
 
@@ -20,7 +22,7 @@ class InferenceThread(threading.Thread):
         self.daemon = True
         self.workflow = wa.get_workflow(kwargs)
         self.args = kwargs
-        self._threshold = kwargs.get('threshold', 0.7)
+        self._threshold = kwargs.get('threshold', None)
 
     def run(self):
         try:
@@ -32,14 +34,24 @@ class InferenceThread(threading.Thread):
                     self.output_queue.put(None)
                     return
 
-                name, frame = data
+                name, filename, frame = data
                 if self.workflow is not None:
+                    # Computes prediction and formats them to studio json format
                     prediction = self.workflow.infer(frame).get()
-                    prediction = [predicted
-                        for predicted in prediction['outputs'][0]['labels']['predicted']
-                        if float(predicted['score']) >= float(self._threshold)]
+                    prediction = transform_json_from_vulcan_to_studio(prediction, name, filename)
+
+                    # Keep only predictions higher than threshold if one is set, otherwise use the model thresholds
+                    kept_pred = []
+                    for pred in prediction['images'][0]['annotated_regions']:
+                        if self._threshold:
+                            if pred['score'] >= self._threshold:
+                                kept_pred.append(pred)
+                        else:
+                            if pred['score'] >= pred['threshold']:
+                                kept_pred.append(pred)
+                    prediction['images'][0]['annotated_regions'] = copy.deepcopy(kept_pred)
                 else:
-                    prediction = []
+                    prediction = {'tags': [], 'images': []}
 
                 result = self.processing(name, frame, prediction)
                 self.input_queue.task_done()

@@ -161,6 +161,7 @@ class InputData(object):
         self._descriptor = descriptor
         self._args = kwargs
         self._name, _ = os.path.splitext(os.path.basename(str(descriptor)))
+        self._filename = str(descriptor)
         recognition_id = kwargs.get('recognition_id', '')
         self._reco = '' if recognition_id is None else recognition_id
 
@@ -209,7 +210,7 @@ class ImageInputData(InputData):
     def next(self):
         if self._first:
             self._first = False
-            return self._name, cv2.imread(self._descriptor, 1)
+            return self._name, self._filename, cv2.imread(self._descriptor, 1)
         else:
             raise StopIteration
 
@@ -259,7 +260,7 @@ class VideoInputData(InputData):
                 raise StopIteration
             else:
                 self._i += 1
-                return self._name % self._i, frame
+                return self._name % self._i, self._filename, frame
         self._cap.release()
         raise StopIteration
 
@@ -509,7 +510,7 @@ class VideoOutputData(OutputData):
         self._fourcc = fourcc
         self._fps = kwargs.get('output_fps', 25)
         self._writer = None
-        self._all_predictions = []
+        self._all_predictions = {'tags': [], 'images': []}
 
     def __enter__(self):
         if self._writer is not None:
@@ -536,8 +537,8 @@ class VideoOutputData(OutputData):
                     self._fps,
                     (frame.shape[1], frame.shape[0]))
             if self._json:
-                pred = {"outputs": [{"labels": {"discarded":[], "predicted": prediction}}], "location": name}
-                self._all_predictions.append(pred)
+                self._all_predictions['images'].append(prediction['images'])
+                self._all_predictions['tags'] = list(set(self._all_predictions['tags'] + prediction['tags']))
             self._writer.write(frame)
 
 class DirectoryOutputData(OutputData):
@@ -580,34 +581,37 @@ class DrawOutputData(OutputData):
         frame = frame.copy()
         h = frame.shape[0]
         w = frame.shape[1]
-        for predicted in prediction:
+        for pred in prediction['images'][0]['annotated_regions']:
+            # Build legend
             label = ''
             if self._draw_labels:
-                label += predicted['label_name']
+                label += ', '.join(pred['tags'])
             if self._draw_labels and self._draw_scores:
                 label += ' '
             if self._draw_scores:
-                label += str(predicted['score'])
+                label += str(pred['score'])
 
-            roi = predicted['roi']
-            if roi is None:
-                pass
-            else:
-                bbox = roi['bbox']
+            # Check that we have a bounding box
+            if 'region' in pred:
+                # Retrieve coordinates
+                bbox = pred['region']
                 xmin = int(bbox['xmin'] * w)
                 ymin = int(bbox['ymin'] * h)
                 xmax = int(bbox['xmax'] * w)
                 ymax = int(bbox['ymax'] * h)
-                region_id = roi['region_id']
+
+                # Draw bounding box
                 color = (255, 0, 0)
                 cv2.rectangle(frame, (xmin, ymin), (xmax, ymax), color, 1)
                 ret, baseline = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, font_scale, 1)
                 cv2.rectangle(frame, (xmin, ymax - ret[1] - baseline), (xmin + ret[0], ymax), (0, 0, 255), -1)
                 cv2.putText(frame, label, (xmin, ymax - baseline), cv2.FONT_HERSHEY_SIMPLEX, font_scale, (255, 255, 255), 1)
+
         return name, frame, prediction
 
     def __enter__(self):
         return self
+
     def __exit__(self, exception_type, exception_value, traceback):
         pass
 
@@ -733,5 +737,4 @@ class JsonOutputData(OutputData):
             self._i += 1
             with open(path, 'w') as file:
                 print_log('Writing %s' % path)
-                print(prediction)
                 json.dump(prediction, file)
