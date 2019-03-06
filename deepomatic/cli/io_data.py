@@ -626,28 +626,31 @@ class BlurOutputData(OutputData):
         frame = frame.copy()
         h = frame.shape[0]
         w = frame.shape[1]
-        for predicted in prediction:
-            label = predicted['label_name']
-            roi = predicted['roi']
-            if (roi is None):
-                pass
-            else:
-                bbox = roi['bbox']
-                xmin = int(float(bbox['xmin']) * w)
-                ymin = int(float(bbox['ymin']) * h)
-                xmax = int(float(bbox['xmax']) * w)
-                ymax = int(float(bbox['ymax']) * h)
+        for pred in prediction['images'][0]['annotated_regions']:
+            # Check that we have a bounding box
+            if 'region' in pred:
+                # Retrieve coordinates
+                bbox = pred['region']
+                xmin = int(bbox['xmin'] * w)
+                ymin = int(bbox['ymin'] * h)
+                xmax = int(bbox['xmax'] * w)
+                ymax = int(bbox['ymax'] * h)
 
-                if (self._method == 'black'):
+                # Draw
+                if self._method == 'black':
                     cv2.rectangle(frame,(xmin, ymin),(xmax, ymax),(0,0,0),-1)
-                else:
+                elif self._method == 'gaussian':
                     face = frame[ymin:ymax, xmin:xmax]
-                    if (self._method == 'gaussian'):
-                        face = cv2.GaussianBlur(face, (15, 15), self._strength)
-                    elif (self._method == 'pixel'):
-                        small = cv2.resize(face, (0,0), fx=1./min((xmax - xmin), self._strength), fy=1./min((ymax - ymin), self._strength))
-                        face = cv2.resize(small, ((xmax - xmin), (ymax - ymin)), interpolation=cv2.INTER_NEAREST)
+                    face = cv2.GaussianBlur(face, (15, 15), self._strength)
                     frame[ymin:ymax, xmin:xmax] = face
+                elif self._method == 'pixel':
+                    face = frame[ymin:ymax, xmin:xmax]
+                    small = cv2.resize(face, (0,0),
+                        fx=1./min((xmax - xmin), self._strength),
+                        fy=1./min((ymax - ymin), self._strength))
+                    face = cv2.resize(small, ((xmax - xmin), (ymax - ymin)), interpolation=cv2.INTER_NEAREST)
+                    frame[ymin:ymax, xmin:xmax] = face
+
         return name, frame, prediction
 
     def __enter__(self):
