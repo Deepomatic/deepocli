@@ -1,14 +1,6 @@
-import os
-import sys
-import io
-import json
-import cv2
-import logging
-import numpy as np
+from deepomatic.cli.cmds import infer
+from deepomatic.cli import io_data
 
-import deepomatic.cli.cmds.infer as infer
-import deepomatic.cli.io_data as io_data
-import deepomatic.cli.workflow_abstraction as wa
 
 class DrawThread(infer.InferenceThread):
     def __init__(self, input_queue, output_queue, **kwargs):
