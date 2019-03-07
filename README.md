@@ -16,6 +16,12 @@ Find the complete documentation at [docs.deepomatic.com/deepomatic-cli/](https:/
 pip install deepomatic-cli
 ```
 
+If you need rpc support, prefer:
+```
+# requires deeomatic-rpc package to be installed
+pip install deepomatic-cli[rpc]
+```
+
 # Bugs
 
 Please send bug reports to support@deepomatic.com
