@@ -4,15 +4,15 @@ import json
 import copy
 import threading
 import logging
-import datetime
+
 try:
     from Queue import Empty
 except ImportError:
     from queue import Empty
 
 from deepomatic.cli.cmds.studio_helpers.vulcan2studio import transform_json_from_vulcan_to_studio
-import deepomatic.cli.io_data as io_data
-import deepomatic.cli.workflow_abstraction as wa
+from deepomatic.cli import io_data
+from deepomatic.cli.workflow import get_workflow
 
 class InferenceThread(threading.Thread):
     def __init__(self, input_queue, output_queue, **kwargs):
@@ -20,7 +20,7 @@ class InferenceThread(threading.Thread):
         self.input_queue = input_queue
         self.output_queue = output_queue
         self.daemon = True
-        self.workflow = wa.get_workflow(kwargs)
+        self.workflow = get_workflow(kwargs)
         self.args = kwargs
         self._threshold = kwargs.get('threshold', None)
 
@@ -32,10 +32,11 @@ class InferenceThread(threading.Thread):
                 if data is None:
                     self.input_queue.task_done()
                     self.output_queue.put(None)
+                    self.workflow.close()
                     return
 
                 name, filename, frame = data
-                if self.workflow is not None:
+                if self.workflow is not None and frame is not None:
                     # Computes prediction and formats them to studio json format
                     prediction = self.workflow.infer(frame).get()
                     prediction = transform_json_from_vulcan_to_studio(prediction, name, filename)
@@ -65,9 +66,11 @@ class InferenceThread(threading.Thread):
                     break
                 self.output_queue.task_done()
             self.output_queue.put(None)
+            self.workflow.close()
 
     def processing(self, name, frame, prediction):
         return name, None, prediction
+
 
 def main(args, force=False):
     try:
