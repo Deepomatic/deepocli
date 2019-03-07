@@ -9,9 +9,12 @@ def download(tmpdir, url, filepath):
 	if not os.path.isdir(os.path.dirname(path)):
 		os.makedirs(os.path.dirname(path))
 	r = requests.get(url)
-	with open(path, 'wb') as f:
-		f.write(r.content)
-	return path
+	if r.status_code != 200:
+		raise ValueError('Status {} for URL {}'.format(r.status_code, url))
+	else:
+		with open(path, 'wb') as f:
+			f.write(r.content)
+		return path
 
 def init_files_setup():
 	"""
@@ -30,7 +33,7 @@ def init_files_setup():
 	# Download all fies
 	tmpdir = tempfile.mkdtemp()
 	single_img_pth = download(tmpdir, 'https://s3-eu-west-1.amazonaws.com/deepo-tests/vulcain/images/test.jpg', 'single_img.jpg')
-	video_pth = download(tmpdir, 'https://s3-eu-west-1.amazonaws.com/deepo-tests/vulcain/images/test.mp4', 'video.mp4')
+	video_pth = download(tmpdir, 'https://s3-eu-west-1.amazonaws.com/deepo-tests/vulcain/videos/test.mp4', 'video.mp4')
 	img1_pth = download(tmpdir, 'https://s3-eu-west-1.amazonaws.com/deepo-tests/vulcain/images/test.jpg', 'img_dir/img1.jpg')
 	img2_pth = download(tmpdir, 'https://s3-eu-west-1.amazonaws.com/deepo-tests/vulcain/images/test.jpg', 'img_dir/img2.jpg')
 	img3_pth = download(tmpdir, 'https://s3-eu-west-1.amazonaws.com/deepo-tests/vulcain/images/test.jpg', 'img_dir/subdir/img3.jpg')
