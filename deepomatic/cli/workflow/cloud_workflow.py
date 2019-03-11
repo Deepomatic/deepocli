@@ -41,4 +41,9 @@ class CloudRecognition(AbstractWorkflow):
 
     def infer(self, frame):
         _, buf = cv2.imencode('.jpeg', frame)
-        return self.InferResult(self._model.inference(inputs=[deepomatic.api.inputs.ImageInput(buf.tobytes(), encoding="binary")], return_task=True, wait_task=False))
+        return self.InferResult(self._model.inference(
+            inputs=[deepomatic.api.inputs.ImageInput(buf.tobytes(), encoding="binary")],
+            show_discarded=True,
+            return_task=True,
+            wait_task=False)
+        )
