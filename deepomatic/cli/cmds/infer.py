@@ -35,26 +35,29 @@ class InferenceThread(threading.Thread):
                     self.workflow.close()
                     return
 
+                result = None
                 name, filename, frame = data
-                if self.workflow is not None and frame is not None:
-                    # Computes prediction and formats them to studio json format
-                    prediction = self.workflow.infer(frame).get()
-                    prediction = transform_json_from_vulcan_to_studio(prediction, name, filename)
+                if frame is not None:
+                    if self.workflow is not None:
+                        # Computes prediction and formats them to studio json format
+                        prediction = self.workflow.infer(frame).get()
+                        prediction = transform_json_from_vulcan_to_studio(prediction, name, filename)
 
-                    # Keep only predictions higher than threshold if one is set, otherwise use the model thresholds
-                    kept_pred = []
-                    for pred in prediction['images'][0]['annotated_regions']:
-                        if self._threshold:
-                            if pred['score'] >= self._threshold:
-                                kept_pred.append(pred)
-                        else:
-                            if pred['score'] >= pred['threshold']:
-                                kept_pred.append(pred)
-                    prediction['images'][0]['annotated_regions'] = copy.deepcopy(kept_pred)
-                else:
-                    prediction = {'tags': [], 'images': []}
+                        # Keep only predictions higher than threshold if one is set, otherwise use the model thresholds
+                        kept_pred = []
+                        for pred in prediction['images'][0]['annotated_regions']:
+                            if self._threshold:
+                                if pred['score'] >= self._threshold:
+                                    kept_pred.append(pred)
+                            else:
+                                if pred['score'] >= pred['threshold']:
+                                    kept_pred.append(pred)
+                        prediction['images'][0]['annotated_regions'] = copy.deepcopy(kept_pred)
+                    else:
+                        prediction = {'tags': [], 'images': []}
 
-                result = self.processing(name, frame, prediction)
+                    result = self.processing(name, frame, prediction)
+
                 self.input_queue.task_done()
                 self.output_queue.put(result)
         except KeyboardInterrupt:
