@@ -726,22 +726,29 @@ class JsonOutputData(OutputData):
     def __init__(self, descriptor, **kwargs):
         super(JsonOutputData, self).__init__(descriptor, **kwargs)
         self._i = 0
+        # Check if the output is a wild card or not
+        try:
+            descriptor % self._i
+            self._all_predictions = None
+        except TypeError:
+            self._all_predictions = {'tags': [], 'images': []}
 
     def __enter__(self):
         self._i = 0
         return self
 
     def __exit__(self, exception_type, exception_value, traceback):
-        pass
+        if self._all_predictions:
+            json_path = os.path.splitext(self._descriptor)[0]
+            save_json_to_file(self._all_predictions, json_path)
 
     def __call__(self, name, frame, prediction):
-        path = self._descriptor
-        try:
-            path = path % self._i
-        except TypeError:
-            pass
-        finally:
-            self._i += 1
-            with open(path, 'w') as file:
-                print_log('Writing %s' % path)
-                json.dump(prediction, file)
+        self._i += 1
+        # If the json is not a wildcard we store prediction to write then to file a the end with the __exit__
+        if self._all_predictions:
+            self._all_predictions['images'] += prediction['images']
+            self._all_predictions['tags'] = list(set(self._all_predictions['tags'] + prediction['tags']))
+        # Otherwise we write them to file directly
+        else:
+            json_path = os.path.splitext(self._descriptor % self._i)[0]
+            save_json_to_file(prediction, json_path)
