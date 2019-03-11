@@ -36,6 +36,9 @@ def argparser_init():
     feedback_parser = studio_subparser.add_parser('add_images', help='Uploads images from the local machine to Deepomatic Studio.')
     feedback_parser.set_defaults(func=feedback, recursive=False)
 
+    for parser in [infer_parser, draw_parser, blur_parser, feedback_parser]:
+        parser.add_argument('--recursive', dest='recursive', action='store_true', help='If a directory inputis used, goes through all files in subdirectories.')
+
     for parser in [infer_parser, draw_parser, blur_parser]:
         parser.add_argument('-i', '--input', required=True, help="Path on which inference should be run. It can be an image (supported formats: *{}), a video (supported formats: *{}) or a directory. If the given path is a directory, it will recursively run inference on all the supported files in this directory.".format(', *'.join(ImageInputData.supported_formats), ', *'.join(VideoInputData.supported_formats)))
         parser.add_argument('-o', '--output', required=True, help="Path in which output should be written. It can be an image (supported formats: *{}), a video (supported formats: *{}) or a directory.".format(', *'.join(ImageInputData.supported_formats), ', *'.join(VideoInputData.supported_formats)))
@@ -59,7 +62,6 @@ def argparser_init():
     feedback_parser.add_argument('-d', '--dataset', required=True, help="Deepomatic Studio dataset name.", type=str)
     feedback_parser.add_argument('-o', '--organization', required=True, help="Deepomatic Studio organization slug.", type=str)
     feedback_parser.add_argument('path', type=str, nargs='+', help='Path to an image file, images directory or json file or directory.')
-    feedback_parser.add_argument('--recursive', dest='recursive', action='store_true', help='Goes through all files in subdirectories.')
     feedback_parser.add_argument('--json', dest='json_file', action='store_true', help='Look for JSON files instead of images.')
 
     return argparser

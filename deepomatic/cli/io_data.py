@@ -293,14 +293,18 @@ class DirectoryInputData(InputData):
         self._files = []
         self._inputs = []
         self._i = 0
+        self._recursive = self._args['recursive']
 
         if self.is_valid(descriptor):
             _paths = [os.path.join(descriptor, name) for name in os.listdir(descriptor)]
-            _files = [
-                ImageInputData(path, **kwargs) if ImageInputData.is_valid(path) else
-                VideoInputData(path, **kwargs) if VideoInputData.is_valid(path) else
-                None for path in _paths if os.path.isfile(path)]
-            self._inputs = [_input for _input in _files if _input is not None]
+            self._inputs = []
+            for path in _paths:
+                if ImageInputData.is_valid(path):
+                    self._inputs.append(ImageInputData(path, **kwargs))
+                elif VideoInputData.is_valid(path):
+                    self._inputs.append(VideoInputData(path, **kwargs))
+                elif self._recursive and self.is_valid(path):
+                    self._inputs.append(DirectoryInputData(path, **kwargs))
 
     def _gen(self):
         for source in self._inputs:
