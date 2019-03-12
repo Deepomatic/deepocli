@@ -493,7 +493,7 @@ class ImageOutputData(OutputData):
 
 
 class VideoOutputData(OutputData):
-    supported_formats = ['.avi', '.mp4']
+    supported_formats = ['.avi', '.mp4', '.webm', '.mjpg']
 
     @classmethod
     def is_valid(cls, descriptor):
@@ -502,11 +502,7 @@ class VideoOutputData(OutputData):
 
     def __init__(self, descriptor, **kwargs):
         super(VideoOutputData, self).__init__(descriptor, **kwargs)
-        _, ext = os.path.splitext(descriptor)
-        if ext is 'mjpg':
-            fourcc = cv2.VideoWriter_fourcc('M', 'J', 'P', 'G')
-        else:
-            fourcc = cv2.VideoWriter_fourcc('X', '2', '6', '4')
+        fourcc = cv2.VideoWriter_fourcc('M', 'J', 'P', 'G')
         self._fourcc = fourcc
         self._fps = kwargs.get('output_fps', 25)
         self._writer = None
