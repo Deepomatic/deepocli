@@ -506,7 +506,7 @@ class VideoOutputData(OutputData):
         if ext == '.avi':
             fourcc = cv2.VideoWriter_fourcc('X', 'V', 'I', 'D')
         elif ext == '.mp4':
-            fourcc = cv2.VideoWriter_fourcc('M', 'P', '4', 'V')
+            fourcc = cv2.VideoWriter_fourcc('m', 'p', '4', 'v')
         self._fourcc = fourcc
         self._fps = kwargs.get('output_fps', 25)
         self._writer = None
