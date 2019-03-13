@@ -50,6 +50,7 @@ def worker(self):
             except RuntimeError as e:
                 tqdm.write('Annotation format for image named {} is incorrect'.format(file), file=sys.stderr)
             pbar.update(len(files))
+
             q.task_done()
             lock.acquire()
             count += len(files)
@@ -59,7 +60,7 @@ def worker(self):
         except Queue.Empty:
             pass
 
-class Image(object):
+class File(object):
     def __init__(self, helper, task=None):
         self._helper = helper
         if not task:
@@ -67,7 +68,7 @@ class Image(object):
         self._task = task
 
 
-    def post_images(self, dataset_name, files, org_slug, is_json=False):
+    def post_files(self, dataset_name, files, org_slug, is_json=False):
         global run, pbar
         try:
             ret = self._helper.get('datasets/' + dataset_name + '/')
@@ -79,7 +80,7 @@ class Image(object):
         total_images = 0
         tmp = []
         for file in files:
-            # If it's an image, add it to the queue
+            # If it's an file, add it to the queue
             if file.split('.')[-1].lower() != 'json':
                 image_key = uuid.uuid4().hex
                 tmp.append({"key": image_key, "path": file})
@@ -99,7 +100,7 @@ class Image(object):
                     continue
 
                 # Check which type of JSON it is:
-                # 1) a JSON associated with one single image and following the format:
+                # 1) a JSON associated with one single file and following the format:
                 #       {"location": "img.jpg", stage": "train", "annotated_regions": [...]}
                 # 2) a JSON following Studio format:
                 #       {"tags": [...], "images": [{"location": "img.jpg", stage": "train", "annotated_regions": [...]}, {...}]}
@@ -115,9 +116,9 @@ class Image(object):
 
                 for i, img_json in enumerate(json_objects['images']):
                     img_loc = img_json['location']
-                    image_path = os.path.join(os.path.dirname(file), img_loc)
-                    if not os.path.isfile(image_path):
-                        tqdm.write("Can't find an image named {}".format(img_loc), file=sys.stderr)
+                    file_path = os.path.join(os.path.dirname(file), img_loc)
+                    if not os.path.isfile(file_path):
+                        tqdm.write("Can't find an file named {}".format(img_loc), file=sys.stderr)
                         continue
                     image_key = uuid.uuid4().hex
                     img_json['location'] = image_key
@@ -132,7 +133,7 @@ class Image(object):
 
         # Initialize progressbar before starting workers
         print("Uploading images...")
-        pbar = tqdm(total=total_images)
+        pbar = tqdm(total=total_files)
 
         # Initialize threads
         run = True  # reset the value to True in case the program is run multiple times
@@ -154,9 +155,9 @@ class Image(object):
         for t in threads:
             t.join()
         pbar.close()
-        if count == total_images:
-            print("All {} images have been uploaded.".format(count))
+        if count == total_files:
+            print("All {} files have been uploaded.".format(count))
         else:
-            print("{} images out of {} have been uploaded.".format(count, total_images))
+            print("{} files out of {} have been uploaded.".format(count, total_files))
 
         return True

@@ -1,45 +1,29 @@
-# -*- coding: utf-8 -*-
 import os
-import tempfile
-import requests
-
+from download_files import init_files_setup
 from deepomatic.cli.cli_parser import run
 
-def download(tmpdir, url, filepath):
-    path = os.path.join(tmpdir, filepath)
-    if not os.path.isdir(os.path.dirname(path)):
-        os.makedirs(os.path.dirname(path))
-    r = requests.get(url)
-    with open(path, 'wb') as f:
-        f.write(r.content)
-    return path
+
+# ------- Files setup ------------------------------------------------------------------------------------------------ #
+
+# Input to test: Image, Directory, Json
+image_input, video_input, directory_input, json_input, dir_output = init_files_setup()
+TEST_DATASET = 'deepocli-feedback-test-detection'
+TEST_ORG = 'travis-deepocli'
 
 
-# Download all files for the test
-#     .
-#     ├── img_dir
-#     │   ├── img1.jpg
-#     │   ├── img2.jpg
-#     │   └── subdir
-#     │       └── img3.jpg
-#     ├── single_img.jpg
-#     └── studio.json
-tmpdir = tempfile.mkdtemp()
-single_img_pth = download(tmpdir, 'https://s3-eu-west-1.amazonaws.com/deepo-tests/vulcain/images/test.jpg', 'single_img.jpg')
-img1_pth = download(tmpdir, 'https://s3-eu-west-1.amazonaws.com/deepo-tests/vulcain/images/test.jpg', 'img_dir/img1.jpg')
-img2_pth = download(tmpdir, 'https://s3-eu-west-1.amazonaws.com/deepo-tests/vulcain/images/test.jpg', 'img_dir/img2.jpg')
-img3_pth = download(tmpdir, 'https://s3-eu-west-1.amazonaws.com/deepo-tests/vulcain/images/test.jpg', 'img_dir/subdir/img3.jpg')
-json_pth = download(tmpdir, 'https://s3-eu-west-1.amazonaws.com/deepo-tests/vulcain/json/studio.json', 'studio.json')
-img_dir_pth = os.path.dirname(img1_pth)
+# ------- Studio Upload Tests----------------------------------------------------------------------------------------- #
 
-def test_2e2_upload_single_image():
-    run(['feedback', '-d', 'deepocli-feedback-test-detection', '-o', 'travis-deepocli', single_img_pth])
+def test_2e2_image_upload(test_input=image_input):
+    run(['studio', 'add_images', '-d', TEST_DATASET, '-o', TEST_ORG, test_input])
 
-def test_2e2_upload_image_dir():
-    run(['feedback', '-d', 'deepocli-feedback-test-detection', '-o', 'travis-deepocli', img_dir_pth])
+def test_2e2_directory_upload(test_input=directory_input):
+    run(['studio', 'add_images', '-d', TEST_DATASET, '-o', TEST_ORG, test_input])
 
-def test_2e2_upload_image_dir_recursive():
-    run(['feedback', '-d', 'deepocli-feedback-test-detection', '-o', 'travis-deepocli', img_dir_pth, '--recursive'])
+def test_2e2_json_upload(test_input=json_input):
+    run(['studio', 'add_images', '-d', TEST_DATASET, '-o', TEST_ORG, test_input, '--json'])
 
-def test_2e2_upload_studio_json():
-    run(['feedback', '-d', 'deepocli-feedback-test-detection', '-o', 'travis-deepocli', json_pth, '--json'])
+
+# ------- Special Options Tests -------------------------------------------------------------------------------------- #
+
+def test_2e2_directory_upload_recursive(test_input=directory_input):
+    run(['studio', 'add_images', '-d', TEST_DATASET, '-o', TEST_ORG, test_input, '--recursive'])

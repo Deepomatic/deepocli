@@ -39,6 +39,8 @@ def get_input(descriptor, kwargs):
                 return ImageInputData(descriptor, **kwargs)
             elif VideoInputData.is_valid(descriptor):
                 return VideoInputData(descriptor, **kwargs)
+            elif JsonInputData.is_valid(descriptor):
+                return JsonInputData(descriptor, **kwargs)
             else:
                 raise NameError('Unsupported input file type')
         elif os.path.isdir(descriptor):
@@ -54,7 +56,7 @@ def get_input(descriptor, kwargs):
 
 def get_output(descriptor, kwargs):
     if descriptor is not None:
-        if os.path.isdir(descriptor):
+        if DirectoryOutputData.is_valid(descriptor):
             return DirectoryOutputData(descriptor, **kwargs)
         elif ImageOutputData.is_valid(descriptor):
             return ImageOutputData(descriptor, **kwargs)
@@ -159,6 +161,7 @@ class InputData(object):
         self._descriptor = descriptor
         self._args = kwargs
         self._name, _ = os.path.splitext(os.path.basename(str(descriptor)))
+        self._filename = str(descriptor)
         recognition_id = kwargs.get('recognition_id', '')
         self._reco = '' if recognition_id is None else recognition_id
 
@@ -207,7 +210,7 @@ class ImageInputData(InputData):
     def next(self):
         if self._first:
             self._first = False
-            return self._name, cv2.imread(self._descriptor, 1)
+            return self._name, self._filename, cv2.imread(self._descriptor, 1)
         else:
             raise StopIteration
 
@@ -257,7 +260,7 @@ class VideoInputData(InputData):
                 raise StopIteration
             else:
                 self._i += 1
-                return self._name % self._i, frame
+                return self._name % self._i, self._filename, frame
         self._cap.release()
         raise StopIteration
 
@@ -290,14 +293,18 @@ class DirectoryInputData(InputData):
         self._files = []
         self._inputs = []
         self._i = 0
+        self._recursive = self._args['recursive']
 
         if self.is_valid(descriptor):
             _paths = [os.path.join(descriptor, name) for name in os.listdir(descriptor)]
-            _files = [
-                ImageInputData(path, **kwargs) if ImageInputData.is_valid(path) else
-                VideoInputData(path, **kwargs) if VideoInputData.is_valid(path) else
-                None for path in _paths if os.path.isfile(path)]
-            self._inputs = [_input for _input in _files if _input is not None]
+            self._inputs = []
+            for path in _paths:
+                if ImageInputData.is_valid(path):
+                    self._inputs.append(ImageInputData(path, **kwargs))
+                elif VideoInputData.is_valid(path):
+                    self._inputs.append(VideoInputData(path, **kwargs))
+                elif self._recursive and self.is_valid(path):
+                    self._inputs.append(DirectoryInputData(path, **kwargs))
 
     def _gen(self):
         for source in self._inputs:
@@ -357,6 +364,84 @@ class DeviceInputData(VideoInputData):
 
     def is_infinite(self):
         return True
+
+class JsonInputData(InputData):
+
+    @classmethod
+    def is_valid(cls, descriptor):
+        # Check that the file exists
+        if not os.path.exists(descriptor):
+            return False
+
+        # Check that file is a json
+        if not os.path.splitext(descriptor)[1].lower() == '.json':
+            return False
+
+        # Check if json is a dictionnary
+        try:
+            with open(descriptor) as json_file:
+                json_data = json.load(json_file)
+        except:
+            raise NameError('File {} is not a valid json'.format(descriptor))
+
+        # Check that the json follows the minimum Studio format
+        studio_format_error = 'File {} is not a valid Studio json'.format(descriptor)
+        if not 'images' in json_data:
+            raise NameError(studio_format_error)
+        elif not isinstance(json_data['images'], list):
+            raise NameError(studio_format_error)
+        else:
+            for img in json_data['images']:
+                if not isinstance(img, dict):
+                    raise NameError(studio_format_error)
+                elif not 'location' in img:
+                    raise NameError(studio_format_error)
+                elif not ImageInputData.is_valid(img['location']):
+                    raise NameError('File {} is not valid'.format(img['location']))
+        return True
+
+    def __init__(self, descriptor, **kwargs):
+        super(JsonInputData, self).__init__(descriptor, **kwargs)
+        self._current = None
+        self._files = []
+        self._inputs = []
+        self._i = 0
+
+        if self.is_valid(descriptor):
+            with open(descriptor) as json_file:
+                json_data = json.load(json_file)
+                _paths = [img['location'] for img in json_data['images']]
+                _files = [
+                    ImageInputData(path, **kwargs) if ImageInputData.is_valid(path) else
+                    VideoInputData(path, **kwargs) if VideoInputData.is_valid(path) else
+                    None for path in _paths if os.path.isfile(path)]
+                self._inputs = [_input for _input in _files if _input is not None]
+
+    def _gen(self):
+        for source in self._inputs:
+            for frame in source:
+                self._i += 1
+                yield frame
+
+    def __iter__(self):
+        self.gen = self._gen()
+        self._i = 0
+        return self
+
+    def next(self):
+        return next(self.gen)
+
+    def get_frame_index(self):
+        return self._i
+
+    def get_frame_count(self):
+        return sum([_input.get_frame_count() for _input in self._inputs])
+
+    def get_fps(self):
+        return 1
+
+    def is_infinite(self):
+        return False
 
 class OutputData(object):
     def __init__(self, descriptor, **kwargs):
@@ -421,15 +506,15 @@ class VideoOutputData(OutputData):
 
     def __init__(self, descriptor, **kwargs):
         super(VideoOutputData, self).__init__(descriptor, **kwargs)
-        _, ext = os.path.splitext(descriptor)
-        if ext is 'mjpg':
-            fourcc = cv2.VideoWriter_fourcc('M', 'J', 'P', 'G')
-        else:
-            fourcc = cv2.VideoWriter_fourcc('X', '2', '6', '4')
+        ext = os.path.splitext(descriptor)[1]
+        if ext == '.avi':
+            fourcc = cv2.VideoWriter_fourcc('X', 'V', 'I', 'D')
+        elif ext == '.mp4':
+            fourcc = cv2.VideoWriter_fourcc('m', 'p', '4', 'v')
         self._fourcc = fourcc
         self._fps = kwargs.get('output_fps', 25)
         self._writer = None
-        self._all_predictions = []
+        self._all_predictions = {'tags': [], 'images': []}
 
     def __enter__(self):
         if self._writer is not None:
@@ -456,8 +541,8 @@ class VideoOutputData(OutputData):
                     self._fps,
                     (frame.shape[1], frame.shape[0]))
             if self._json:
-                pred = {"outputs": [{"labels": {"discarded":[], "predicted": prediction}}], "location": name}
-                self._all_predictions.append(pred)
+                self._all_predictions['images'] += prediction['images']
+                self._all_predictions['tags'] = list(set(self._all_predictions['tags'] + prediction['tags']))
             self._writer.write(frame)
 
 class DirectoryOutputData(OutputData):
@@ -500,34 +585,37 @@ class DrawOutputData(OutputData):
         frame = frame.copy()
         h = frame.shape[0]
         w = frame.shape[1]
-        for predicted in prediction:
+        for pred in prediction['images'][0]['annotated_regions']:
+            # Build legend
             label = ''
             if self._draw_labels:
-                label += predicted['label_name']
+                label += ', '.join(pred['tags'])
             if self._draw_labels and self._draw_scores:
                 label += ' '
             if self._draw_scores:
-                label += str(predicted['score'])
+                label += str(pred['score'])
 
-            roi = predicted['roi']
-            if roi is None:
-                pass
-            else:
-                bbox = roi['bbox']
+            # Check that we have a bounding box
+            if 'region' in pred:
+                # Retrieve coordinates
+                bbox = pred['region']
                 xmin = int(bbox['xmin'] * w)
                 ymin = int(bbox['ymin'] * h)
                 xmax = int(bbox['xmax'] * w)
                 ymax = int(bbox['ymax'] * h)
-                region_id = roi['region_id']
+
+                # Draw bounding box
                 color = (255, 0, 0)
                 cv2.rectangle(frame, (xmin, ymin), (xmax, ymax), color, 1)
                 ret, baseline = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, font_scale, 1)
                 cv2.rectangle(frame, (xmin, ymax - ret[1] - baseline), (xmin + ret[0], ymax), (0, 0, 255), -1)
                 cv2.putText(frame, label, (xmin, ymax - baseline), cv2.FONT_HERSHEY_SIMPLEX, font_scale, (255, 255, 255), 1)
+
         return name, frame, prediction
 
     def __enter__(self):
         return self
+
     def __exit__(self, exception_type, exception_value, traceback):
         pass
 
@@ -542,28 +630,31 @@ class BlurOutputData(OutputData):
         frame = frame.copy()
         h = frame.shape[0]
         w = frame.shape[1]
-        for predicted in prediction:
-            label = predicted['label_name']
-            roi = predicted['roi']
-            if (roi is None):
-                pass
-            else:
-                bbox = roi['bbox']
-                xmin = int(float(bbox['xmin']) * w)
-                ymin = int(float(bbox['ymin']) * h)
-                xmax = int(float(bbox['xmax']) * w)
-                ymax = int(float(bbox['ymax']) * h)
+        for pred in prediction['images'][0]['annotated_regions']:
+            # Check that we have a bounding box
+            if 'region' in pred:
+                # Retrieve coordinates
+                bbox = pred['region']
+                xmin = int(bbox['xmin'] * w)
+                ymin = int(bbox['ymin'] * h)
+                xmax = int(bbox['xmax'] * w)
+                ymax = int(bbox['ymax'] * h)
 
-                if (self._method == 'black'):
+                # Draw
+                if self._method == 'black':
                     cv2.rectangle(frame,(xmin, ymin),(xmax, ymax),(0,0,0),-1)
-                else:
+                elif self._method == 'gaussian':
                     face = frame[ymin:ymax, xmin:xmax]
-                    if (self._method == 'gaussian'):
-                        face = cv2.GaussianBlur(face, (15, 15), self._strength)
-                    elif (self._method == 'pixel'):
-                        small = cv2.resize(face, (0,0), fx=1./min((xmax - xmin), self._strength), fy=1./min((ymax - ymin), self._strength))
-                        face = cv2.resize(small, ((xmax - xmin), (ymax - ymin)), interpolation=cv2.INTER_NEAREST)
+                    face = cv2.GaussianBlur(face, (15, 15), self._strength)
                     frame[ymin:ymax, xmin:xmax] = face
+                elif self._method == 'pixel':
+                    face = frame[ymin:ymax, xmin:xmax]
+                    small = cv2.resize(face, (0,0),
+                        fx=1./min((xmax - xmin), self._strength),
+                        fy=1./min((ymax - ymin), self._strength))
+                    face = cv2.resize(small, ((xmax - xmin), (ymax - ymin)), interpolation=cv2.INTER_NEAREST)
+                    frame[ymin:ymax, xmin:xmax] = face
+
         return name, frame, prediction
 
     def __enter__(self):
@@ -635,22 +726,29 @@ class JsonOutputData(OutputData):
     def __init__(self, descriptor, **kwargs):
         super(JsonOutputData, self).__init__(descriptor, **kwargs)
         self._i = 0
+        # Check if the output is a wild card or not
+        try:
+            descriptor % self._i
+            self._all_predictions = None
+        except TypeError:
+            self._all_predictions = {'tags': [], 'images': []}
 
     def __enter__(self):
         self._i = 0
         return self
 
     def __exit__(self, exception_type, exception_value, traceback):
-        pass
+        if self._all_predictions:
+            json_path = os.path.splitext(self._descriptor)[0]
+            save_json_to_file(self._all_predictions, json_path)
 
     def __call__(self, name, frame, prediction):
-        path = self._descriptor
-        try:
-            path = path % self._i
-        except TypeError:
-            pass
-        finally:
-            self._i += 1
-            with open(path, 'w') as file:
-                print_log('Writing %s' % path)
-                json.dump(prediction, file)
+        self._i += 1
+        # If the json is not a wildcard we store prediction to write then to file a the end with the __exit__
+        if self._all_predictions:
+            self._all_predictions['images'] += prediction['images']
+            self._all_predictions['tags'] = list(set(self._all_predictions['tags'] + prediction['tags']))
+        # Otherwise we write them to file directly
+        else:
+            json_path = os.path.splitext(self._descriptor % self._i)[0]
+            save_json_to_file(prediction, json_path)

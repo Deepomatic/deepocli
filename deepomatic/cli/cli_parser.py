@@ -31,17 +31,23 @@ def argparser_init():
     blur_parser = subparsers.add_parser('blur', help="Generates new images and videos with predictions results blurred on them. Computes prediction if JSON has not yet been generated.")
     blur_parser.set_defaults(func=blur)
 
-    feedback_parser = subparsers.add_parser('feedback', help='Uploads images from the local machine to Deepomatic Studio.')
+    studio_parser = subparsers.add_parser('studio', help='Deepomatic Studio related commands')
+    studio_subparser = studio_parser.add_subparsers(dest='studio_command', help='')
+    feedback_parser = studio_subparser.add_parser('add_images', help='Uploads images from the local machine to Deepomatic Studio.')
     feedback_parser.set_defaults(func=feedback, recursive=False)
 
-    parsers = [infer_parser, draw_parser, blur_parser]
-    for parser in parsers:
+    for parser in [infer_parser, draw_parser, blur_parser, feedback_parser]:
+        parser.add_argument('--recursive', dest='recursive', action='store_true', help='If a directory inputis used, goes through all files in subdirectories.')
+
+    for parser in [infer_parser, draw_parser, blur_parser]:
         parser.add_argument('-i', '--input', required=True, help="Path on which inference should be run. It can be an image (supported formats: *{}), a video (supported formats: *{}) or a directory. If the given path is a directory, it will recursively run inference on all the supported files in this directory.".format(', *'.join(ImageInputData.supported_formats), ', *'.join(VideoInputData.supported_formats)))
         parser.add_argument('-o', '--output', required=True, help="Path in which output should be written. It can be an image (supported formats: *{}), a video (supported formats: *{}) or a directory.".format(', *'.join(ImageInputData.supported_formats), ', *'.join(VideoInputData.supported_formats)))
         parser.add_argument('-r', '--recognition_id', required=True, help="Neural network recognition version ID.")
         parser.add_argument('-u', '--amqp_url', help="AMQP url for on-premises deployments.")
         parser.add_argument('-k', '--routing_key', help="Recognition routing key for on-premises deployments.")
-        parser.add_argument('-t', '--threshold', help="Threshold above which a prediction is considered valid.", default=0.7)
+        parser.add_argument('-t', '--threshold', type=float, help="Threshold above which a prediction is considered valid.", default=None)
+
+    for parser in [draw_parser, blur_parser]:
         parser.add_argument('--output_fps', help="In case of video output, video frame rate.", default=25)
         parser.add_argument('--fullscreen', help="Fullscreen if window output.", action="store_true")
 
@@ -56,7 +62,6 @@ def argparser_init():
     feedback_parser.add_argument('-d', '--dataset', required=True, help="Deepomatic Studio dataset name.", type=str)
     feedback_parser.add_argument('-o', '--organization', required=True, help="Deepomatic Studio organization slug.", type=str)
     feedback_parser.add_argument('path', type=str, nargs='+', help='Path to an image file, images directory or json file or directory.')
-    feedback_parser.add_argument('--recursive', dest='recursive', action='store_true', help='Goes through all files in subdirectories.')
     feedback_parser.add_argument('--json', dest='json_file', action='store_true', help='Look for JSON files instead of images.')
 
     return argparser
