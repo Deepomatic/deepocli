@@ -25,7 +25,7 @@ class RpcRecognition(AbstractWorkflow):
             self._correlation_id = correlation_id
             self._consumer = consumer
 
-        def get(self):
+        def get_predictions(self):
             response = self._consumer.get(self._correlation_id, timeout=60)
             outputs = response.to_parsed_result_buffer()
             return {

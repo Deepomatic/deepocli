@@ -3,7 +3,7 @@ import os
 
 class AbstractWorkflow(object):
     class AbstractInferResult(object):
-        def get(self):
+        def get_predictions(self):
             raise NotImplementedError
 
     def __init__(self, display_id):

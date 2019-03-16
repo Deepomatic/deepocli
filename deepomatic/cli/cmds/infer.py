@@ -15,50 +15,44 @@ from deepomatic.cli import io_data
 from deepomatic.cli.workflow import get_workflow
 
 class InferenceThread(threading.Thread):
-    def __init__(self, input_queue, output_queue, **kwargs):
+    def __init__(self, worker_queue, output_queue, workflow, **kwargs):
         threading.Thread.__init__(self, args=(), kwargs=None)
-        self.input_queue = input_queue
+        self.worker_queue = worker_queue
         self.output_queue = output_queue
-        self.daemon = True
-        self.workflow = get_workflow(kwargs)
+        self.workflow = workflow
         self.args = kwargs
-        self._threshold = kwargs.get('threshold', None)
+        self.threshold = kwargs.get('threshold', None)
 
     def run(self):
         try:
             while True:
-                data = self.input_queue.get()
+                data = self.worker_queue.get()
 
                 if data is None:
-                    self.input_queue.task_done()
-                    self.output_queue.put(None)
+                    self.worker_queue.task_done()
+                    self.output_queue.put(None)  # Signals the end of input to the next thread
                     self.workflow.close()
                     return
 
                 result = None
-                name, filename, frame = data
-                if frame is not None:
-                    if self.workflow is not None:
-                        # Computes prediction and formats them to studio json format
-                        prediction = self.workflow.infer(frame).get()
-                        prediction = transform_json_from_vulcan_to_studio(prediction, name, filename)
+                name, filename, frame, inference = data
+                if inference is not None:
+                    prediction = inference.get_predictions()
+                    prediction = transform_json_from_vulcan_to_studio(prediction, name, filename)
 
-                        # Keep only predictions higher than threshold if one is set, otherwise use the model thresholds
-                        kept_pred = []
-                        for pred in prediction['images'][0]['annotated_regions']:
-                            if self._threshold:
-                                if pred['score'] >= self._threshold:
-                                    kept_pred.append(pred)
-                            else:
-                                if pred['score'] >= pred['threshold']:
-                                    kept_pred.append(pred)
-                        prediction['images'][0]['annotated_regions'] = copy.deepcopy(kept_pred)
-                    else:
-                        prediction = {'tags': [], 'images': []}
-
+                    # Keep only predictions higher than threshold if one is set, otherwise use the model thresholds
+                    kept_pred = []
+                    for pred in prediction['images'][0]['annotated_regions']:
+                        if self.threshold:
+                            if pred['score'] >= self.threshold:
+                                kept_pred.append(pred)
+                        else:
+                            if pred['score'] >= pred['threshold']:
+                                kept_pred.append(pred)
+                    prediction['images'][0]['annotated_regions'] = copy.deepcopy(kept_pred)
                     result = self.processing(name, frame, prediction)
 
-                self.input_queue.task_done()
+                self.worker_queue.task_done()
                 self.output_queue.put(result)
         except KeyboardInterrupt:
             logging.info('Stopping output')

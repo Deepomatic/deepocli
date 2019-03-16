@@ -7,6 +7,7 @@ import cv2
 import time
 import threading
 from tqdm import tqdm
+from deepomatic.cli.workflow import get_workflow
 
 try:
     from Queue import Queue, LifoQueue, Empty
@@ -73,7 +74,7 @@ def get_output(descriptor, kwargs):
     else:
         return DisplayOutputData(**kwargs)
 
-def input_loop(kwargs, worker_thread):
+def input_loop(kwargs, WorkerThread):
     inputs = get_input(kwargs.get('input', 0), kwargs)
 
     # Initialize progress bar
@@ -83,11 +84,26 @@ def input_loop(kwargs, worker_thread):
 
     # For realtime, queue should be LIFO
     input_queue = LifoQueue() if inputs.is_infinite() else Queue()
+    worker_queue = LifoQueue() if inputs.is_infinite() else Queue()
     output_queue = LifoQueue() if inputs.is_infinite() else Queue()
 
-    worker = worker_thread(input_queue, output_queue, **kwargs)
-    worker.start()
+    # Initialize workflow for mutual use between input and worker threads:
+    #   - input thread uses it to send frames
+    #   - worker thread uses it to retrieve predictions
+    # Note: the workflow is closed by the worker thread
+    workflow = get_workflow(kwargs)
+
+    # Define threads
+    #   - input: prepares input and send it to worker
+    #   - worker: retrieves prediction from worker
+    #   - output: transforms predictions into outputs
+    input_thread = InputThread(input_queue, worker_queue, workflow, **kwargs)
+    worker_thread = WorkerThread(worker_queue, output_queue, workflow, **kwargs)
     output_thread = OutputThread(output_queue, on_progress=lambda i: pbar.update(1), **kwargs)
+
+    # Start threads
+    input_thread.start()
+    worker_thread.start()
     output_thread.start()
 
     try:
@@ -106,13 +122,13 @@ def input_loop(kwargs, worker_thread):
 
             input_queue.put(frame)
 
-        # notify worker_thread that input stream is over
+        # Notify following threads that input stream is over and wait for completion
         input_queue.put(None)
-
-        worker.join()
+        input_thread.join()
+        worker_thread.join()
         output_thread.join()
 
-        # Close the tqdm progress bar
+        # Close tqdm progress bar
         time.sleep(0.1)
         pbar.n = max_value
         pbar.refresh()
@@ -127,9 +143,44 @@ def input_loop(kwargs, worker_thread):
             except Empty:
                 break
         input_queue.put(None)
-
-        worker.join()
+        input_thread.join()
+        worker_thread.join()
         output_thread.join()
+
+class InputThread(threading.Thread):
+    def __init__(self, input_queue, worker_queue, workflow, **kwargs):
+        threading.Thread.__init__(self, args=(), kwargs=None)
+        self.input_queue = input_queue
+        self.worker_queue = worker_queue
+        self.workflow = workflow
+        self.args = kwargs
+
+    def run(self):
+        try:
+            while True:
+                data = self.input_queue.get()
+                if data is None:
+                    self.input_queue.task_done()
+                    self.worker_queue.put(None)  # Signals the end of input to the next thread
+                    return
+
+                result = None
+                name, filename, frame = data
+                if frame is not None:
+                    if self.workflow is not None:
+                        inference = self.workflow.infer(frame)
+
+                self.input_queue.task_done()
+                self.worker_queue.put((name, filename, frame, inference))
+        except KeyboardInterrupt:
+            logging.info('Stopping output')
+            while not self.input_queue.empty():
+                try:
+                    self.input_queue.get(False)
+                except Empty:
+                    break
+                self.input_queue.task_done()
+            self.worker_queue.put(None)
 
 class OutputThread(threading.Thread):
     def __init__(self, queue, on_progress=None, **kwargs):
