@@ -10,16 +10,16 @@ try:
 except ImportError:
     from queue import Empty
 
-from deepomatic.cli.cmds.studio_helpers.vulcan2studio import transform_json_from_vulcan_to_studio
 from deepomatic.cli import io_data
-from deepomatic.cli.workflow import get_workflow
+from deepomatic.cli.cmds.studio_helpers.vulcan2studio import transform_json_from_vulcan_to_studio
 
 class InferenceThread(threading.Thread):
-    def __init__(self, worker_queue, output_queue, workflow, **kwargs):
+    def __init__(self, worker_queue, output_queue, workflow, workflow_lock, **kwargs):
         threading.Thread.__init__(self, args=(), kwargs=None)
         self.worker_queue = worker_queue
         self.output_queue = output_queue
         self.workflow = workflow
+        self.workflow_lock = workflow_lock
         self.args = kwargs
         self.threshold = kwargs.get('threshold', None)
 
@@ -37,7 +37,8 @@ class InferenceThread(threading.Thread):
                 result = None
                 name, filename, frame, inference = data
                 if inference is not None:
-                    prediction = inference.get_predictions()
+                    with self.workflow_lock:
+                        prediction = inference.get_predictions()
                     prediction = transform_json_from_vulcan_to_studio(prediction, name, filename)
 
                     # Keep only predictions higher than threshold if one is set, otherwise use the model thresholds

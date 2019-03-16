@@ -1,9 +1,10 @@
 from deepomatic.cli.cmds import infer
 from deepomatic.cli import io_data
 
+
 class BlurThread(infer.InferenceThread):
-    def __init__(self, input_queue, output_queue, **kwargs):
-        super(BlurThread, self).__init__(input_queue, output_queue, **kwargs)
+    def __init__(self, worker_queue, output_queue, workflow, workflow_lock, **kwargs):
+        super(BlurThread, self).__init__(worker_queue, output_queue, workflow, workflow_lock, **kwargs)
         self.process = io_data.BlurOutputData(**kwargs)
 
     def processing(self, name, frame, prediction):

@@ -13,7 +13,7 @@ class CloudRecognition(AbstractWorkflow):
         def __init__(self, task):
             self._task = task
 
-        def get(self):
+        def get_predictions(self):
             try:
                 return self._task.wait().data()['data']
             except (deepomatic.api.exceptions.TaskTimeout, deepomatic.api.exceptions.TaskError) as e:

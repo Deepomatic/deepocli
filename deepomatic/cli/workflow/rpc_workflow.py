@@ -33,6 +33,7 @@ class RpcRecognition(AbstractWorkflow):
                     'labels': MessageToDict(output.labels, including_default_value_fields=True, preserving_proto_field_name=True)
                 } for output in outputs]
             }
+            return
 
     def __init__(self, recognition_version_id, amqp_url, routing_key, recognition_cmd_kwargs=None):
         super(RpcRecognition, self).__init__('recognition_{}'.format(recognition_version_id))

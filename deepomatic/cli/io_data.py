@@ -14,7 +14,7 @@ try:
 except ImportError:
     from queue import Queue, LifoQueue, Empty
 
-INPUT_QUEUE_MAX_SIZE = 50
+QUEUE_MAX_SIZE = 50
 
 def print_log(log):
     """Uses tqdm helper function to ensure progressbar stays at the bottom."""
@@ -92,13 +92,14 @@ def input_loop(kwargs, WorkerThread):
     #   - worker thread uses it to retrieve predictions
     # Note: the workflow is closed by the worker thread
     workflow = get_workflow(kwargs)
+    workflow_lock = threading.Lock()  # Controls access to underlying socket
 
     # Define threads
     #   - input: prepares input and send it to worker
     #   - worker: retrieves prediction from worker
     #   - output: transforms predictions into outputs
-    input_thread = InputThread(input_queue, worker_queue, workflow, **kwargs)
-    worker_thread = WorkerThread(worker_queue, output_queue, workflow, **kwargs)
+    input_thread = InputThread(input_queue, worker_queue, workflow, workflow_lock, **kwargs)
+    worker_thread = WorkerThread(worker_queue, output_queue, workflow, workflow_lock, **kwargs)
     output_thread = OutputThread(output_queue, on_progress=lambda i: pbar.update(1), **kwargs)
 
     # Start threads
@@ -117,7 +118,7 @@ def input_loop(kwargs, WorkerThread):
                     except Empty:
                         break
 
-            while input_queue.qsize() > INPUT_QUEUE_MAX_SIZE:
+            while input_queue.qsize() > QUEUE_MAX_SIZE or worker_queue.qsize() > QUEUE_MAX_SIZE:
                 time.sleep(1)
 
             input_queue.put(frame)
@@ -148,11 +149,12 @@ def input_loop(kwargs, WorkerThread):
         output_thread.join()
 
 class InputThread(threading.Thread):
-    def __init__(self, input_queue, worker_queue, workflow, **kwargs):
+    def __init__(self, input_queue, worker_queue, workflow, workflow_lock, **kwargs):
         threading.Thread.__init__(self, args=(), kwargs=None)
         self.input_queue = input_queue
         self.worker_queue = worker_queue
         self.workflow = workflow
+        self.workflow_lock = workflow_lock
         self.args = kwargs
 
     def run(self):
@@ -168,7 +170,8 @@ class InputThread(threading.Thread):
                 name, filename, frame = data
                 if frame is not None:
                     if self.workflow is not None:
-                        inference = self.workflow.infer(frame)
+                        with self.workflow_lock:
+                            inference = self.workflow.infer(frame)
 
                 self.input_queue.task_done()
                 self.worker_queue.put((name, filename, frame, inference))
