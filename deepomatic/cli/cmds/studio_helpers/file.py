@@ -5,6 +5,7 @@ import json
 import uuid
 import time
 import signal
+import logging
 import threading
 from tqdm import tqdm
 from .task import Task
@@ -13,6 +14,7 @@ if sys.version_info >= (3,0):
 else:
     import Queue
 
+
 # Define thread parameters
 THREAD_NUMBER = 5
 q = Queue.Queue()
@@ -20,11 +22,12 @@ count = 0
 run = True
 lock = threading.Lock()
 
+
 def handler(signum, frame):
     global run, q, pbar
     run = False
     pbar.close()
-    print("Stopping upload...")
+    logging.info("Stopping upload...")
     while not q.empty():
         q.get()
         q.task_done()
@@ -110,7 +113,7 @@ class File(object):
                     total_files += 1
 
         # Initialize progressbar before starting workers
-        print("Uploading images...")
+        logging.info("Uploading images...")
         pbar = tqdm(total=total_files)
 
         # Initialize threads
@@ -134,8 +137,8 @@ class File(object):
             t.join()
         pbar.close()
         if count == total_files:
-            print("All {} files have been uploaded.".format(count))
+            logging.info("All {} files have been uploaded.".format(count))
         else:
-            print("{} files out of {} have been uploaded.".format(count, total_files))
+            logging.info("{} files out of {} have been uploaded.".format(count, total_files))
 
         return True

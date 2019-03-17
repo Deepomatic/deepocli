@@ -1,8 +1,5 @@
 import json
 
-def pretty_print(inline_json):
-    """Prints a json in easily-readable format."""
-    print(json.dumps(inline_json, indent=4, sort_keys=True))
 
 def transform_json_from_vulcan_to_studio(vulcan_json, name, filename):
     """Transforms a json from the vulcan format to the Studio format."""

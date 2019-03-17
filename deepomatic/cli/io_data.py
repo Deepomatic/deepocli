@@ -8,24 +8,21 @@ import logging
 import threading
 from tqdm import tqdm
 from deepomatic.cli.workflow import get_workflow
-
 try:
     from Queue import Queue, LifoQueue, Empty
 except ImportError:
     from queue import Queue, LifoQueue, Empty
 
+
 QUEUE_MAX_SIZE = 50
 END_OF_STREAM_MSG = "__END_OF_STREAM__"
 TERMINATION_MSG = "__TERMINATION__"
 
-def print_log(log):
-    """Uses tqdm helper function to ensure progressbar stays at the bottom."""
-    tqdm.write(log)
 
 def save_json_to_file(json_data, json_path):
     try:
         with open('%s.json' % json_path, 'w') as file:
-            print_log('Writing %s.json' % json_path)
+            logging.info('Writing %s.json' % json_path)
             json.dump(json_data, file)
     except:
         logging.error("Could not save file {} in json format.".format(json_path))
@@ -570,7 +567,7 @@ class ImageOutputData(OutputData):
             if (frame is None):
                 logging.warning('No frame to output.')
             else:
-                print_log('Writing %s' % path)
+                logging.info('Writing %s' % path)
                 cv2.imwrite(path, frame)
                 if self._json:
                     json_path = os.path.splitext(path)[0]
@@ -616,7 +613,7 @@ class VideoOutputData(OutputData):
             logging.warning('No frame to output.')
         else:
             if self._writer is None:
-                print_log('Writing %s' % self._descriptor)
+                logging.info('Writing %s' % self._descriptor)
                 self._writer = cv2.VideoWriter(self._descriptor, self._fourcc, self._fps, (frame.shape[1], frame.shape[0]))
             if self._json:
                 self._all_predictions['images'] += prediction['images']
@@ -644,10 +641,10 @@ class DirectoryOutputData(OutputData):
                 pass
             else:
                 with open('%s.json' % path, 'w') as file:
-                    print_log('Writing %s.json' % path)
+                    logging.info('Writing %s.json' % path)
                     json.dump(prediction, file)
         else:
-            print_log('Writing %s.jpeg' % path)
+            logging.info('Writing %s.jpeg' % path)
             cv2.imwrite('%s.jpeg' % path, frame)
             if self._json:
                 save_json_to_file(prediction, path)
@@ -750,9 +747,9 @@ class StdOutputData(OutputData):
         else:
             sys.stdout.write(frame[:, :, ::-1].tostring())
 
-
     def __enter__(self):
         return self
+        
     def __exit__(self, exception_type, exception_value, traceback):
         pass
 
