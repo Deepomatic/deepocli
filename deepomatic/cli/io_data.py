@@ -124,7 +124,8 @@ def input_loop(kwargs, WorkerThread):
             while input_queue.qsize() > QUEUE_MAX_SIZE or worker_queue.qsize() > QUEUE_MAX_SIZE:
                 time.sleep(1)
 
-            input_queue.put((frame_number, *frame))
+            data = (frame_number,) + frame  # Python 2.7 compatiblity
+            input_queue.put(data)
             frame_number += 1
 
         # Notify following threads that input stream is over and wait for completion
