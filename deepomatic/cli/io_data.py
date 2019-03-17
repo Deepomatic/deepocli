@@ -95,7 +95,7 @@ def input_loop(kwargs, WorkerThread):
     #   - worker thread uses it to retrieve predictions
     # Note: the workflow is closed by the worker thread
     workflow = get_workflow(kwargs)
-    workflow_lock = threading.Lock()  # Controls access to underlying socket
+    workflow_lock = threading.Lock()  # Controls access to amqp connection
 
     # Define threads
     #   - input: prepares input and send it to worker
@@ -106,6 +106,7 @@ def input_loop(kwargs, WorkerThread):
     output_thread = OutputThread(output_queue, on_progress=lambda i: pbar.update(1), **kwargs)
 
     # Start threads
+    daemon = True  # Makes all threads daemon threads, must be set before starting threads
     input_thread.start()
     worker_thread.start()
     output_thread.start()
@@ -160,7 +161,7 @@ class InputThread(threading.Thread):
 
     def run(self):
         try:
-            while 1:
+            while True:
                 data = self.input_queue.get()
                 if data is END_OF_STREAM_MSG or data is TERMINATION_MSG:
                     self.input_queue.task_done()
