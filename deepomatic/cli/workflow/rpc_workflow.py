@@ -27,8 +27,8 @@ class RpcRecognition(AbstractWorkflow):
             self._consumer = consumer
 
         def get_predictions(self):
-            # Check if the prediction is complete, in case of stream and LIFO we might need to force waiting
-            response_done, response_pending = wait_responses(self._consumer, [self._correlation_id], timeout=0.100)
+            # TODO: Enforce a certain level of force waiting for live streams
+            response_done, response_pending = wait_responses(self._consumer, [self._correlation_id], timeout=0.010)
             if response_done:
                 response = response_done[0][1]
                 outputs = response.to_parsed_result_buffer()

@@ -110,6 +110,7 @@ def input_loop(kwargs, WorkerThread):
     output_thread.start()
 
     try:
+        frame_number = 0  # Used to keep input order, notably for video reconstruction
         for frame in inputs:
             if inputs.is_infinite():
                 # Discard all previous inputs
@@ -123,7 +124,8 @@ def input_loop(kwargs, WorkerThread):
             while input_queue.qsize() > QUEUE_MAX_SIZE or worker_queue.qsize() > QUEUE_MAX_SIZE:
                 time.sleep(1)
 
-            input_queue.put(frame)
+            input_queue.put((frame_number, *frame))
+            frame_number += 1
 
         # Notify following threads that input stream is over and wait for completion
         input_queue.put(END_OF_STREAM_MSG)
@@ -164,14 +166,14 @@ class InputThread(threading.Thread):
                     return
 
                 inference = None
-                name, filename, frame = data
+                frame_number, name, filename, frame = data
                 if frame is not None:
                     if self.workflow is not None:
                         with self.workflow_lock:
                             inference = self.workflow.infer(frame)
 
                 self.input_queue.task_done()
-                self.worker_queue.put((name, filename, frame, inference))
+                self.worker_queue.put((frame_number, name, filename, frame, inference))
         except KeyboardInterrupt:
             logging.info('Stopping output')
             while not self.input_queue.empty():
@@ -190,12 +192,11 @@ class OutputThread(threading.Thread):
         self.on_progress = on_progress
 
     def run(self):
-        i = 0
         with get_output(self.args.get('output', None), self.args) as output_processing:
             try:
+                frame_to_process = 0
                 while 1:
                     data = self.output_queue.get()
-
                     if data is TERMINATION_MSG:
                         self.output_queue.task_done()
                         return
@@ -207,11 +208,18 @@ class OutputThread(threading.Thread):
                         else:
                             return
                     else:
-                        output_processing(*data)
-                        i += 1
-                        if self.on_progress:
-                            self.on_progress(i)
-                        self.output_queue.task_done()
+                        queue_frame_number, queue_frame_processed = data
+                        # TODO: Disregard frame order for live streams
+                        # Make sure we process outputs in the same order as inputs for video reconstruction
+                        if frame_to_process == queue_frame_number:
+                            output_processing(*queue_frame_processed)
+                            frame_to_process += 1
+                            if self.on_progress: self.on_progress(frame_to_process)
+                            self.output_queue.task_done()
+                        # Otherwise put it back in the queue
+                        else:
+                            self.output_queue.task_done()
+                            self.output_queue.put(data)
             except KeyboardInterrupt:
                 logging.info('Stopping output')
                 while not self.output_queue.empty():

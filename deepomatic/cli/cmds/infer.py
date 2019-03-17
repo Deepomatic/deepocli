@@ -29,7 +29,6 @@ class InferenceThread(threading.Thread):
         try:
             while 1:
                 data = self.worker_queue.get()
-
                 if data is TERMINATION_MSG:
                     self.worker_queue.task_done()
                     self.output_queue.put(TERMINATION_MSG)
@@ -45,8 +44,8 @@ class InferenceThread(threading.Thread):
                         self.workflow.close()
                         return
                 else:
-                    result = None
-                    name, filename, frame, inference = data
+                    frame_processed = None
+                    frame_number, name, filename, frame, inference = data
                     if inference is not None:
                         with self.workflow_lock:
                             prediction = inference.get_predictions()
@@ -67,10 +66,10 @@ class InferenceThread(threading.Thread):
                                 if pred['score'] >= pred['threshold']:
                                     kept_pred.append(pred)
                         prediction['images'][0]['annotated_regions'] = copy.deepcopy(kept_pred)
-                        result = self.processing(name, frame, prediction)
+                        frame_processed = self.processing(name, frame, prediction)
 
                     self.worker_queue.task_done()
-                    self.output_queue.put(result)
+                    self.output_queue.put((frame_number, frame_processed))
         except KeyboardInterrupt:
             logging.info('Stopping output')
             while not self.output_queue.empty():
