@@ -15,6 +15,8 @@ except ImportError:
     from queue import Queue, LifoQueue, Empty
 
 QUEUE_MAX_SIZE = 50
+END_OF_STREAM_MSG = "__END_OF_STREAM__"
+TERMINATION_MSG = "__TERMINATION_MSG__"
 
 def print_log(log):
     """Uses tqdm helper function to ensure progressbar stays at the bottom."""
@@ -124,15 +126,10 @@ def input_loop(kwargs, WorkerThread):
             input_queue.put(frame)
 
         # Notify following threads that input stream is over and wait for completion
-        input_queue.put(None)
+        input_queue.put(END_OF_STREAM_MSG)
         input_thread.join()
         worker_thread.join()
         output_thread.join()
-
-        # Close tqdm progress bar
-        time.sleep(0.1)
-        pbar.n = max_value
-        pbar.refresh()
         pbar.close()
 
     except KeyboardInterrupt:
@@ -143,7 +140,7 @@ def input_loop(kwargs, WorkerThread):
                 input_queue.task_done()
             except Empty:
                 break
-        input_queue.put(None)
+        input_queue.put(TERMINATION_MSG)
         input_thread.join()
         worker_thread.join()
         output_thread.join()
@@ -159,14 +156,14 @@ class InputThread(threading.Thread):
 
     def run(self):
         try:
-            while True:
+            while 1:
                 data = self.input_queue.get()
-                if data is None:
+                if data is END_OF_STREAM_MSG or data is TERMINATION_MSG:
                     self.input_queue.task_done()
-                    self.worker_queue.put(None)  # Signals the end of input to the next thread
+                    self.worker_queue.put(data)
                     return
 
-                result = None
+                inference = None
                 name, filename, frame = data
                 if frame is not None:
                     if self.workflow is not None:
@@ -183,32 +180,46 @@ class InputThread(threading.Thread):
                 except Empty:
                     break
                 self.input_queue.task_done()
-            self.worker_queue.put(None)
+            self.worker_queue.put(TERMINATION_MSG)
 
 class OutputThread(threading.Thread):
-    def __init__(self, queue, on_progress=None, **kwargs):
+    def __init__(self, output_queue, on_progress=None, **kwargs):
         threading.Thread.__init__(self, args=(), kwargs=None)
-        self.queue = queue
+        self.output_queue = output_queue
         self.args = kwargs
         self.on_progress = on_progress
 
     def run(self):
         i = 0
-        with get_output(self.args.get('output', None), self.args) as output:
+        with get_output(self.args.get('output', None), self.args) as output_processing:
             try:
-                while True:
-                    i += 1
-                    data = self.queue.get()
-                    if data is None:
-                        self.queue.task_done()
-                        return
+                while 1:
+                    data = self.output_queue.get()
 
-                    output(*data)
-                    if (self.on_progress is not None):
-                        self.on_progress(i)
-                    self.queue.task_done()
+                    if data is TERMINATION_MSG:
+                        self.output_queue.task_done()
+                        return
+                    elif data is END_OF_STREAM_MSG:
+                        self.output_queue.task_done()
+                        if not self.output_queue.empty():
+                            self.output_queue.put(END_OF_STREAM_MSG)
+                            continue
+                        else:
+                            return
+                    else:
+                        output_processing(*data)
+                        i += 1
+                        if self.on_progress:
+                            self.on_progress(i)
+                        self.output_queue.task_done()
             except KeyboardInterrupt:
-                pass
+                logging.info('Stopping output')
+                while not self.output_queue.empty():
+                    try:
+                        self.output_queue.get(False)
+                    except Empty:
+                        break
+                    self.output_queue.task_done()
 
 class InputData(object):
     def __init__(self, descriptor,  **kwargs):

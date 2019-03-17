@@ -2,8 +2,9 @@ import os
 import sys
 import json
 import copy
-import threading
+import time
 import logging
+import threading
 
 try:
     from Queue import Empty
@@ -11,6 +12,7 @@ except ImportError:
     from queue import Empty
 
 from deepomatic.cli import io_data
+from deepomatic.cli.io_data import END_OF_STREAM_MSG, TERMINATION_MSG
 from deepomatic.cli.cmds.studio_helpers.vulcan2studio import transform_json_from_vulcan_to_studio
 
 class InferenceThread(threading.Thread):
@@ -25,36 +27,50 @@ class InferenceThread(threading.Thread):
 
     def run(self):
         try:
-            while True:
+            while 1:
                 data = self.worker_queue.get()
 
-                if data is None:
+                if data is TERMINATION_MSG:
                     self.worker_queue.task_done()
-                    self.output_queue.put(None)  # Signals the end of input to the next thread
+                    self.output_queue.put(TERMINATION_MSG)
                     self.workflow.close()
                     return
+                elif data is END_OF_STREAM_MSG:
+                    self.worker_queue.task_done()
+                    if not self.worker_queue.empty():
+                        self.worker_queue.put(END_OF_STREAM_MSG)
+                        continue
+                    else:
+                        self.output_queue.put(END_OF_STREAM_MSG)
+                        self.workflow.close()
+                        return
+                else:
+                    result = None
+                    name, filename, frame, inference = data
+                    if inference is not None:
+                        with self.workflow_lock:
+                            prediction = inference.get_predictions()
+                            # If the prediction is not finished, then put the data back in the queue
+                            if prediction is None:
+                                self.worker_queue.task_done()
+                                self.worker_queue.put(data)
+                                continue
 
-                result = None
-                name, filename, frame, inference = data
-                if inference is not None:
-                    with self.workflow_lock:
-                        prediction = inference.get_predictions()
-                    prediction = transform_json_from_vulcan_to_studio(prediction, name, filename)
+                        prediction = transform_json_from_vulcan_to_studio(prediction, name, filename)
+                        # Keep only predictions higher than threshold if one is set, otherwise use the model thresholds
+                        kept_pred = []
+                        for pred in prediction['images'][0]['annotated_regions']:
+                            if self.threshold:
+                                if pred['score'] >= self.threshold:
+                                    kept_pred.append(pred)
+                            else:
+                                if pred['score'] >= pred['threshold']:
+                                    kept_pred.append(pred)
+                        prediction['images'][0]['annotated_regions'] = copy.deepcopy(kept_pred)
+                        result = self.processing(name, frame, prediction)
 
-                    # Keep only predictions higher than threshold if one is set, otherwise use the model thresholds
-                    kept_pred = []
-                    for pred in prediction['images'][0]['annotated_regions']:
-                        if self.threshold:
-                            if pred['score'] >= self.threshold:
-                                kept_pred.append(pred)
-                        else:
-                            if pred['score'] >= pred['threshold']:
-                                kept_pred.append(pred)
-                    prediction['images'][0]['annotated_regions'] = copy.deepcopy(kept_pred)
-                    result = self.processing(name, frame, prediction)
-
-                self.worker_queue.task_done()
-                self.output_queue.put(result)
+                    self.worker_queue.task_done()
+                    self.output_queue.put(result)
         except KeyboardInterrupt:
             logging.info('Stopping output')
             while not self.output_queue.empty():
@@ -63,7 +79,7 @@ class InferenceThread(threading.Thread):
                 except Empty:
                     break
                 self.output_queue.task_done()
-            self.output_queue.put(None)
+            self.output_queue.put(TERMINATION_MSG)
             self.workflow.close()
 
     def processing(self, name, frame, prediction):

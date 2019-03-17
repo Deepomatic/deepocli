@@ -2,6 +2,7 @@ import logging
 import cv2
 from deepomatic.cli.workflow.workflow_abstraction import AbstractWorkflow
 from deepomatic.cli.common import DeepoCLIException
+from deepomatic.rpc.response import wait_responses
 
 can_use_rpc = True
 
@@ -26,14 +27,15 @@ class RpcRecognition(AbstractWorkflow):
             self._consumer = consumer
 
         def get_predictions(self):
-            response = self._consumer.get(self._correlation_id, timeout=60)
-            outputs = response.to_parsed_result_buffer()
-            return {
-                'outputs': [{
-                    'labels': MessageToDict(output.labels, including_default_value_fields=True, preserving_proto_field_name=True)
-                } for output in outputs]
-            }
-            return
+            # Check if the prediction is complete, in case of stream and LIFO we might need to force waiting
+            response_done, response_pending = wait_responses(self._consumer, [self._correlation_id], timeout=0.100)
+            if response_done:
+                response = response_done[0][1]
+                outputs = response.to_parsed_result_buffer()
+                predictions = {'outputs': [{'labels': MessageToDict(output.labels, including_default_value_fields=True, preserving_proto_field_name=True)} for output in outputs]}
+                return predictions
+            else:
+                return None
 
     def __init__(self, recognition_version_id, amqp_url, routing_key, recognition_cmd_kwargs=None):
         super(RpcRecognition, self).__init__('recognition_{}'.format(recognition_version_id))
