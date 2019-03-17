@@ -7,17 +7,16 @@ import imutils
 import logging
 import threading
 from tqdm import tqdm
+from deepomatic.cli.common import TqdmToLogger
 from deepomatic.cli.workflow import get_workflow
 try:
     from Queue import Queue, LifoQueue, Empty
 except ImportError:
     from queue import Queue, LifoQueue, Empty
 
-
 QUEUE_MAX_SIZE = 50
 END_OF_STREAM_MSG = "__END_OF_STREAM__"
 TERMINATION_MSG = "__TERMINATION__"
-
 
 def save_json_to_file(json_data, json_path):
     try:
@@ -77,9 +76,11 @@ def input_loop(kwargs, WorkerThread):
     inputs = get_input(kwargs.get('input', 0), kwargs)
 
     # Initialize progress bar
-    max_value = inputs.get_frame_count()
-    max_value = int(max_value) if max_value >= 0 else None  # ensure it's int for tqdm display
-    pbar = tqdm(total=max_value)
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger()
+    max_value = int(inputs.get_frame_count()) if inputs.get_frame_count() >= 0 else None
+    tqdmout = TqdmToLogger(logger, level=logging.INFO)
+    pbar = tqdm(total=max_value, file=tqdmout, desc='Input processing', smoothing=0)
 
     # For realtime, queue should be LIFO
     input_queue = LifoQueue() if inputs.is_infinite() else Queue()
@@ -749,7 +750,7 @@ class StdOutputData(OutputData):
 
     def __enter__(self):
         return self
-        
+
     def __exit__(self, exception_type, exception_value, traceback):
         pass
 

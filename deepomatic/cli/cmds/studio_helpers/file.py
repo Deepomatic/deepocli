@@ -13,6 +13,7 @@ if sys.version_info >= (3,0):
     import queue as Queue
 else:
     import Queue
+from deepomatic.cli.common import TqdmToLogger
 
 
 # Define thread parameters
@@ -42,7 +43,7 @@ def worker(self):
                     rq = self._helper.post(url, data={"meta": data}, content_type='multipart/form', files={"file": fd})
                 self._task.retrieve(rq['task_id'])
             except RuntimeError as e:
-                tqdm.write('Annotation format for file named {} is incorrect'.format(file), file=sys.stderr)
+                logging.error('Annotation format for file named {} is incorrect'.format(file), file=sys.stderr)
             pbar.update(1)
             q.task_done()
             lock.acquire()
@@ -82,8 +83,8 @@ class File(object):
                     with open(file, 'r') as fd:
                         json_objects = json.load(fd)
                 except ValueError as err:
-                    tqdm.write(err, file=sys.stderr)
-                    tqdm.write("Can't read file {}, skipping...".format(file), file=sys.stderr)
+                    logging.error(err)
+                    logging.error("Can't read file {}, skipping...".format(file))
                     continue
 
                 # Check which type of JSON it is:
@@ -94,7 +95,7 @@ class File(object):
 
                 # Check that the JSON is a dict
                 if not isinstance(json_objects, dict):
-                    tqdm.write("JSON {} is not a dictionnary.".format(os.path.basename(file)), file=sys.stderr)
+                    logging.error("JSON {} is not a dictionnary.".format(os.path.basename(file)))
                     continue
 
                 # If it's a type-1 JSON, transform it into a type-2 JSON
@@ -105,7 +106,7 @@ class File(object):
                     img_loc = img_json['location']
                     file_path = os.path.join(os.path.dirname(file), img_loc)
                     if not os.path.isfile(file_path):
-                        tqdm.write("Can't find an file named {}".format(img_loc), file=sys.stderr)
+                        logging.error("Can't find file named {}".format(img_loc))
                         continue
                     image_key = uuid.uuid4().hex
                     img_json['location'] = image_key
@@ -113,8 +114,10 @@ class File(object):
                     total_files += 1
 
         # Initialize progressbar before starting workers
-        logging.info("Uploading images...")
-        pbar = tqdm(total=total_files)
+        logging.basicConfig(level=logging.INFO)
+        logger = logging.getLogger()
+        tqdmout = TqdmToLogger(logger, level=logging.INFO)
+        pbar = tqdm(total=total_files, file=tqdmout, desc='Uploading images', smoothing=0)
 
         # Initialize threads
         run = True  # reset the value to True in case the program is run multiple times
