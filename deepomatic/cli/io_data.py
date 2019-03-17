@@ -3,7 +3,6 @@ import cv2
 import sys
 import json
 import time
-import math
 import imutils
 import logging
 import threading
@@ -322,7 +321,7 @@ class VideoInputData(InputData):
         if self._cap is not None:
             raw_fps = self._cap.get(cv2.CAP_PROP_FPS)
             desired_fps = min(kwargs['fps'], raw_fps) if kwargs['fps'] else raw_fps
-            total_frames = math.floor(self._cap.get(cv2.CAP_PROP_FRAME_COUNT) * desired_fps / raw_fps)
+            total_frames = int(self._cap.get(cv2.CAP_PROP_FRAME_COUNT) * desired_fps / raw_fps)
             self._fps = desired_fps
             self._adjusted_frames = [round(frame * raw_fps / desired_fps) for frame in range(0, total_frames)]
             self._total_frames = len(self._adjusted_frames)
