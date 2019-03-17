@@ -13,6 +13,7 @@ try:
 except ImportError:
     RPC_PACKAGES_USABLE = False
 
+
 class RpcRecognition(AbstractWorkflow):
 
     class InferResult(AbstractWorkflow.AbstractInferResult):

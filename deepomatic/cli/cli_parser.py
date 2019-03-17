@@ -48,7 +48,7 @@ def argparser_init():
         parser.add_argument('-t', '--threshold', type=float, help="Threshold above which a prediction is considered valid.", default=None)
 
     for parser in [draw_parser, blur_parser]:
-        parser.add_argument('--output_fps', help="In case of video output, video frame rate.", default=25)
+        parser.add_argument('--fps', type=int, help="Video frame rate if applicable.")
         parser.add_argument('--fullscreen', help="Fullscreen if window output.", action="store_true")
 
     draw_parser.add_argument('--draw_scores', help="Overlays the prediction scores.", action="store_true")

@@ -2,7 +2,6 @@ import os
 import sys
 import json
 import copy
-import time
 import logging
 import threading
 

@@ -93,7 +93,7 @@ def test_e2e_image_draw_image_threshold(test_input=image_input, test_output=imag
     run(['draw', '-i', test_input, '-o', test_output, '-r', 'fashion-v4', '-t', '0.5'])
 
 def test_e2e_video_draw_video_fps(test_input=video_input, test_output=video_output):
-    run(['draw', '-i', test_input, '-o', test_output, '-r', 'fashion-v4', '--output_fps', '2'])
+    run(['draw', '-i', test_input, '-o', test_output, '-r', 'fashion-v4', '--fps', '2'])
 
 def test_e2e_image_draw_image_window(test_input=image_input, test_output='window'):
     return  # window not handled by test

@@ -1,10 +1,11 @@
 import os
+import cv2
 import sys
 import json
+import time
+import math
 import imutils
 import logging
-import cv2
-import time
 import threading
 from tqdm import tqdm
 from deepomatic.cli.workflow import get_workflow
@@ -16,7 +17,7 @@ except ImportError:
 
 QUEUE_MAX_SIZE = 50
 END_OF_STREAM_MSG = "__END_OF_STREAM__"
-TERMINATION_MSG = "__TERMINATION_MSG__"
+TERMINATION_MSG = "__TERMINATION__"
 
 def print_log(log):
     """Uses tqdm helper function to ensure progressbar stays at the bottom."""
@@ -314,10 +315,19 @@ class VideoInputData(InputData):
 
     def __init__(self, descriptor, **kwargs):
         super(VideoInputData, self).__init__(descriptor, **kwargs)
-        self._cap = None
         self._i = 0
         self._name = '%s_%s_%s' % (self._name, '%05d', self._reco)
         self._cap = cv2.VideoCapture(self._descriptor)
+        if self._cap is not None:
+            raw_fps = self._cap.get(cv2.CAP_PROP_FPS)
+            desired_fps = min(kwargs['fps'], raw_fps) if 'fps' in kwargs else raw_fps
+            self._fps = desired_fps
+            self._total_frames = math.floor(self._cap.get(cv2.CAP_PROP_FRAME_COUNT) * self._fps / raw_fps)
+            self._adjusted_frames = [math.floor(frame * raw_fps / self._fps) for frame in range(0, self._total_frames)]
+        else:
+            self._fps = None
+            self._total_frames = None
+            self._adjusted_frames = None
 
     def __iter__(self):
         if self._cap is not None:
@@ -328,30 +338,26 @@ class VideoInputData(InputData):
 
     def next(self):
         if self._cap.isOpened():
-            _, frame = self._cap.read()
-            if frame is None:
-                self._cap.release()
-                raise StopIteration
-            else:
+            while self._i not in self._adjusted_frames:
                 self._i += 1
-                return self._name % self._i, self._filename, frame
+                _, frame = self._cap.read()
+                if frame is None:
+                    self._cap.release()
+                    raise StopIteration
+            self._i += 1
+            _, frame = self._cap.read()
+            return self._name % self._i, self._filename, frame
         self._cap.release()
         raise StopIteration
 
     def get_fps(self):
-        if (self._cap is not None):
-            return self._cap.get(cv2.CAP_PROP_FPS)
-        else:
-            return None
+        return self._fps
 
     def get_frame_index(self):
         return self._i
 
     def get_frame_count(self):
-        if (self._cap is not None):
-            return self._cap.get(cv2.CAP_PROP_FRAME_COUNT)
-        else:
-            return None
+        return self._total_frames
 
     def is_infinite(self):
         return False
@@ -586,7 +592,7 @@ class VideoOutputData(OutputData):
         elif ext == '.mp4':
             fourcc = cv2.VideoWriter_fourcc('m', 'p', '4', 'v')
         self._fourcc = fourcc
-        self._fps = kwargs.get('output_fps', 25)
+        self._fps = kwargs.get('fps', 25)
         self._writer = None
         self._all_predictions = {'tags': [], 'images': []}
 
@@ -610,10 +616,7 @@ class VideoOutputData(OutputData):
         else:
             if self._writer is None:
                 print_log('Writing %s' % self._descriptor)
-                self._writer = cv2.VideoWriter(self._descriptor,
-                    self._fourcc,
-                    self._fps,
-                    (frame.shape[1], frame.shape[0]))
+                self._writer = cv2.VideoWriter(self._descriptor, self._fourcc, self._fps, (frame.shape[1], frame.shape[0]))
             if self._json:
                 self._all_predictions['images'] += prediction['images']
                 self._all_predictions['tags'] = list(set(self._all_predictions['tags'] + prediction['tags']))
@@ -755,7 +758,7 @@ class StdOutputData(OutputData):
 class DisplayOutputData(OutputData):
     def __init__(self, **kwargs):
         super(DisplayOutputData, self).__init__(None, **kwargs)
-        self._fps = kwargs.get('output_fps', 25)
+        self._fps = kwargs.get('fps', 25)
         self._window_name = 'Deepomatic'
         self._fullscreen = kwargs.get('fullscreen', False)
 
