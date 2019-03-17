@@ -320,7 +320,7 @@ class VideoInputData(InputData):
         self._cap = cv2.VideoCapture(self._descriptor)
         if self._cap is not None:
             raw_fps = self._cap.get(cv2.CAP_PROP_FPS)
-            desired_fps = min(kwargs['fps'], raw_fps) if 'fps' in kwargs else raw_fps
+            desired_fps = min(kwargs['fps'], raw_fps) if kwargs['fps'] else raw_fps
             self._fps = desired_fps
             self._total_frames = math.floor(self._cap.get(cv2.CAP_PROP_FRAME_COUNT) * self._fps / raw_fps)
             self._adjusted_frames = [math.floor(frame * raw_fps / self._fps) for frame in range(0, self._total_frames)]
@@ -592,7 +592,7 @@ class VideoOutputData(OutputData):
         elif ext == '.mp4':
             fourcc = cv2.VideoWriter_fourcc('m', 'p', '4', 'v')
         self._fourcc = fourcc
-        self._fps = kwargs.get('fps', 25)
+        self._fps = kwargs['fps'] if kwargs['fps'] else 25
         self._writer = None
         self._all_predictions = {'tags': [], 'images': []}
 
