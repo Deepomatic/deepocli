@@ -2,21 +2,16 @@ import logging
 import cv2
 from deepomatic.cli.workflow.workflow_abstraction import AbstractWorkflow
 from deepomatic.cli.common import DeepoCLIException
-from deepomatic.rpc.response import wait_responses
-
-can_use_rpc = True
-
 try:
     from deepomatic.rpc.client import Client
-except ImportError:
-    can_use_rpc = False
-
-if can_use_rpc:
     from deepomatic.rpc import v07_ImageInput, BINARY_IMAGE_PREFIX
+    from deepomatic.rpc.response import wait_responses
     from deepomatic.rpc.helpers.v07_proto import create_recognition_command_mix
     from deepomatic.rpc.helpers.proto import create_v07_images_command
     from google.protobuf.json_format import MessageToDict
-
+    RPC_PACKAGES_USABLE = True
+except ImportError:
+    RPC_PACKAGES_USABLE = False
 
 class RpcRecognition(AbstractWorkflow):
 
@@ -46,7 +41,7 @@ class RpcRecognition(AbstractWorkflow):
 
         recognition_cmd_kwargs = recognition_cmd_kwargs or {}
 
-        if can_use_rpc:
+        if RPC_PACKAGES_USABLE:
             self._client = Client(amqp_url)
             self._recognition = None
             try:
