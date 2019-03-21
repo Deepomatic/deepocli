@@ -83,9 +83,10 @@ def input_loop(kwargs, WorkerThread):
     pbar = tqdm(total=max_value, file=tqdmout, desc='Input processing', smoothing=0)
 
     # For realtime, queue should be LIFO
-    input_queue = LifoQueue() if inputs.is_infinite() else Queue()
-    worker_queue = LifoQueue() if inputs.is_infinite() else Queue()
-    output_queue = LifoQueue() if inputs.is_infinite() else Queue()
+    # TODO: might need to rethink the whole pipeling for infinite streams
+    input_queue = LifoQueue(maxsize=QUEUE_MAX_SIZE) if inputs.is_infinite() else Queue()
+    worker_queue = LifoQueue(maxsize=QUEUE_MAX_SIZE) if inputs.is_infinite() else Queue()
+    output_queue = LifoQueue(maxsize=QUEUE_MAX_SIZE) if inputs.is_infinite() else Queue()
 
     # Initialize workflow for mutual use between input and worker threads:
     #   - input thread uses it to send frames
