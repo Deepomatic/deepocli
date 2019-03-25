@@ -29,9 +29,8 @@ class RpcRecognition(AbstractWorkflow):
 
         def get_predictions(self):
             # TODO: Enforce a certain level of force waiting for live streams
-            response_done, response_pending = wait_responses(self._consumer, [self._correlation_id], timeout=0.010)
-            if response_done:
-                response = response_done[0][1]
+            response = self._consumer.get(self._correlation_id, timeout=0.010)  # small timeout to avoid CPU saturation
+            if response is not None:
                 outputs = response.to_parsed_result_buffer()
                 predictions = {'outputs': [{'labels': MessageToDict(output.labels, including_default_value_fields=True, preserving_proto_field_name=True)} for output in outputs]}
                 return predictions
