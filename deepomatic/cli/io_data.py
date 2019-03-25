@@ -84,6 +84,18 @@ def input_loop(kwargs, WorkerThread):
     pbar = tqdm(total=max_value, file=tqdmout, desc='Input processing', smoothing=0)
 
     # For realtime, queue should be LIFO
+    # The data exchanged in the different queues is of the following format:
+    #   - input: data = (frame_number, frame_name, frame_filename, frame_payload)
+    #   - worker: data = (frame_number, frame_name, frame_filename, frame_payload, frame_correlation_id)
+    #   - output: data = (frame_number, frame_name, frame_modified, frame_prediction)
+    # With:
+    #   - frame_number: the frame number is the input sequence
+    #   - frame_name: the new name of the frame
+    #   - frame_filename: the original filename from which the frame was extracted
+    #   - frame_payload: the original pixels of the frame
+    #   - frame_correlation_id: the worker-nn correlation id of the frame
+    #   - frame_modified: the modifier frame, for instance the blurred frame
+    #   - frame_prediction: the actual prediction corresponding to the frame
     # TODO: might need to rethink the whole pipeling for infinite streams
     input_queue = LifoQueue(maxsize=QUEUE_MAX_SIZE) if inputs.is_infinite() else Queue()
     worker_queue = LifoQueue(maxsize=QUEUE_MAX_SIZE) if inputs.is_infinite() else Queue()
