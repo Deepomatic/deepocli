@@ -2,16 +2,21 @@ import logging
 import cv2
 from deepomatic.cli.workflow.workflow_abstraction import AbstractWorkflow
 from deepomatic.cli.common import DeepoCLIException
+
+# First we test whether the deepomatic-rpc module is installed. An error here indicates we need to install it.
 try:
     from deepomatic.rpc.client import Client
-    from deepomatic.rpc import v07_ImageInput, BINARY_IMAGE_PREFIX
-    from deepomatic.rpc.response import wait_responses
-    from deepomatic.rpc.helpers.v07_proto import create_recognition_command_mix
-    from deepomatic.rpc.helpers.proto import create_v07_images_command
-    from google.protobuf.json_format import MessageToDict
     RPC_PACKAGES_USABLE = True
 except ImportError:
     RPC_PACKAGES_USABLE = False
+# If the deepomatic-rpc module is installed, then we try to import the other modules. An error here might indicate a
+# version mismatch, in which case we want to know which one and why, i.e. we don't want to catch the error but we want
+# to display it to the end user.
+from deepomatic.rpc import v07_ImageInput, BINARY_IMAGE_PREFIX
+from deepomatic.rpc.response import wait_responses
+from deepomatic.rpc.helpers.v07_proto import create_recognition_command_mix
+from deepomatic.rpc.helpers.proto import create_v07_images_command
+from google.protobuf.json_format import MessageToDict
 
 
 class RpcRecognition(AbstractWorkflow):

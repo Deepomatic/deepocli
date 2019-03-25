@@ -17,6 +17,7 @@ except ImportError:
 QUEUE_MAX_SIZE = 50
 END_OF_STREAM_MSG = "__END_OF_STREAM__"
 TERMINATION_MSG = "__TERMINATION__"
+DEFAULT_FPS = 25
 
 def save_json_to_file(json_data, json_path):
     try:
@@ -161,7 +162,7 @@ class InputThread(threading.Thread):
         try:
             while True:
                 data = self.input_queue.get()
-                if data is END_OF_STREAM_MSG or data is TERMINATION_MSG:
+                if data == END_OF_STREAM_MSG or data == TERMINATION_MSG:
                     self.input_queue.task_done()
                     self.worker_queue.put(data)
                     return
@@ -198,10 +199,10 @@ class OutputThread(threading.Thread):
                 frame_to_process = 0
                 while 1:
                     data = self.output_queue.get()
-                    if data is TERMINATION_MSG:
+                    if data == TERMINATION_MSG:
                         self.output_queue.task_done()
                         return
-                    elif data is END_OF_STREAM_MSG:
+                    elif data == END_OF_STREAM_MSG:
                         self.output_queue.task_done()
                         if not self.output_queue.empty():
                             self.output_queue.put(END_OF_STREAM_MSG)
@@ -320,6 +321,7 @@ class VideoInputData(InputData):
         if self._cap is not None:
             raw_fps = self._cap.get(cv2.CAP_PROP_FPS)
             desired_fps = min(kwargs['fps'], raw_fps) if kwargs['fps'] else raw_fps
+            logging.info('Detected raw video fps of {}, using fps of {}'.format(raw_fps, desired_fps))
             total_frames = int(self._cap.get(cv2.CAP_PROP_FRAME_COUNT) * desired_fps / raw_fps)
             self._fps = desired_fps
             self._adjusted_frames = [round(frame * raw_fps / desired_fps) for frame in range(0, total_frames)]
@@ -592,7 +594,7 @@ class VideoOutputData(OutputData):
         elif ext == '.mp4':
             fourcc = cv2.VideoWriter_fourcc('m', 'p', '4', 'v')
         self._fourcc = fourcc
-        self._fps = kwargs['fps'] if kwargs['fps'] else 25
+        self._fps = kwargs['fps'] if kwargs['fps'] else DEFAULT_FPS
         self._writer = None
         self._all_predictions = {'tags': [], 'images': []}
 
@@ -758,7 +760,7 @@ class StdOutputData(OutputData):
 class DisplayOutputData(OutputData):
     def __init__(self, **kwargs):
         super(DisplayOutputData, self).__init__(None, **kwargs)
-        self._fps = kwargs.get('fps', 25)
+        self._fps = kwargs.get('fps', DEFAULT_FPS)
         self._window_name = 'Deepomatic'
         self._fullscreen = kwargs.get('fullscreen', False)
 

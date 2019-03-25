@@ -28,12 +28,12 @@ class InferenceThread(threading.Thread):
         try:
             while True:
                 data = self._worker_queue.get()
-                if data is TERMINATION_MSG:
+                if data == TERMINATION_MSG:
                     self._worker_queue.task_done()
                     self._output_queue.put(TERMINATION_MSG)
                     self._workflow.close()
                     return
-                elif data is END_OF_STREAM_MSG:
+                elif data == END_OF_STREAM_MSG:
                     self._worker_queue.task_done()
                     if not self._worker_queue.empty():
                         self._worker_queue.put(END_OF_STREAM_MSG)
