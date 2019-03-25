@@ -163,7 +163,7 @@ def input_loop(kwargs, WorkerThread):
 
 class InputThread(threading.Thread):
     def __init__(self, input_queue, worker_queue, workflow, workflow_lock, **kwargs):
-        threading.Thread.__init__(self, args=(), kwargs=None)
+        threading.Thread.__init__(self, args=(), name='InputThread', kwargs=None)
         self.input_queue = input_queue
         self.worker_queue = worker_queue
         self.workflow = workflow
@@ -200,7 +200,7 @@ class InputThread(threading.Thread):
 
 class OutputThread(threading.Thread):
     def __init__(self, output_queue, on_progress=None, **kwargs):
-        threading.Thread.__init__(self, args=(), kwargs=None)
+        threading.Thread.__init__(self, args=(), name='OutputThread', kwargs=None)
         self.output_queue = output_queue
         self.args = kwargs
         self.on_progress = on_progress

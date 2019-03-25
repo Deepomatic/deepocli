@@ -16,7 +16,7 @@ from deepomatic.cli.cmds.studio_helpers.vulcan2studio import transform_json_from
 
 class InferenceThread(threading.Thread):
     def __init__(self, worker_queue, output_queue, workflow, workflow_lock, **kwargs):
-        threading.Thread.__init__(self, args=(), kwargs=None)
+        threading.Thread.__init__(self, args=(), name='WorkerThread', kwargs=None)
         self._worker_queue = worker_queue
         self._output_queue = output_queue
         self._workflow = workflow

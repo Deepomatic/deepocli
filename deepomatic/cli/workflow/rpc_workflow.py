@@ -1,5 +1,6 @@
-import logging
 import cv2
+import time
+import logging
 from deepomatic.cli.workflow.workflow_abstraction import AbstractWorkflow
 from deepomatic.cli.common import DeepoCLIException
 
@@ -31,12 +32,13 @@ class RpcRecognition(AbstractWorkflow):
 
         def get_predictions(self):
             # TODO: Enforce a certain level of force waiting for live streams
-            response = self._consumer.get(self._correlation_id, timeout=0.010)  # small timeout to avoid CPU saturation
+            response = self._consumer.get(self._correlation_id, timeout=None)
             if response is not None:
                 outputs = response.to_parsed_result_buffer()
                 predictions = {'outputs': [{'labels': MessageToDict(output.labels, including_default_value_fields=True, preserving_proto_field_name=True)} for output in outputs]}
                 return predictions
             else:
+                time.sleep(0.010)
                 return None
 
     def __init__(self, recognition_version_id, amqp_url, routing_key, recognition_cmd_kwargs=None):
