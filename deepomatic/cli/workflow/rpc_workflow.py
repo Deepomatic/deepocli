@@ -9,14 +9,16 @@ try:
     RPC_PACKAGES_USABLE = True
 except ImportError:
     RPC_PACKAGES_USABLE = False
+
 # If the deepomatic-rpc module is installed, then we try to import the other modules. An error here might indicate a
 # version mismatch, in which case we want to know which one and why, i.e. we don't want to catch the error but we want
 # to display it to the end user.
-from deepomatic.rpc import v07_ImageInput, BINARY_IMAGE_PREFIX
-from deepomatic.rpc.response import wait_responses
-from deepomatic.rpc.helpers.v07_proto import create_recognition_command_mix
-from deepomatic.rpc.helpers.proto import create_v07_images_command
-from google.protobuf.json_format import MessageToDict
+if RPC_PACKAGES_USABLE:
+    from deepomatic.rpc import v07_ImageInput, BINARY_IMAGE_PREFIX
+    from deepomatic.rpc.response import wait_responses
+    from deepomatic.rpc.helpers.v07_proto import create_recognition_command_mix
+    from deepomatic.rpc.helpers.proto import create_v07_images_command
+    from google.protobuf.json_format import MessageToDict
 
 
 class RpcRecognition(AbstractWorkflow):
