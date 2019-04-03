@@ -9,11 +9,11 @@ import logging
 import threading
 from tqdm import tqdm
 from .task import Task
-if sys.version_info >= (3,0):
+from ...common import TqdmToLogger
+if sys.version_info >= (3, 0):
     import queue as Queue
 else:
     import Queue
-from deepomatic.cli.common import TqdmToLogger
 
 
 # Define thread parameters
@@ -28,10 +28,11 @@ def handler(signum, frame):
     global run, q, pbar
     run = False
     pbar.close()
-    logging.info("Stopping upload...")
+    logging.info("Stopping upload..")
     while not q.empty():
         q.get()
         q.task_done()
+
 
 def worker(self):
     global count, run, q, pbar
@@ -52,13 +53,13 @@ def worker(self):
         except Queue.Empty:
             pass
 
+
 class File(object):
     def __init__(self, helper, task=None):
         self._helper = helper
         if not task:
             task = Task(helper)
         self._task = task
-
 
     def post_files(self, dataset_name, files, org_slug, is_json=False):
         global run, pbar
@@ -84,14 +85,14 @@ class File(object):
                         json_objects = json.load(fd)
                 except ValueError as err:
                     logging.error(err)
-                    logging.error("Can't read file {}, skipping...".format(file))
+                    logging.error("Can't read file {}, skipping..".format(file))
                     continue
 
                 # Check which type of JSON it is:
                 # 1) a JSON associated with one single file and following the format:
-                #       {"location": "img.jpg", stage": "train", "annotated_regions": [...]}
+                #       {"location": "img.jpg", stage": "train", "annotated_regions": [..]}
                 # 2) a JSON following Studio format:
-                #       {"tags": [...], "images": [{"location": "img.jpg", stage": "train", "annotated_regions": [...]}, {...}]}
+                #       {"tags": [..], "images": [{"location": "img.jpg", stage": "train", "annotated_regions": [..]}, {..}]}
 
                 # Check that the JSON is a dict
                 if not isinstance(json_objects, dict):

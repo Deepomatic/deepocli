@@ -1,8 +1,8 @@
 import cv2
 import time
 import logging
-from deepomatic.cli.workflow.workflow_abstraction import AbstractWorkflow
-from deepomatic.cli.common import DeepoCLIException
+from .workflow_abstraction import AbstractWorkflow
+from ..common import DeepoCLIException
 
 # First we test whether the deepomatic-rpc module is installed. An error here indicates we need to install it.
 try:
@@ -71,9 +71,8 @@ class RpcRecognition(AbstractWorkflow):
         if self._stream is not None:
             self._stream.close()
 
-    def infer(self, frame):
-        _, buf = cv2.imencode('.jpeg', frame)
-        image_input = v07_ImageInput(source=BINARY_IMAGE_PREFIX + buf.tobytes())
+    def infer(self, encoded_image_bytes):
+        image_input = v07_ImageInput(source=BINARY_IMAGE_PREFIX + encoded_image_bytes)
         # forward_to parameter can be removed for images of worker nn with tag >= 0.7.8
         serialized_buffer = create_v07_images_command([image_input], self._command_mix, forward_to=[self._stream.response_queue.name])
         correlation_id = self._stream.send_binary(serialized_buffer)

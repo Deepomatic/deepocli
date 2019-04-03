@@ -1,8 +1,8 @@
 import os
 import logging
 import cv2
-from deepomatic.cli.workflow.workflow_abstraction import AbstractWorkflow
-from deepomatic.cli import common
+from .workflow_abstraction import AbstractWorkflow
+from .. import common
 import deepomatic.api.client
 import deepomatic.api.inputs
 import deepomatic.api.exceptions
@@ -39,10 +39,9 @@ class CloudRecognition(AbstractWorkflow):
         if self._model is None:
             self._model = self._client.RecognitionVersion.retrieve(recognition_version_id)
 
-    def infer(self, frame):
-        _, buf = cv2.imencode('.jpeg', frame)
+    def infer(self, encoded_image_bytes):
         return self.InferResult(self._model.inference(
-            inputs=[deepomatic.api.inputs.ImageInput(buf.tobytes(), encoding="binary")],
+            inputs=[deepomatic.api.inputs.ImageInput(encoded_image_bytes, encoding="binary")],
             show_discarded=True,
             return_task=True,
             wait_task=False)

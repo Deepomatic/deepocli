@@ -7,6 +7,7 @@ import json
 from six import string_types
 from requests.structures import CaseInsensitiveDict
 
+
 class HTTPHelper(object):
     def __init__(self, token, verify, host, check_query_parameters, user_agent_suffix='', pool_maxsize=20):
         """

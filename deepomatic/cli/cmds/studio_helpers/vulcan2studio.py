@@ -1,5 +1,3 @@
-import json
-
 
 def transform_json_from_vulcan_to_studio(vulcan_json, name, filename):
     """Transforms a json from the vulcan format to the Studio format."""

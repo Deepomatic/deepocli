@@ -1,10 +1,8 @@
 import sys
 import argparse
-from deepomatic.cli.cmds.infer import main as infer
-from deepomatic.cli.cmds.draw import main as draw
-from deepomatic.cli.cmds.feedback import main as feedback
-from deepomatic.cli.cmds.blur import main as blur
-from deepomatic.cli.io_data import ImageInputData, VideoInputData, StreamInputData
+from .cmds.feedback import main as feedback
+from .input_data import ImageInputData, VideoInputData, StreamInputData, input_loop
+from .cmds.infer import BlurImagePostprocessing, DrawImagePostprocessing
 
 
 class ParserWithHelpOnError(argparse.ArgumentParser):
@@ -17,19 +15,25 @@ class ParserWithHelpOnError(argparse.ArgumentParser):
         sys.exit(1)
 
 
+def infer_func(args):
+    # inference always dump json
+    args['json'] = True
+    return input_loop(args)
+
+
 def argparser_init():
     argparser = ParserWithHelpOnError(prog='deepo')
     subparsers = argparser.add_subparsers(dest='command', help='')
     subparsers.required = True
 
     infer_parser = subparsers.add_parser('infer', help="Computes prediction on a file or directory and outputs results as a JSON file.")
-    infer_parser.set_defaults(func=infer)
+    infer_parser.set_defaults(func=infer_func)
 
     draw_parser = subparsers.add_parser('draw', help="Generates new images and videos with predictions results drawn on them. Computes prediction if JSON has not yet been generated.")
-    draw_parser.set_defaults(func=draw)
+    draw_parser.set_defaults(func=lambda args: input_loop(args, DrawImagePostprocessing(**args)))
 
     blur_parser = subparsers.add_parser('blur', help="Generates new images and videos with predictions results blurred on them. Computes prediction if JSON has not yet been generated.")
-    blur_parser.set_defaults(func=blur)
+    blur_parser.set_defaults(func=lambda args: input_loop(args, BlurImagePostprocessing(**args)))
 
     studio_parser = subparsers.add_parser('studio', help='Deepomatic Studio related commands')
     studio_subparser = studio_parser.add_subparsers(dest='studio_command', help='')
@@ -47,6 +51,7 @@ def argparser_init():
         parser.add_argument('-k', '--routing_key', help="Recognition routing key for on-premises deployments.")
         parser.add_argument('-t', '--threshold', type=float, help="Threshold above which a prediction is considered valid.", default=None)
         parser.add_argument('--fps', type=int, help="Video frame rate if applicable.")
+        parser.add_argument('-s', '--studio_format', action='store_true', help="Convert deepomatic run predictions into deepomatic studio format.")
 
     for parser in [draw_parser, blur_parser]:
         parser.add_argument('--fullscreen', help="Fullscreen if window output.", action="store_true")
@@ -65,6 +70,7 @@ def argparser_init():
     feedback_parser.add_argument('--json', dest='json_file', action='store_true', help='Look for JSON files instead of images.')
 
     return argparser
+
 
 def run(args):
     # Initialize the argparser

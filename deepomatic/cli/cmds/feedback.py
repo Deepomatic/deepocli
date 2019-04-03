@@ -57,6 +57,7 @@ def get_all_files(paths, find_json=False, recursive=True):
 
     return files
 
+
 def main(args):
     # Initialize deepomatic client
     clt = Client()
