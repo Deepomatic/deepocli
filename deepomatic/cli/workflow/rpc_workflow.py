@@ -46,12 +46,13 @@ class RpcRecognition(AbstractWorkflow):
         self._id = recognition_version_id
 
         self._routing_key = routing_key
-        self._stream = None
+        self._consumer = None
 
         recognition_cmd_kwargs = recognition_cmd_kwargs or {}
 
         if RPC_PACKAGES_USABLE:
-            self._client = Client(amqp_url)
+            self._push_client = Client(amqp_url)
+            self._consume_client = Client(amqp_url)
             self._recognition = None
             try:
                 recognition_version_id = int(recognition_version_id)
@@ -60,20 +61,20 @@ class RpcRecognition(AbstractWorkflow):
 
             self._command_mix = create_recognition_command_mix(recognition_version_id,
                                                                **recognition_cmd_kwargs)
-            # We want to retrieve responses in the order we want
-            self._stream = self._client.new_stream(self._routing_key, keep_response_order=False)
-
+            self._command_queue = self._push_client.new_queue(self._routing_key)
+            self._response_queue, self._consumer = self._consume_client.new_consuming_queue()
         else:
             self._client = None
             raise DeepoCLIException('RPC not available')
 
     def close(self):
-        if self._stream is not None:
-            self._stream.close()
+        if self._consumer is not None:
+            self._consume_client.remove_consuming_queue(self._response_queue, self._consumer)
 
     def infer(self, encoded_image_bytes):
         image_input = v07_ImageInput(source=BINARY_IMAGE_PREFIX + encoded_image_bytes)
         # forward_to parameter can be removed for images of worker nn with tag >= 0.7.8
-        serialized_buffer = create_v07_images_command([image_input], self._command_mix, forward_to=[self._stream.response_queue.name])
-        correlation_id = self._stream.send_binary(serialized_buffer)
-        return self.InferResult(correlation_id, self._stream.consumer)
+        reply_to = self._response_queue.name
+        serialized_buffer = create_v07_images_command([image_input], self._command_mix, forward_to=[reply_to])
+        correlation_id = self._push_client.send_binary(serialized_buffer, self._command_queue.name, reply_to=reply_to)
+        return self.InferResult(correlation_id, self._consumer)

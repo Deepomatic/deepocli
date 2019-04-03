@@ -9,7 +9,6 @@ except ImportError:
 from .. import thread_base
 from .studio_helpers.vulcan2studio import transform_json_from_vulcan_to_studio
 
-
 FONT_SCALE = 0.5
 
 
@@ -100,11 +99,10 @@ class BlurImagePostprocessing(object):
 
 
 class SendInferenceThread(thread_base.ThreadBase):
-    def __init__(self, input_queue, output_queue, workflow, workflow_lock, **kwargs):
+    def __init__(self, input_queue, output_queue, workflow, **kwargs):
         super(SendInferenceThread, self).__init__('SendInferenceThread', input_queue)
         self.output_queue = output_queue
         self.workflow = workflow
-        self.workflow_lock = workflow_lock
         self.args = kwargs
 
     def loop_impl(self):
@@ -115,62 +113,67 @@ class SendInferenceThread(thread_base.ThreadBase):
 
         _, buf = cv2.imencode('.jpeg', frame.image)
         buf_bytes = buf.tobytes()
-        with self.workflow_lock:
-            frame.inference_async_result = self.workflow.infer(buf_bytes)
+        frame.inference_async_result = self.workflow.infer(buf_bytes)
 
         self.input_queue.task_done()
         self.output_queue.put(frame)
 
 
 class ResultInferenceThread(thread_base.ThreadBase):
-    def __init__(self, input_queue, output_queue, workflow, workflow_lock, **kwargs):
+    def __init__(self, input_queue, output_queue, workflow, **kwargs):
         super(ResultInferenceThread, self).__init__('ResultInferenceThread', input_queue)
         self.output_queue = output_queue
         self.workflow = workflow
-        self.workflow_lock = workflow_lock
         self.args = kwargs
         self.postprocessing = kwargs.get('postprocessing')
         self.threshold = kwargs.get('threshold')
         self.to_studio_format = kwargs.get('studio_format')
+        self.frames_to_check_first = []
 
     def close(self):
         self.workflow.close()
 
     def loop_impl(self):
-        try:
-            frame = self.input_queue.get(timeout=thread_base.POP_TIMEOUT)
-        except Empty:
+        if len(self.frames_to_check_first) > 10:
+            frame = self.frames_to_check_first.pop(0)
+        else:
+            try:
+                frame = self.input_queue.get(timeout=thread_base.POP_TIMEOUT)
+                self.input_queue.task_done()
+            except Empty:
+                if not self.frames_to_check_first:
+                    print("Waiting")
+                    return
+                frame = self.frames_to_check_first.pop(0)
+
+        predictions = frame.inference_async_result.get_predictions()
+
+        # If the prediction is not finished, then put the data back in the queue
+        if predictions is None:
+            self.frames_to_check_first.append(frame)
             return
 
-        with self.workflow_lock:
-            predictions = frame.inference_async_result.get_predictions()
-            # If the prediction is not finished, then put the data back in the queue
-            if predictions is None:
-                self.input_queue.task_done()
-                self.input_queue.put(frame)
-                return
+        if self.to_studio_format:
+            predictions = transform_json_from_vulcan_to_studio(predictions,
+                                                               frame.name,
+                                                               frame.filename)
 
-            if self.to_studio_format:
-                predictions = transform_json_from_vulcan_to_studio(predictions,
-                                                                   frame.name,
-                                                                   frame.filename)
+            # Keep only predictions higher than threshold if one is set, otherwise use the model thresholds
+            # TODO
+            kept_pred = []
+            for pred in predictions['images'][0]['annotated_regions']:
+                if self.threshold:
+                    if pred['score'] >= self.threshold:
+                        kept_pred.append(pred)
+                else:
+                    if pred['score'] >= pred['threshold']:
+                        kept_pred.append(pred)
+            predictions['images'][0]['annotated_regions'] = copy.deepcopy(kept_pred)
 
-                # Keep only predictions higher than threshold if one is set, otherwise use the model thresholds
-                # TODO
-                kept_pred = []
-                for pred in predictions['images'][0]['annotated_regions']:
-                    if self.threshold:
-                        if pred['score'] >= self.threshold:
-                            kept_pred.append(pred)
-                    else:
-                        if pred['score'] >= pred['threshold']:
-                            kept_pred.append(pred)
-                predictions['images'][0]['annotated_regions'] = copy.deepcopy(kept_pred)
+        frame.predictions = predictions
 
-            frame.predictions = predictions
+        if self.postprocessing is not None:
+            self.postprocessing(frame)
 
-            if self.postprocessing is not None:
-                self.postprocessing(frame)
-
-        self.input_queue.task_done()
+        # self.input_queue.task_done()
         self.output_queue.put(frame)

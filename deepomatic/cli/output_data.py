@@ -53,27 +53,29 @@ class OutputThread(ThreadBase):
         self.on_progress = on_progress
 
     def run(self):
+        frames_done = {}
         with get_output(self.args.get('output'), self.args) as output:
-            print(output)
             frame_to_output = 0
             while not self.stop_asked:
-                try:
-                    frame = self.input_queue.get(timeout=POP_TIMEOUT)
-                except Empty:
-                    continue
+                # looking into frames we poped earlier
+                frame = frames_done.pop(frame_to_output, None)
+                if frame is None:
+                    try:
+                        frame = self.input_queue.get(timeout=POP_TIMEOUT)
+                        self.input_queue.task_done()
+                    except Empty:
+                        continue
 
-                # TODO: Disregard frame order for live streams
-                # Make sure we process outputs in the same order as inputs for video reconstruction
-                if frame_to_output == frame.frame_number:
-                    output.output_frame(frame)
-                    frame_to_output += 1
-                    if self.on_progress:
-                        self.on_progress(frame_to_output)
-                    self.input_queue.task_done()
-                # Otherwise put it back in the queue
-                else:
-                    self.input_queue.task_done()
-                    self.input_queue.put(frame)
+                    # TODO: possible memory leak here ?
+                    if frame_to_output != frame.frame_number:
+                        frames_done[frame.frame_number] = frame
+                        continue
+
+                output.output_frame(frame)
+                frame_to_output += 1
+                if self.on_progress:
+                    self.on_progress(frame_to_output)
+
 
 
 class OutputData(object):

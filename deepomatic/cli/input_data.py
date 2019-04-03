@@ -1,12 +1,9 @@
 import os
 import cv2
 import json
-import time
 import logging
-import threading
 from .cmds.infer import ResultInferenceThread, SendInferenceThread
 from tqdm import tqdm
-from .thread_base import ThreadBase, POP_TIMEOUT
 from .common import TqdmToLogger
 from .workflow import get_workflow
 from .output_data import OutputThread
@@ -89,14 +86,13 @@ def input_loop(kwargs, postprocessing=None):
     #   - worker thread uses it to retrieve predictions
     # Note: the workflow is closed by the worker thread
     workflow = get_workflow(kwargs)
-    workflow_lock = threading.Lock()  # Controls access to amqp connection
 
     # Define threads
     #   - input: prepares input and send it to worker
     #   - worker: retrieves prediction from worker
     #   - output: transforms predictions into outputs
-    send_inference_thread = SendInferenceThread(input_queue, worker_queue, workflow, workflow_lock, postprocessing=postprocessing, **kwargs)
-    result_inference_thread = ResultInferenceThread(worker_queue, output_queue, workflow, workflow_lock, **kwargs)
+    send_inference_thread = SendInferenceThread(input_queue, worker_queue, workflow, postprocessing=postprocessing, **kwargs)
+    result_inference_thread = ResultInferenceThread(worker_queue, output_queue, workflow, **kwargs)
     output_thread = OutputThread(output_queue, on_progress=lambda i: pbar.update(1), **kwargs)
 
     stop_asked = 0
