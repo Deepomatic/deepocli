@@ -72,7 +72,7 @@ class InferenceThread(threading.Thread):
             self.workflow.close()
 
     def processing(self, name, frame, prediction):
-        return name, None, prediction
+        return name, frame, prediction
 
 
 def main(args, force=False):
