@@ -508,9 +508,6 @@ class ImageOutputData(OutputData):
             else:
                 print_log('Writing %s' % path)
                 cv2.imwrite(path, frame)
-                if self._json:
-                    json_path = os.path.splitext(path)[0]
-                    save_json_to_file(prediction, json_path)
 
 
 class VideoOutputData(OutputData):
@@ -540,9 +537,6 @@ class VideoOutputData(OutputData):
         return self
 
     def __exit__(self, exception_type, exception_value, traceback):
-        if self._json:
-            json_path = os.path.splitext(self._descriptor)[0]
-            save_json_to_file(self._all_predictions, json_path)
         if self._writer is not None:
             self._writer.release()
         self._writer = None
@@ -557,9 +551,6 @@ class VideoOutputData(OutputData):
                     self._fourcc,
                     self._fps,
                     (frame.shape[1], frame.shape[0]))
-            if self._json:
-                self._all_predictions['images'] += prediction['images']
-                self._all_predictions['tags'] = list(set(self._all_predictions['tags'] + prediction['tags']))
             self._writer.write(frame)
 
 class DirectoryOutputData(OutputData):
@@ -588,8 +579,6 @@ class DirectoryOutputData(OutputData):
         else:
             print_log('Writing %s.jpeg' % path)
             cv2.imwrite('%s.jpeg' % path, frame)
-            if self._json:
-                save_json_to_file(prediction, path)
 
 class DrawOutputData(OutputData):
 
