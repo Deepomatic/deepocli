@@ -54,6 +54,22 @@ def get_input(descriptor, kwargs):
     else:
         raise NameError('Unknown input')
 
+class ListContext:
+    def __init__(self, l):
+        self.l = l
+
+    def __enter__(self):
+        for x in self.l:
+            x.__enter__()
+        return self.l
+
+    def __exit__(self, type, value, traceback):
+        for x in self.l:
+            x.__exit__(type, value, traceback)
+
+def get_outputs(descriptors, kwargs):
+    return [get_output(descriptor, kwargs) for descriptor in descriptors]
+
 def get_output(descriptor, kwargs):
     if descriptor is not None:
         if DirectoryOutputData.is_valid(descriptor):
@@ -140,7 +156,7 @@ class OutputThread(threading.Thread):
 
     def run(self):
         i = 0
-        with get_output(self.args.get('output', None), self.args) as output:
+        with ListContext(get_outputs(self.args.get('outputs', None), self.args)) as outputs:
             try:
                 while True:
                     i += 1
@@ -149,7 +165,8 @@ class OutputThread(threading.Thread):
                         self.queue.task_done()
                         return
 
-                    output(*data)
+                    for output in outputs:
+                        output(*data)
                     if (self.on_progress is not None):
                         self.on_progress(i)
                     self.queue.task_done()
