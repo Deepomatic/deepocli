@@ -15,28 +15,28 @@ FONT_SCALE = 0.5
 class DrawImagePostprocessing(object):
 
     def __init__(self, **kwargs):
-        super(DrawImagePostprocessing, self).__init__(None, **kwargs)
         self._draw_labels = kwargs.get('draw_labels', False)
         self._draw_scores = kwargs.get('draw_scores', False)
 
     def __call__(self, frame):
+        frame.output_image = frame.image.copy()
         output_image = frame.output_image
         h = output_image.shape[0]
         w = output_image.shape[1]
-        for pred in frame.predictions['images'][0]['annotated_regions']:
-            # Build legend
-            label = ''
-            if self._draw_labels:
-                label += ', '.join(pred['tags'])
-            if self._draw_labels and self._draw_scores:
-                label += ' '
-            if self._draw_scores:
-                label += str(pred['score'])
-
+        for pred in frame.predictions['outputs'][0]['labels']['predicted']:
             # Check that we have a bounding box
-            if 'region' in pred:
+            if 'roi' in pred:
+                # Build legend
+                label = ''
+                if self._draw_labels:
+                    label += ', ' + pred['label_name']
+                if self._draw_labels and self._draw_scores:
+                    label += ' '
+                if self._draw_scores:
+                    label += str(pred['score'])
+
                 # Retrieve coordinates
-                bbox = pred['region']
+                bbox = pred['roi']['bbox']
                 xmin = int(bbox['xmin'] * w)
                 ymin = int(bbox['ymin'] * h)
                 xmax = int(bbox['xmax'] * w)
@@ -49,12 +49,6 @@ class DrawImagePostprocessing(object):
                 cv2.rectangle(output_image, (xmin, ymax - ret[1] - baseline), (xmin + ret[0], ymax), (0, 0, 255), -1)
                 cv2.putText(output_image, label, (xmin, ymax - baseline), cv2.FONT_HERSHEY_SIMPLEX, FONT_SCALE, (255, 255, 255), 1)
 
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exception_type, exception_value, traceback):
-        pass
-
 
 class BlurImagePostprocessing(object):
     def __init__(self, **kwargs):
@@ -62,14 +56,15 @@ class BlurImagePostprocessing(object):
         self._strength = int(kwargs.get('blur_strength', 10))
 
     def __call__(self, frame):
-        output_image = frame.init_output_image_from_original()
+        frame.output_image = frame.image.copy()
+        output_image = frame.output_image
         h = output_image.shape[0]
         w = output_image.shape[1]
-        for pred in frame.predictions['images'][0]['annotated_regions']:
+        for pred in frame.predictions['outputs'][0]['labels']['predicted']:
             # Check that we have a bounding box
-            if 'region' in pred:
+            if 'roi' in pred:
                 # Retrieve coordinates
-                bbox = pred['region']
+                bbox = pred['roi']['bbox']
                 xmin = int(bbox['xmin'] * w)
                 ymin = int(bbox['ymin'] * h)
                 xmax = int(bbox['xmax'] * w)
@@ -91,16 +86,10 @@ class BlurImagePostprocessing(object):
                                       interpolation=cv2.INTER_NEAREST)
                     output_image[ymin:ymax, xmin:xmax] = face
 
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exception_type, exception_value, traceback):
-        pass
-
 
 class SendInferenceThread(thread_base.ThreadBase):
-    def __init__(self, input_queue, output_queue, workflow, **kwargs):
-        super(SendInferenceThread, self).__init__('SendInferenceThread', input_queue)
+    def __init__(self, exit_event, input_queue, output_queue, workflow, **kwargs):
+        super(SendInferenceThread, self).__init__(exit_event, 'SendInferenceThread', input_queue)
         self.output_queue = output_queue
         self.workflow = workflow
         self.args = kwargs
@@ -120,8 +109,8 @@ class SendInferenceThread(thread_base.ThreadBase):
 
 
 class ResultInferenceThread(thread_base.ThreadBase):
-    def __init__(self, input_queue, output_queue, workflow, **kwargs):
-        super(ResultInferenceThread, self).__init__('ResultInferenceThread', input_queue)
+    def __init__(self, exit_event, input_queue, output_queue, workflow, **kwargs):
+        super(ResultInferenceThread, self).__init__(exit_event, 'ResultInferenceThread', input_queue)
         self.output_queue = output_queue
         self.workflow = workflow
         self.args = kwargs
@@ -132,6 +121,14 @@ class ResultInferenceThread(thread_base.ThreadBase):
 
     def close(self):
         self.workflow.close()
+        self.frames_to_check_first.clear()
+
+    def fill_predictions(self, predictions, new_predicted, new_discarded):
+        for prediction in predictions:
+            if prediction['score'] >= self.threshold:
+                new_predicted.append(prediction)
+            else:
+                new_discarded.append(prediction)
 
     def loop_impl(self):
         if len(self.frames_to_check_first) > 10:
@@ -142,7 +139,6 @@ class ResultInferenceThread(thread_base.ThreadBase):
                 self.input_queue.task_done()
             except Empty:
                 if not self.frames_to_check_first:
-                    print("Waiting")
                     return
                 frame = self.frames_to_check_first.pop(0)
 
@@ -153,27 +149,26 @@ class ResultInferenceThread(thread_base.ThreadBase):
             self.frames_to_check_first.append(frame)
             return
 
-        if self.to_studio_format:
-            predictions = transform_json_from_vulcan_to_studio(predictions,
-                                                               frame.name,
-                                                               frame.filename)
-
-            # Keep only predictions higher than threshold if one is set, otherwise use the model thresholds
-            # TODO
-            kept_pred = []
-            for pred in predictions['images'][0]['annotated_regions']:
-                if self.threshold:
-                    if pred['score'] >= self.threshold:
-                        kept_pred.append(pred)
-                else:
-                    if pred['score'] >= pred['threshold']:
-                        kept_pred.append(pred)
-            predictions['images'][0]['annotated_regions'] = copy.deepcopy(kept_pred)
+        if self.threshold is not None:
+            # Keep only predictions higher than threshold
+            for output in predictions['outputs']:
+                new_predicted = []
+                new_discarded = []
+                labels = output['labels']
+                self.fill_predictions(labels['predicted'], new_predicted, new_discarded)
+                self.fill_predictions(labels['discarded'], new_predicted, new_discarded)
+                labels['predicted'] = new_predicted
+                labels['discarded'] = new_discarded
 
         frame.predictions = predictions
 
         if self.postprocessing is not None:
             self.postprocessing(frame)
+
+        if self.to_studio_format:
+            frame.predictions = transform_json_from_vulcan_to_studio(frame.predictions,
+                                                                     frame.name,
+                                                                     frame.filename)
 
         # self.input_queue.task_done()
         self.output_queue.put(frame)

@@ -83,4 +83,4 @@ def run(args):
     # Otherwise parse the arguments and run the command
     else:
         args = argparser.parse_args(args)
-        args.func(vars(args))
+        return args.func(vars(args))

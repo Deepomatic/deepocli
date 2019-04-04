@@ -7,8 +7,7 @@ def transform_json_from_vulcan_to_studio(vulcan_json, name, filename):
 
     # Loop through all images
     img_studio = {'annotated_regions': []}
-    all_predictions = vulcan_json['outputs'][0]['labels']['predicted'] + \
-                      vulcan_json['outputs'][0]['labels']['discarded']
+    all_predictions = vulcan_json['outputs'][0]['labels']['predicted']
     for prediction in all_predictions:
         # Build studio annotation
         annotation = {

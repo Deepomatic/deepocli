@@ -20,14 +20,18 @@ directory_output = dir_output
 def test_e2e_image_draw_image(test_input=image_input, test_output=image_output):
     run(['draw', '-i', test_input, '-o', test_output, '-r', 'fashion-v4'])
 
+
 def test_e2e_image_draw_video(test_input=image_input, test_output=video_output):
     run(['draw', '-i', test_input, '-o', test_output, '-r', 'fashion-v4'])
+
 
 def test_e2e_image_draw_stdout(test_input=image_input, test_output=std_output):
     run(['draw', '-i', test_input, '-o', test_output, '-r', 'fashion-v4'])
 
+
 def test_e2e_image_draw_json(test_input=image_input, test_output=json_output):
     run(['draw', '-i', test_input, '-o', test_output, '-r', 'fashion-v4'])
+
 
 def test_e2e_image_draw_directory(test_input=image_input, test_output=directory_output):
     run(['draw', '-i', test_input, '-o', test_output, '-r', 'fashion-v4'])
@@ -38,14 +42,18 @@ def test_e2e_image_draw_directory(test_input=image_input, test_output=directory_
 def test_e2e_video_draw_image(test_input=video_input, test_output=image_output):
     run(['draw', '-i', test_input, '-o', test_output, '-r', 'fashion-v4'])
 
+
 def test_e2e_video_draw_video(test_input=video_input, test_output=video_output):
     run(['draw', '-i', test_input, '-o', test_output, '-r', 'fashion-v4'])
+
 
 def test_e2e_video_draw_stdout(test_input=video_input, test_output=std_output):
     run(['draw', '-i', test_input, '-o', test_output, '-r', 'fashion-v4'])
 
+
 def test_e2e_video_draw_json(test_input=video_input, test_output=json_output):
     run(['draw', '-i', test_input, '-o', test_output, '-r', 'fashion-v4'])
+
 
 def test_e2e_video_draw_directory(test_input=video_input, test_output=directory_output):
     run(['draw', '-i', test_input, '-o', test_output, '-r', 'fashion-v4'])
@@ -56,14 +64,18 @@ def test_e2e_video_draw_directory(test_input=video_input, test_output=directory_
 def test_e2e_directory_draw_image(test_input=directory_input, test_output=image_output):
     run(['draw', '-i', test_input, '-o', test_output, '-r', 'fashion-v4'])
 
+
 def test_e2e_directory_draw_video(test_input=directory_input, test_output=video_output):
     run(['draw', '-i', test_input, '-o', test_output, '-r', 'fashion-v4'])
+
 
 def test_e2e_directory_draw_stdout(test_input=directory_input, test_output=std_output):
     run(['draw', '-i', test_input, '-o', test_output, '-r', 'fashion-v4'])
 
+
 def test_e2e_directory_draw_json(test_input=directory_input, test_output=json_output):
     run(['draw', '-i', test_input, '-o', test_output, '-r', 'fashion-v4'])
+
 
 def test_e2e_directory_draw_directory(test_input=directory_input, test_output=directory_output):
     run(['draw', '-i', test_input, '-o', test_output, '-r', 'fashion-v4'])
@@ -74,14 +86,18 @@ def test_e2e_directory_draw_directory(test_input=directory_input, test_output=di
 def test_e2e_json_draw_image(test_input=json_input, test_output=image_output):
     run(['draw', '-i', test_input, '-o', test_output, '-r', 'fashion-v4'])
 
+
 def test_e2e_json_draw_video(test_input=json_input, test_output=video_output):
     run(['draw', '-i', test_input, '-o', test_output, '-r', 'fashion-v4'])
+
 
 def test_e2e_json_draw_stdout(test_input=json_input, test_output=std_output):
     run(['draw', '-i', test_input, '-o', test_output, '-r', 'fashion-v4'])
 
+
 def test_e2e_json_draw_json(test_input=json_input, test_output=json_output):
     run(['draw', '-i', test_input, '-o', test_output, '-r', 'fashion-v4'])
+
 
 def test_e2e_json_draw_directory(test_input=json_input, test_output=directory_output):
     run(['draw', '-i', test_input, '-o', test_output, '-r', 'fashion-v4'])
@@ -92,21 +108,27 @@ def test_e2e_json_draw_directory(test_input=json_input, test_output=directory_ou
 def test_e2e_image_draw_image_threshold(test_input=image_input, test_output=image_output):
     run(['draw', '-i', test_input, '-o', test_output, '-r', 'fashion-v4', '-t', '0.5'])
 
+
 def test_e2e_video_draw_video_fps(test_input=video_input, test_output=video_output):
     run(['draw', '-i', test_input, '-o', test_output, '-r', 'fashion-v4', '--fps', '2'])
+
 
 def test_e2e_image_draw_image_window(test_input=image_input, test_output='window'):
     return  # window not handled by test
     run(['draw', '-i', test_input, '-o', test_output, '-r', 'fashion-v4', '--fullscreen'])
 
+
 def test_e2e_image_draw_image_json(test_input=image_input, test_output=image_output):
     run(['draw', '-i', test_input, '-o', test_output, '-r', 'fashion-v4', '--json'])
+
 
 def test_e2e_image_draw_image_scores(test_input=image_input, test_output=image_output):
     run(['draw', '-i', test_input, '-o', test_output, '-r', 'fashion-v4', '--draw_scores'])
 
+
 def test_e2e_image_draw_image_labels(test_input=image_input, test_output=image_output):
     run(['draw', '-i', test_input, '-o', test_output, '-r', 'fashion-v4', '--draw_labels'])
+
 
 def test_e2e_image_draw_image_scores_and_labels(test_input=image_input, test_output=image_output):
     run(['draw', '-i', test_input, '-o', test_output, '-r', 'fashion-v4', '--draw_scores', '--draw_labels'])

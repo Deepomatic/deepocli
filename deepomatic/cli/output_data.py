@@ -47,35 +47,37 @@ def get_output(descriptor, kwargs):
 
 
 class OutputThread(ThreadBase):
-    def __init__(self, input_queue, on_progress=None, **kwargs):
-        super(OutputThread, self).__init__('OutputThread', input_queue)
+    def __init__(self, exit_event, input_queue, on_progress=None, **kwargs):
+        super(OutputThread, self).__init__(exit_event, 'OutputThread', input_queue)
         self.args = kwargs
         self.on_progress = on_progress
+        self.output = get_output(self.args.get('output'), self.args)
+        self.frames_done = {}
+        self.frame_to_output = 0
 
-    def run(self):
-        frames_done = {}
-        with get_output(self.args.get('output'), self.args) as output:
-            frame_to_output = 0
-            while not self.stop_asked:
-                # looking into frames we poped earlier
-                frame = frames_done.pop(frame_to_output, None)
-                if frame is None:
-                    try:
-                        frame = self.input_queue.get(timeout=POP_TIMEOUT)
-                        self.input_queue.task_done()
-                    except Empty:
-                        continue
+    def close(self):
+        self.frames_done.clear()
+        self.frame_to_output = 0
+        self.output.close()
 
-                    # TODO: possible memory leak here ?
-                    if frame_to_output != frame.frame_number:
-                        frames_done[frame.frame_number] = frame
-                        continue
+    def loop_impl(self):
+        # looking into frames we popped earlier
+        frame = self.frames_done.pop(self.frame_to_output, None)
+        if frame is None:
+            try:
+                frame = self.input_queue.get(timeout=POP_TIMEOUT)
+                self.input_queue.task_done()
+            except Empty:
+                return
 
-                output.output_frame(frame)
-                frame_to_output += 1
-                if self.on_progress:
-                    self.on_progress(frame_to_output)
+            if self.frame_to_output != frame.frame_number:
+                self.frames_done[frame.frame_number] = frame
+                return
 
+        self.output.output_frame(frame)
+        self.frame_to_output += 1
+        if self.on_progress:
+            self.on_progress(self.frame_to_output)
 
 
 class OutputData(object):
@@ -84,11 +86,8 @@ class OutputData(object):
         self._args = kwargs
         self._json = kwargs.get('json', False)
 
-    def __enter__(self):
-        raise NotImplementedError()
-
-    def __exit__(self, exception_type, exception_value, traceback):
-        raise NotImplementedError()
+    def close(self):
+        pass
 
     def output_frame(self, frame):
         # override this to output the results of the frame
@@ -106,13 +105,6 @@ class ImageOutputData(OutputData):
     def __init__(self, descriptor, **kwargs):
         super(ImageOutputData, self).__init__(descriptor, **kwargs)
         self._i = 0
-
-    def __enter__(self):
-        self._i = 0
-        return self
-
-    def __exit__(self, exception_type, exception_value, traceback):
-        pass
 
     def output_frame(self, frame):
         path = self._descriptor
@@ -150,13 +142,7 @@ class VideoOutputData(OutputData):
         self._writer = None
         self._all_predictions = {'tags': [], 'images': []}
 
-    def __enter__(self):
-        if self._writer is not None:
-            self._writer.release()
-        self._writer = None
-        return self
-
-    def __exit__(self, exception_type, exception_value, traceback):
+    def close(self):
         if self._json:
             json_path = os.path.splitext(self._descriptor)[0]
             save_json_to_file(self._all_predictions, json_path)
@@ -182,12 +168,6 @@ class DirectoryOutputData(OutputData):
     def is_valid(cls, descriptor):
         return (os.path.exists(descriptor) and os.path.isdir(descriptor))
 
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exception_type, exception_value, traceback):
-        pass
-
     def output_frame(self, frame):
         path = os.path.join(self._descriptor, frame.name)
         if frame.output_image is not None:
@@ -202,16 +182,11 @@ class StdOutputData(OutputData):
         super(StdOutputData, self).__init__(None, **kwargs)
 
     def output_frame(self, frame):
-        if frame is None:
+        if frame.output_image is None:
             print(json.dumps(frame.predictions))
         else:
-            sys.stdout.write(frame.output_image[:, :, ::-1].tostring())
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exception_type, exception_value, traceback):
-        pass
+            # https://stackoverflow.com/questions/908331/how-to-write-binary-data-to-stdout-in-python-3
+            sys.stdout.buffer.write(frame.output_image[:, :, ::-1].tobytes())
 
 
 class DisplayOutputData(OutputData):
@@ -243,10 +218,7 @@ class DisplayOutputData(OutputData):
                 cv2.waitKey(1)
                 sys.exit()
 
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exception_type, exception_value, traceback):
+    def close(self):
         if cv2.waitKey(0) & 0xFF == ord('q'):
             cv2.destroyAllWindows()
             cv2.waitKey(1)
@@ -270,11 +242,7 @@ class JsonOutputData(OutputData):
         except TypeError:
             self._all_predictions = {'tags': [], 'images': []}
 
-    def __enter__(self):
-        self._i = 0
-        return self
-
-    def __exit__(self, exception_type, exception_value, traceback):
+    def close(self):
         if self._all_predictions:
             json_path = os.path.splitext(self._descriptor)[0]
             save_json_to_file(self._all_predictions, json_path)

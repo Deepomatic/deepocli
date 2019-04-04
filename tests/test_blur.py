@@ -17,17 +17,22 @@ directory_output = dir_output
 
 # ------- Image Input Tests ------------------------------------------------------------------------------------------ #
 
+
 def test_e2e_image_blur_image(test_input=image_input, test_output=image_output):
     run(['blur', '-i', test_input, '-o', test_output, '-r', 'fashion-v4'])
+
 
 def test_e2e_image_blur_video(test_input=image_input, test_output=video_output):
     run(['blur', '-i', test_input, '-o', test_output, '-r', 'fashion-v4'])
 
+
 def test_e2e_image_blur_stdout(test_input=image_input, test_output=std_output):
     run(['blur', '-i', test_input, '-o', test_output, '-r', 'fashion-v4'])
 
+
 def test_e2e_image_blur_json(test_input=image_input, test_output=json_output):
     run(['blur', '-i', test_input, '-o', test_output, '-r', 'fashion-v4'])
+
 
 def test_e2e_image_blur_directory(test_input=image_input, test_output=directory_output):
     run(['blur', '-i', test_input, '-o', test_output, '-r', 'fashion-v4'])
@@ -35,78 +40,100 @@ def test_e2e_image_blur_directory(test_input=image_input, test_output=directory_
 
 # ------- Video Input Tests ------------------------------------------------------------------------------------------ #
 
+
 def test_e2e_video_blur_image(test_input=video_input, test_output=image_output):
     run(['blur', '-i', test_input, '-o', test_output, '-r', 'fashion-v4'])
+
 
 def test_e2e_video_blur_video(test_input=video_input, test_output=video_output):
     run(['blur', '-i', test_input, '-o', test_output, '-r', 'fashion-v4'])
 
+
 def test_e2e_video_blur_stdout(test_input=video_input, test_output=std_output):
     run(['blur', '-i', test_input, '-o', test_output, '-r', 'fashion-v4'])
 
+
 def test_e2e_video_blur_json(test_input=video_input, test_output=json_output):
     run(['blur', '-i', test_input, '-o', test_output, '-r', 'fashion-v4'])
+
 
 def test_e2e_video_blur_directory(test_input=video_input, test_output=directory_output):
     run(['blur', '-i', test_input, '-o', test_output, '-r', 'fashion-v4'])
 
 
-# ------- Directory Input Tests -------------------------------------------------------------------------------------- #
+# # ------- Directory Input Tests -------------------------------------------------------------------------------------- #
+
 
 def test_e2e_directory_blur_image(test_input=directory_input, test_output=image_output):
     run(['blur', '-i', test_input, '-o', test_output, '-r', 'fashion-v4'])
 
+
 def test_e2e_directory_blur_video(test_input=directory_input, test_output=video_output):
     run(['blur', '-i', test_input, '-o', test_output, '-r', 'fashion-v4'])
+
 
 def test_e2e_directory_blur_stdout(test_input=directory_input, test_output=std_output):
     run(['blur', '-i', test_input, '-o', test_output, '-r', 'fashion-v4'])
 
+
 def test_e2e_directory_blur_json(test_input=directory_input, test_output=json_output):
     run(['blur', '-i', test_input, '-o', test_output, '-r', 'fashion-v4'])
+
 
 def test_e2e_directory_blur_directory(test_input=directory_input, test_output=directory_output):
     run(['blur', '-i', test_input, '-o', test_output, '-r', 'fashion-v4'])
 
 
-# ------- Json Input Tests ------------------------------------------------------------------------------------------- #
+# # ------- Json Input Tests ------------------------------------------------------------------------------------------- #
+
 
 def test_e2e_json_blur_image(test_input=json_input, test_output=image_output):
     run(['blur', '-i', test_input, '-o', test_output, '-r', 'fashion-v4'])
 
+
 def test_e2e_json_blur_video(test_input=json_input, test_output=video_output):
     run(['blur', '-i', test_input, '-o', test_output, '-r', 'fashion-v4'])
+
 
 def test_e2e_json_blur_stdout(test_input=json_input, test_output=std_output):
     run(['blur', '-i', test_input, '-o', test_output, '-r', 'fashion-v4'])
 
+
 def test_e2e_json_blur_json(test_input=json_input, test_output=json_output):
     run(['blur', '-i', test_input, '-o', test_output, '-r', 'fashion-v4'])
+
 
 def test_e2e_json_blur_directory(test_input=json_input, test_output=directory_output):
     run(['blur', '-i', test_input, '-o', test_output, '-r', 'fashion-v4'])
 
 
-# ------- Special Options Tests -------------------------------------------------------------------------------------- #
+# # ------- Special Options Tests -------------------------------------------------------------------------------------- #
+
 
 def test_e2e_image_blur_image_threshold(test_input=image_input, test_output=image_output):
     run(['blur', '-i', test_input, '-o', test_output, '-r', 'fashion-v4', '-t', '0.5'])
 
+
 def test_e2e_video_blur_video_fps(test_input=video_input, test_output=video_output):
     run(['blur', '-i', test_input, '-o', test_output, '-r', 'fashion-v4', '--fps', '2'])
+
 
 def test_e2e_image_blur_image_window(test_input=image_input, test_output='window'):
     return  # window not handled by test
     run(['blur', '-i', test_input, '-o', test_output, '-r', 'fashion-v4', '--fullscreen'])
 
+
 def test_e2e_image_blur_image_json(test_input=image_input, test_output=image_output):
     run(['blur', '-i', test_input, '-o', test_output, '-r', 'fashion-v4', '--json'])
+
 
 def test_e2e_image_blur_image_method(test_input=image_input, test_output=image_output):
     run(['blur', '-i', test_input, '-o', test_output, '-r', 'fashion-v4', '--blur_method', 'pixel'])
 
+
 def test_e2e_image_blur_image_strengh(test_input=image_input, test_output=image_output):
     run(['blur', '-i', test_input, '-o', test_output, '-r', 'fashion-v4', '--blur_strength', '5'])
+
 
 def test_e2e_image_blur_image_method_and_strenght(test_input=image_input, test_output=image_output):
     run(['blur', '-i', test_input, '-o', test_output, '-r', 'fashion-v4', '--blur_method', 'pixel', '--blur_strength', '5'])

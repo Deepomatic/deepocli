@@ -48,9 +48,10 @@ class RpcRecognition(AbstractWorkflow):
         self._routing_key = routing_key
         self._consumer = None
 
-        recognition_cmd_kwargs = recognition_cmd_kwargs or {}
+        recognition_cmd_kwargs = recognition_cmd_kwargs or {'show_discarded': True, 'max_predictions': 1000}
 
         if RPC_PACKAGES_USABLE:
+            # Using one client for the push thread and one client for the consuming thread (they are not thread safe)
             self._push_client = Client(amqp_url)
             self._consume_client = Client(amqp_url)
             self._recognition = None

@@ -1,7 +1,9 @@
 import os
 import cv2
+import sys
 import json
 import logging
+import threading
 from .cmds.infer import ResultInferenceThread, SendInferenceThread
 from tqdm import tqdm
 from .common import TqdmToLogger
@@ -91,9 +93,10 @@ def input_loop(kwargs, postprocessing=None):
     #   - input: prepares input and send it to worker
     #   - worker: retrieves prediction from worker
     #   - output: transforms predictions into outputs
-    send_inference_thread = SendInferenceThread(input_queue, worker_queue, workflow, postprocessing=postprocessing, **kwargs)
-    result_inference_thread = ResultInferenceThread(worker_queue, output_queue, workflow, **kwargs)
-    output_thread = OutputThread(output_queue, on_progress=lambda i: pbar.update(1), **kwargs)
+    exit_event = threading.Event()
+    send_inference_thread = SendInferenceThread(exit_event, input_queue, worker_queue, workflow, **kwargs)
+    result_inference_thread = ResultInferenceThread(exit_event, worker_queue, output_queue, workflow, postprocessing=postprocessing, **kwargs)
+    output_thread = OutputThread(exit_event, output_queue, on_progress=lambda i: pbar.update(1), **kwargs)
 
     stop_asked = 0
     # Start threads
@@ -137,7 +140,13 @@ def input_loop(kwargs, postprocessing=None):
             else:
                 logging.info('Stop asked, waiting for threads to process queued messages.')
 
+    send_inference_thread.join()
+    result_inference_thread.join()
+    output_thread.join()
     pbar.close()
+    if exit_event.is_set() or stop_asked > 0:
+        # At least one thread failed
+        sys.exit(1)
 
 
 class InputData(object):

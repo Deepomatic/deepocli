@@ -16,8 +16,10 @@ TEST_ORG = 'travis-deepocli'
 def test_2e2_image_upload(test_input=image_input):
     run(['studio', 'add_images', '-d', TEST_DATASET, '-o', TEST_ORG, test_input])
 
+
 def test_2e2_directory_upload(test_input=directory_input):
     run(['studio', 'add_images', '-d', TEST_DATASET, '-o', TEST_ORG, test_input])
+
 
 def test_2e2_json_upload(test_input=json_input):
     run(['studio', 'add_images', '-d', TEST_DATASET, '-o', TEST_ORG, test_input, '--json'])
