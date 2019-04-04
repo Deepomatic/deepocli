@@ -56,7 +56,7 @@ class OutputThread(ThreadBase):
         self.frame_to_output = 0
 
     def close(self):
-        self.frames_done.clear()
+        self.frames_done = {}
         self.frame_to_output = 0
         self.output.close()
 

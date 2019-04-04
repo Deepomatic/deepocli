@@ -121,7 +121,7 @@ class ResultInferenceThread(thread_base.ThreadBase):
 
     def close(self):
         self.workflow.close()
-        self.frames_to_check_first.clear()
+        self.frames_to_check_first = []
 
     def fill_predictions(self, predictions, new_predicted, new_discarded):
         for prediction in predictions:
