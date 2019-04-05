@@ -2,6 +2,7 @@ import os
 import cv2
 import sys
 import json
+import time
 import logging
 import threading
 from .cmds.infer import ResultInferenceThread, SendInferenceThread
@@ -20,14 +21,15 @@ QUEUE_MAX_SIZE = 50
 
 class Frame(object):
     def __init__(self, name, filename, image, video_frame_index=None):
-        self.name = name
-        self.filename = filename
-        self.image = image  # an opencv loaded image
-        self.video_frame_index = video_frame_index
-        self.frame_number = None  # frame_number since deepocli started
-        self.predictions = None
-        self.output_image = None  # frame to output (modified version of the frame)
-        self.inference_async_result = None
+        # The Frame object is used as a data exchanged in the different queues
+        self.name = name  # name of the frame
+        self.filename = filename  # the original filename from which the frame was extracted
+        self.image = image  # an opencv loaded image (numpy array)
+        self.video_frame_index = video_frame_index  # index of the frame in the video sequence
+        self.frame_number = None  # frame_number since deepocli started (set by input_loop)
+        self.inference_async_result = None  # an inference request object that will allow us to retrieve the predictions when ready
+        self.predictions = None  # predictions result dict
+        self.output_image = None  # frame to output (modified version of the image, check infer postprocessings draw/blur)
 
 
 def get_input(descriptor, kwargs):
@@ -66,33 +68,18 @@ def input_loop(kwargs, postprocessing=None):
     pbar = tqdm(total=max_value, file=tqdmout, desc='Input processing', smoothing=0)
 
     # For realtime, queue should be LIFO
-    # The data exchanged in the different queues is of the following format:
-    #   - input: data = (frame_number, frame_name, frame_filename, frame_payload)
-    #   - worker: data = (frame_number, frame_name, frame_filename, frame_payload, frame_correlation_id)
-    #   - output: data = (frame_number, frame_name, frame_modified, frame_prediction)
-    # With:
-    #   - frame_number: the frame number is the input sequence
-    #   - frame_name: the new name of the frame
-    #   - frame_filename: the original filename from which the frame was extracted
-    #   - frame_payload: the original pixels of the frame
-    #   - frame_correlation_id: the worker-nn correlation id of the frame
-    #   - frame_modified: the modifier frame, for instance the blurred frame
-    #   - frame_prediction: the actual prediction corresponding to the frame
     # TODO: might need to rethink the whole pipeling for infinite streams
     input_queue = LifoQueue(maxsize=QUEUE_MAX_SIZE) if inputs.is_infinite() else Queue()
     worker_queue = LifoQueue(maxsize=QUEUE_MAX_SIZE) if inputs.is_infinite() else Queue()
     output_queue = LifoQueue(maxsize=QUEUE_MAX_SIZE) if inputs.is_infinite() else Queue()
 
-    # Initialize workflow for mutual use between input and worker threads:
-    #   - input thread uses it to send frames
-    #   - worker thread uses it to retrieve predictions
-    # Note: the workflow is closed by the worker thread
+    # Initialize workflow for mutual use between send_inference_thread and result_inference_thread
     workflow = get_workflow(kwargs)
 
     # Define threads
-    #   - input: prepares input and send it to worker
-    #   - worker: retrieves prediction from worker
-    #   - output: transforms predictions into outputs
+    #   - send_inference_thread: prepares input request and send it to worker
+    #   - result_inference_thread: retrieves prediction from worker
+    #   - output_thread: transforms predictions into outputs
     exit_event = threading.Event()
     send_inference_thread = SendInferenceThread(exit_event, input_queue, worker_queue, workflow, **kwargs)
     result_inference_thread = ResultInferenceThread(exit_event, worker_queue, output_queue, workflow, postprocessing=postprocessing, **kwargs)
@@ -119,9 +106,6 @@ def input_loop(kwargs, postprocessing=None):
                             except Empty:
                                 break
 
-                    # while input_queue.qsize() > QUEUE_MAX_SIZE or worker_queue.qsize() > QUEUE_MAX_SIZE:
-                    #     time.sleep(1)
-
                     input_queue.put(frame)
                     frame_number += 1
 
@@ -143,6 +127,7 @@ def input_loop(kwargs, postprocessing=None):
     send_inference_thread.join()
     result_inference_thread.join()
     output_thread.join()
+    workflow.close()
     pbar.close()
     if exit_event.is_set() or stop_asked > 0:
         # At least one thread failed

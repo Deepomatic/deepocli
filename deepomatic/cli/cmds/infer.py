@@ -1,4 +1,3 @@
-import copy
 import cv2
 
 try:
@@ -7,7 +6,7 @@ except ImportError:
     from queue import Empty
 
 from .. import thread_base
-from .studio_helpers.vulcan2studio import transform_json_from_vulcan_to_studio
+
 
 FONT_SCALE = 0.5
 
@@ -25,7 +24,8 @@ class DrawImagePostprocessing(object):
         w = output_image.shape[1]
         for pred in frame.predictions['outputs'][0]['labels']['predicted']:
             # Check that we have a bounding box
-            if 'roi' in pred:
+            roi = pred.get('roi')
+            if roi is not None:
                 # Build legend
                 label = ''
                 if self._draw_labels:
@@ -36,7 +36,7 @@ class DrawImagePostprocessing(object):
                     label += str(pred['score'])
 
                 # Retrieve coordinates
-                bbox = pred['roi']['bbox']
+                bbox = roi['bbox']
                 xmin = int(bbox['xmin'] * w)
                 ymin = int(bbox['ymin'] * h)
                 xmax = int(bbox['xmax'] * w)
@@ -62,9 +62,10 @@ class BlurImagePostprocessing(object):
         w = output_image.shape[1]
         for pred in frame.predictions['outputs'][0]['labels']['predicted']:
             # Check that we have a bounding box
-            if 'roi' in pred:
+            roi = pred.get('roi')
+            if roi is not None:
                 # Retrieve coordinates
-                bbox = pred['roi']['bbox']
+                bbox = roi['bbox']
                 xmin = int(bbox['xmin'] * w)
                 ymin = int(bbox['ymin'] * h)
                 xmax = int(bbox['xmax'] * w)
@@ -116,11 +117,9 @@ class ResultInferenceThread(thread_base.ThreadBase):
         self.args = kwargs
         self.postprocessing = kwargs.get('postprocessing')
         self.threshold = kwargs.get('threshold')
-        self.to_studio_format = kwargs.get('studio_format')
         self.frames_to_check_first = []
 
     def close(self):
-        self.workflow.close()
         self.frames_to_check_first = []
 
     def fill_predictions(self, predictions, new_predicted, new_discarded):
@@ -131,6 +130,7 @@ class ResultInferenceThread(thread_base.ThreadBase):
                 new_discarded.append(prediction)
 
     def loop_impl(self):
+        # we keep an internal cache that we re-check when it is big or that the input_queue is empty
         if len(self.frames_to_check_first) > 10:
             frame = self.frames_to_check_first.pop(0)
         else:
@@ -166,11 +166,6 @@ class ResultInferenceThread(thread_base.ThreadBase):
             self.postprocessing(frame)
         else:
             frame.image_output = frame.image  # we output the original image
-
-        if self.to_studio_format:
-            frame.predictions = transform_json_from_vulcan_to_studio(frame.predictions,
-                                                                     frame.name,
-                                                                     frame.filename)
 
         # self.input_queue.task_done()
         self.output_queue.put(frame)

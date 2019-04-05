@@ -2,9 +2,11 @@ import os
 import sys
 import logging
 import json
+import copy
 import cv2
 import imutils
 from .thread_base import ThreadBase, POP_TIMEOUT
+from .cmds.studio_helpers.vulcan2studio import transform_json_from_vulcan_to_studio
 
 try:
     from Queue import Empty
@@ -144,7 +146,6 @@ class VideoOutputData(OutputData):
         self._fourcc = fourcc
         self._fps = kwargs['fps'] if kwargs['fps'] else DEFAULT_FPS
         self._writer = None
-        self._all_predictions = {'tags': [], 'images': []}
 
     def close(self):
         if self._writer is not None:
@@ -233,26 +234,43 @@ class JsonOutputData(OutputData):
     def __init__(self, descriptor, **kwargs):
         super(JsonOutputData, self).__init__(descriptor, **kwargs)
         self._i = 0
+        self._to_studio_format = kwargs.get('studio_format')
         # Check if the output is a wild card or not
         try:
             descriptor % self._i
             self._all_predictions = None
         except TypeError:
-            self._all_predictions = {'tags': [], 'images': []}
+            if self._to_studio_format:
+                self._all_predictions = {'tags': [], 'images': []}
+            else:
+                self._all_predictions = []
 
     def close(self):
-        if self._all_predictions:
+        if self._all_predictions is not None:
             json_path = os.path.splitext(self._descriptor)[0]
             save_json_to_file(self._all_predictions, json_path)
 
     def output_frame(self, frame):
         self._i += 1
-        # If the json is not a wildcard we store prediction to write then to file a the end with the __exit__
-        if self._all_predictions:
-            self._all_predictions['images'] += frame.predictions['images']
-            self._all_predictions['tags'] = list(set(self._all_predictions['tags'] +
-                                                     frame.predictions['tags']))
+        predictions = frame.predictions
+        if self._to_studio_format:
+            predictions = transform_json_from_vulcan_to_studio(predictions,
+                                                               frame.name,
+                                                               frame.filename)
+        else:
+            predictions['location'] = frame.filename
+
+        if self._all_predictions is not None:
+            # If the json is not a wildcard we store prediction to write then to file a the end in close()
+            if self._to_studio_format:
+                self._all_predictions['images'] += predictions['images']
+                self._all_predictions['tags'] = list(
+                    set(self._all_predictions['tags'] + predictions['tags'])
+                )
+            else:
+                # we deepcopy to avoid surprises if another output modify the frame.predictions
+                self._all_predictions.append(copy.deepcopy(predictions))
         # Otherwise we write them to file directly
         else:
             json_path = os.path.splitext(self._descriptor % self._i)[0]
-            save_json_to_file(frame.predictions, json_path)
+            save_json_to_file(predictions, json_path)
