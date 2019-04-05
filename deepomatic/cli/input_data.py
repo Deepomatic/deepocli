@@ -161,6 +161,9 @@ class InputData(object):
     def __iter__(self):
         raise NotImplementedError()
 
+    def __next__(self):
+        raise NotImplementedError()
+
     def get_fps(self):
         raise NotImplementedError()
 
@@ -169,6 +172,8 @@ class InputData(object):
 
     def is_infinite(self):
         raise NotImplementedError()
+
+    next = __next__  # Python 2
 
 
 class ImageInputData(InputData):
@@ -184,7 +189,11 @@ class ImageInputData(InputData):
         self._name = '%s_%s' % (self._name, self._reco)
 
     def __iter__(self):
-        return iter([Frame(self._name, self._filename, cv2.imread(self._descriptor, 1))])
+        self._iterator = iter([Frame(self._name, self._filename, cv2.imread(self._descriptor, 1))])
+        return self
+
+    def __next__(self):
+        return next(self._iterator)
 
     def get_fps(self):
         return 0
