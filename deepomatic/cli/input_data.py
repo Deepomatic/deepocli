@@ -164,6 +164,9 @@ class InputData(object):
     def __next__(self):
         raise NotImplementedError()
 
+    def next(self):
+        return self.__next__()  # for python 2
+
     def get_fps(self):
         raise NotImplementedError()
 
@@ -172,8 +175,6 @@ class InputData(object):
 
     def is_infinite(self):
         raise NotImplementedError()
-
-    next = __next__  # Python 2
 
 
 class ImageInputData(InputData):
