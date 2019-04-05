@@ -58,18 +58,22 @@ class OutputThread(ThreadBase):
         self.args = kwargs
         self.on_progress = on_progress
         self.outputs = get_outputs(self.args.get('outputs', None), self.args)
-        self.frames_done = {}
+        self.frames_to_check_first = {}
         self.frame_to_output = 0
 
     def close(self):
-        self.frames_done = {}
+        self.frames_to_check_first = {}
         self.frame_to_output = 0
         for output in self.outputs:
             output.close()
 
+    def can_stop(self):
+        return super(OutputThread, self).can_stop() and \
+            len(self.frames_to_check_first) == 0
+
     def loop_impl(self):
         # looking into frames we popped earlier
-        frame = self.frames_done.pop(self.frame_to_output, None)
+        frame = self.frames_to_check_first.pop(self.frame_to_output, None)
         if frame is None:
             try:
                 frame = self.input_queue.get(timeout=POP_TIMEOUT)
@@ -78,7 +82,7 @@ class OutputThread(ThreadBase):
                 return
 
             if self.frame_to_output != frame.frame_number:
-                self.frames_done[frame.frame_number] = frame
+                self.frames_to_check_first[frame.frame_number] = frame
                 return
 
         for output in self.outputs:

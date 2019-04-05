@@ -122,6 +122,10 @@ class ResultInferenceThread(thread_base.ThreadBase):
     def close(self):
         self.frames_to_check_first = []
 
+    def can_stop(self):
+        return super(ResultInferenceThread, self).can_stop() and \
+            len(self.frames_to_check_first) == 0
+
     def fill_predictions(self, predictions, new_predicted, new_discarded):
         for prediction in predictions:
             if prediction['score'] >= self.threshold:

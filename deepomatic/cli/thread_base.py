@@ -14,10 +14,14 @@ class ThreadBase(threading.Thread):
         self.stop_asked = False
         self.daemon = True
 
-    def stop_when_no_input(self):
+    def can_stop(self):
         if self.input_queue is not None:
-            while not self.input_queue.empty():
-                time.sleep(0.2)
+            return self.input_queue.empty()
+        return True
+
+    def stop_when_no_input(self):
+        while not self.can_stop():
+            time.sleep(0.2)
         self.stop()
 
     def stop(self):
