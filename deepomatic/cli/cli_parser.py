@@ -15,19 +15,13 @@ class ParserWithHelpOnError(argparse.ArgumentParser):
         sys.exit(1)
 
 
-def infer_func(args):
-    # inference always dump json
-    args['json'] = True
-    return input_loop(args)
-
-
 def argparser_init():
     argparser = ParserWithHelpOnError(prog='deepo')
     subparsers = argparser.add_subparsers(dest='command', help='')
     subparsers.required = True
 
     infer_parser = subparsers.add_parser('infer', help="Computes prediction on a file or directory and outputs results as a JSON file.")
-    infer_parser.set_defaults(func=infer_func)
+    infer_parser.set_defaults(func=input_loop)
 
     draw_parser = subparsers.add_parser('draw', help="Generates new images and videos with predictions results drawn on them. Computes prediction if JSON has not yet been generated.")
     draw_parser.set_defaults(func=lambda args: input_loop(args, DrawImagePostprocessing(**args)))
@@ -45,7 +39,7 @@ def argparser_init():
 
     for parser in [infer_parser, draw_parser, blur_parser]:
         parser.add_argument('-i', '--input', required=True, help="Path on which inference should be run. It can be an image (supported formats: *{}), a video (supported formats: *{}) or a directory. If the given path is a directory, it will recursively run inference on all the supported files in this directory.".format(', *'.join(ImageInputData.supported_formats), ', *'.join(VideoInputData.supported_formats)))
-        parser.add_argument('-o', '--output', required=True, help="Path in which output should be written. It can be an image (supported formats: *{}), a video (supported formats: *{}) or a directory.".format(', *'.join(ImageInputData.supported_formats), ', *'.join(VideoInputData.supported_formats)))
+        parser.add_argument('-o', '--outputs', required=True, nargs='+', help="Path in which output should be written. It can be an image (supported formats: *{}), a video (supported formats: *{}) or a directory.".format(', *'.join(ImageInputData.supported_formats), ', *'.join(VideoInputData.supported_formats)))
         parser.add_argument('-r', '--recognition_id', required=True, help="Neural network recognition version ID.")
         parser.add_argument('-u', '--amqp_url', help="AMQP url for on-premises deployments.")
         parser.add_argument('-k', '--routing_key', help="Recognition routing key for on-premises deployments.")
@@ -58,11 +52,9 @@ def argparser_init():
 
     draw_parser.add_argument('--draw_scores', help="Overlays the prediction scores.", action="store_true")
     draw_parser.add_argument('--draw_labels', help="Overlays the prediction labels.", action="store_true")
-    draw_parser.add_argument('--json', help="Saves predictions in a json file.", action="store_true")
 
     blur_parser.add_argument('--blur_method', help="Blur method to apply, either 'pixel', 'gaussian' or 'black', defaults to 'pixel'.", default='pixel', choices=['pixel', 'gaussian', 'black'])
     blur_parser.add_argument('--blur_strength', help="Blur strength, defaults to 10.", default=10)
-    blur_parser.add_argument('--json', help="Saves predictions in a json file.", action="store_true")
 
     feedback_parser.add_argument('-d', '--dataset', required=True, help="Deepomatic Studio dataset name.", type=str)
     feedback_parser.add_argument('-o', '--organization', required=True, help="Deepomatic Studio organization slug.", type=str)
@@ -75,7 +67,6 @@ def argparser_init():
 def run(args):
     # Initialize the argparser
     argparser = argparser_init()
-
     # Display the help section if no arguments are supplied
     if len(args) == 0:
         argparser.print_help(sys.stderr)

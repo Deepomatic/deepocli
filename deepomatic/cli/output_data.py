@@ -41,9 +41,13 @@ def get_output(descriptor, kwargs):
         elif descriptor == 'window':
             return DisplayOutputData(**kwargs)
         else:
-            raise NameError('Unknown output')
+            raise NameError("Unknown output '{}'".format(descriptor))
     else:
         return DisplayOutputData(**kwargs)
+
+
+def get_outputs(descriptors, kwargs):
+    return [get_output(descriptor, kwargs) for descriptor in descriptors]
 
 
 class OutputThread(ThreadBase):
@@ -51,14 +55,15 @@ class OutputThread(ThreadBase):
         super(OutputThread, self).__init__(exit_event, 'OutputThread', input_queue)
         self.args = kwargs
         self.on_progress = on_progress
-        self.output = get_output(self.args.get('output'), self.args)
+        self.outputs = get_outputs(self.args.get('outputs', None), self.args)
         self.frames_done = {}
         self.frame_to_output = 0
 
     def close(self):
         self.frames_done = {}
         self.frame_to_output = 0
-        self.output.close()
+        for output in self.outputs:
+            output.close()
 
     def loop_impl(self):
         # looking into frames we popped earlier
@@ -74,7 +79,8 @@ class OutputThread(ThreadBase):
                 self.frames_done[frame.frame_number] = frame
                 return
 
-        self.output.output_frame(frame)
+        for output in self.outputs:
+            output.output_frame(frame)
         self.frame_to_output += 1
         if self.on_progress:
             self.on_progress(self.frame_to_output)
@@ -84,7 +90,6 @@ class OutputData(object):
     def __init__(self, descriptor, **kwargs):
         self._descriptor = descriptor
         self._args = kwargs
-        self._json = kwargs.get('json', False)
 
     def close(self):
         pass
@@ -117,9 +122,8 @@ class ImageOutputData(OutputData):
             if frame.output_image is not None:
                 logging.info('Writing %s' % path)
                 cv2.imwrite(path, frame.output_image)
-            if self._json:
-                json_path = os.path.splitext(path)[0]
-                save_json_to_file(frame.predictions, json_path)
+            else:
+                logging.warning('No frame to output.')
 
 
 class VideoOutputData(OutputData):
@@ -143,24 +147,20 @@ class VideoOutputData(OutputData):
         self._all_predictions = {'tags': [], 'images': []}
 
     def close(self):
-        if self._json:
-            json_path = os.path.splitext(self._descriptor)[0]
-            save_json_to_file(self._all_predictions, json_path)
         if self._writer is not None:
             self._writer.release()
         self._writer = None
 
     def output_frame(self, frame):
-        if self._writer is None:
-            logging.info('Writing %s' % self._descriptor)
-            self._writer = cv2.VideoWriter(self._descriptor, self._fourcc,
-                                           self._fps, (frame.output_image.shape[1],
-                                                       frame.output_image.shape[0]))
-        if self._json:
-            self._all_predictions['images'] += frame.predictions['images']
-            self._all_predictions['tags'] = list(set(self._all_predictions['tags'] +
-                                                     frame.predictions['tags']))
-        self._writer.write(frame.output_image)
+        if frame.output_image is None:
+            logging.warning('No frame to output.')
+        else:
+            if self._writer is None:
+                logging.info('Writing %s' % self._descriptor)
+                self._writer = cv2.VideoWriter(self._descriptor, self._fourcc,
+                                               self._fps, (frame.output_image.shape[1],
+                                                           frame.output_image.shape[0]))
+            self._writer.write(frame.output_image)
 
 
 class DirectoryOutputData(OutputData):
@@ -173,8 +173,6 @@ class DirectoryOutputData(OutputData):
         if frame.output_image is not None:
             logging.info('Writing %s.jpeg' % path)
             cv2.imwrite('%s.jpeg' % path, frame.output_image)
-        if self._json:
-            save_json_to_file(frame.predictions, path)
 
 
 class StdOutputData(OutputData):

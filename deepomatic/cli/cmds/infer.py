@@ -164,6 +164,8 @@ class ResultInferenceThread(thread_base.ThreadBase):
 
         if self.postprocessing is not None:
             self.postprocessing(frame)
+        else:
+            frame.image_output = frame.image  # we output the original image
 
         if self.to_studio_format:
             frame.predictions = transform_json_from_vulcan_to_studio(frame.predictions,
