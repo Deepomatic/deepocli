@@ -12,8 +12,7 @@ std_output = 'stdout'
 image_output = os.path.join(dir_output, 'image_output%4d.jpg')
 video_output = os.path.join(dir_output, 'video_output%4d.mp4')
 json_output = os.path.join(dir_output, 'test_output%4d.json')
-directory_output = dir_output
-outputs = [std_output, image_output, video_output, json_output, directory_output]
+outputs = [std_output, image_output, video_output, json_output]
 
 # ------- Image Input Tests ------------------------------------------------------------------------------------------ #
 
@@ -31,10 +30,6 @@ def test_e2e_image_draw_stdout(test_input=image_input, test_output=std_output):
 
 
 def test_e2e_image_draw_json(test_input=image_input, test_output=json_output):
-    run(['draw', '-i', test_input, '-o', test_output, '-r', 'fashion-v4'])
-
-
-def test_e2e_image_draw_directory(test_input=image_input, test_output=directory_output):
     run(['draw', '-i', test_input, '-o', test_output, '-r', 'fashion-v4'])
 
 
@@ -61,10 +56,6 @@ def test_e2e_video_draw_json(test_input=video_input, test_output=json_output):
     run(['draw', '-i', test_input, '-o', test_output, '-r', 'fashion-v4'])
 
 
-def test_e2e_video_draw_directory(test_input=video_input, test_output=directory_output):
-    run(['draw', '-i', test_input, '-o', test_output, '-r', 'fashion-v4'])
-
-
 def test_e2e_video_draw_multiples(test_input=video_input, test_output=outputs):
     run(['draw', '-i', test_input, '-o'] + outputs + ['-r', 'fashion-v4'])
 
@@ -88,10 +79,6 @@ def test_e2e_directory_draw_json(test_input=directory_input, test_output=json_ou
     run(['draw', '-i', test_input, '-o', test_output, '-r', 'fashion-v4'])
 
 
-def test_e2e_directory_draw_directory(test_input=directory_input, test_output=directory_output):
-    run(['draw', '-i', test_input, '-o', test_output, '-r', 'fashion-v4'])
-
-
 def test_e2e_directory_draw_multiples(test_input=directory_input, test_output=outputs):
     run(['draw', '-i', test_input, '-o'] + outputs + ['-r', 'fashion-v4'])
 
@@ -112,10 +99,6 @@ def test_e2e_json_draw_stdout(test_input=json_input, test_output=std_output):
 
 
 def test_e2e_json_draw_json(test_input=json_input, test_output=json_output):
-    run(['draw', '-i', test_input, '-o', test_output, '-r', 'fashion-v4'])
-
-
-def test_e2e_json_draw_directory(test_input=json_input, test_output=directory_output):
     run(['draw', '-i', test_input, '-o', test_output, '-r', 'fashion-v4'])
 
 
