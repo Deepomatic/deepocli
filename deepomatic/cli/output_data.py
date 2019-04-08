@@ -116,13 +116,13 @@ class ImageOutputData(OutputData):
         self._i = 0
 
     def output_frame(self, frame):
+        self._i += 1
         path = self._descriptor
         try:
             path = path % self._i
         except TypeError:
             pass
         finally:
-            self._i += 1
             if frame.output_image is not None:
                 logging.info('Writing %s' % path)
                 cv2.imwrite(path, frame.output_image)

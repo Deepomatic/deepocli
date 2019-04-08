@@ -69,9 +69,11 @@ def input_loop(kwargs, postprocessing=None):
 
     # For realtime, queue should be LIFO
     # TODO: might need to rethink the whole pipeling for infinite streams
-    input_queue = LifoQueue(maxsize=QUEUE_MAX_SIZE) if inputs.is_infinite() else Queue()
-    worker_queue = LifoQueue(maxsize=QUEUE_MAX_SIZE) if inputs.is_infinite() else Queue()
-    output_queue = LifoQueue(maxsize=QUEUE_MAX_SIZE) if inputs.is_infinite() else Queue()
+
+    queue_cls = LifoQueue if inputs.is_infinite() else Queue
+    input_queue = queue_cls(maxsize=QUEUE_MAX_SIZE)
+    worker_queue = queue_cls(maxsize=QUEUE_MAX_SIZE)
+    output_queue = queue_cls(maxsize=QUEUE_MAX_SIZE)
 
     # Initialize workflow for mutual use between send_inference_thread and result_inference_thread
     workflow = get_workflow(kwargs)

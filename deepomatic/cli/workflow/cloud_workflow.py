@@ -6,6 +6,7 @@ from .. import common
 import deepomatic.api.client
 import deepomatic.api.inputs
 import deepomatic.api.exceptions
+from deepomatic.api.resources.task import is_success_status, is_error_status
 
 
 class CloudRecognition(AbstractWorkflow):
@@ -14,10 +15,12 @@ class CloudRecognition(AbstractWorkflow):
             self._task = task
 
         def get_predictions(self):
-            try:
-                return self._task.wait().data()['data']
-            except (deepomatic.api.exceptions.TaskTimeout, deepomatic.api.exceptions.TaskError) as e:
-                return None
+            self._task.refresh()
+            if is_success_status(self._task['status']):
+                return self._task['data']
+            elif is_error_status(self._task['status']):
+                logging.error(self._task.data())
+            return None
 
     def __init__(self, recognition_version_id):
         super(CloudRecognition, self).__init__('r{}'.format(recognition_version_id))

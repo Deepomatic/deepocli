@@ -36,11 +36,14 @@ class ThreadBase(threading.Thread):
     def close(self):
         pass
 
+    def _run(self):
+        while not self.stop_asked:
+            self.loop_impl()
+
     def run(self):
         try:
             self.init()
-            while not self.stop_asked:
-                self.loop_impl()
+            self._run()
         except Exception:
             logging.error(traceback.format_exc())
             self.exit_event.set()

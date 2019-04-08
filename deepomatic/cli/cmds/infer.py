@@ -1,4 +1,6 @@
 import cv2
+import os
+import time
 
 try:
     from Queue import Empty
@@ -10,6 +12,7 @@ from .. import thread_base
 
 # Size of the font we draw in the image_output
 FONT_SCALE = 0.5
+RESULT_BATCH_SIZE = int(os.getenv('RESULT_BATCH_SIZE', 10))
 
 
 class DrawImagePostprocessing(object):
@@ -118,14 +121,14 @@ class ResultInferenceThread(thread_base.ThreadBase):
         self.args = kwargs
         self.postprocessing = kwargs.get('postprocessing')
         self.threshold = kwargs.get('threshold')
-        self.frames_to_check_first = []
+        self.batch = []
 
     def close(self):
-        self.frames_to_check_first = []
+        self.batch = []
 
     def can_stop(self):
         return super(ResultInferenceThread, self).can_stop() and \
-            len(self.frames_to_check_first) == 0
+            len(self.batch) == 0
 
     def fill_predictions(self, predictions, new_predicted, new_discarded):
         for prediction in predictions:
@@ -134,42 +137,49 @@ class ResultInferenceThread(thread_base.ThreadBase):
             else:
                 new_discarded.append(prediction)
 
-    def loop_impl(self):
-        # we keep an internal cache that we re-check when it is big or that the input_queue is empty
-        if len(self.frames_to_check_first) > 10:
-            frame = self.frames_to_check_first.pop(0)
-        else:
-            try:
-                frame = self.input_queue.get(timeout=thread_base.POP_TIMEOUT)
-                self.input_queue.task_done()
-            except Empty:
-                if not self.frames_to_check_first:
-                    return
-                frame = self.frames_to_check_first.pop(0)
+    def _run(self):
+        sleep_time = 0
+        while not self.stop_asked:
+            for i in range(RESULT_BATCH_SIZE):
+                try:
+                    frame = self.input_queue.get(timeout=thread_base.POP_TIMEOUT)
+                    self.batch.append(frame)
+                except Empty:
+                    break
 
-        predictions = frame.inference_async_result.get_predictions()
+            time.sleep(sleep_time)
+            not_done = 0
+            while self.batch:
+                frame = self.batch.pop(0)
 
-        # If the prediction is not finished, then put the data back in the queue
-        if predictions is None:
-            self.frames_to_check_first.append(frame)
-            return
+                predictions = frame.inference_async_result.get_predictions()
 
-        if self.threshold is not None:
-            # Keep only predictions higher than threshold
-            for output in predictions['outputs']:
-                new_predicted = []
-                new_discarded = []
-                labels = output['labels']
-                self.fill_predictions(labels['predicted'], new_predicted, new_discarded)
-                self.fill_predictions(labels['discarded'], new_predicted, new_discarded)
-                labels['predicted'] = new_predicted
-                labels['discarded'] = new_discarded
+                # If the prediction is not finished, then put the data back in the batch
+                if predictions is None:
+                    self.batch.append(frame)
+                    sleep_time += 0.005
+                    not_done += 1
+                    continue
 
-        frame.predictions = predictions
+                if self.threshold is not None:
+                    # Keep only predictions higher than threshold
+                    for output in predictions['outputs']:
+                        new_predicted = []
+                        new_discarded = []
+                        labels = output['labels']
+                        self.fill_predictions(labels['predicted'], new_predicted, new_discarded)
+                        self.fill_predictions(labels['discarded'], new_predicted, new_discarded)
+                        labels['predicted'] = new_predicted
+                        labels['discarded'] = new_discarded
 
-        if self.postprocessing is not None:
-            self.postprocessing(frame)
-        else:
-            frame.output_image = frame.image  # we output the original image
+                frame.predictions = predictions
 
-        self.output_queue.put(frame)
+                if self.postprocessing is not None:
+                    self.postprocessing(frame)
+                else:
+                    frame.output_image = frame.image  # we output the original image
+
+                self.output_queue.put(frame)
+
+            if not_done == 0:
+                sleep_time = max(sleep_time - 0.005, 0)
