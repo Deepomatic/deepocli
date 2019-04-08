@@ -8,6 +8,7 @@ except ImportError:
 from .. import thread_base
 
 
+# Size of the font we draw in the image_output
 FONT_SCALE = 0.5
 
 
@@ -75,17 +76,17 @@ class BlurImagePostprocessing(object):
                 if self._method == 'black':
                     cv2.rectangle(output_image, (xmin, ymin), (xmax, ymax), (0, 0, 0), -1)
                 elif self._method == 'gaussian':
-                    face = frame[ymin:ymax, xmin:xmax]
-                    face = cv2.GaussianBlur(face, (15, 15), self._strength)
-                    output_image[ymin:ymax, xmin:xmax] = face
+                    rectangle = frame[ymin:ymax, xmin:xmax]
+                    rectangle = cv2.GaussianBlur(rectangle, (15, 15), self._strength)
+                    output_image[ymin:ymax, xmin:xmax] = rectangle
                 elif self._method == 'pixel':
-                    face = output_image[ymin:ymax, xmin:xmax]
-                    small = cv2.resize(face, (0, 0),
+                    rectangle = output_image[ymin:ymax, xmin:xmax]
+                    small = cv2.resize(rectangle, (0, 0),
                                        fx=1. / min((xmax - xmin), self._strength),
                                        fy=1. / min((ymax - ymin), self._strength))
-                    face = cv2.resize(small, ((xmax - xmin), (ymax - ymin)),
-                                      interpolation=cv2.INTER_NEAREST)
-                    output_image[ymin:ymax, xmin:xmax] = face
+                    rectangle = cv2.resize(small, ((xmax - xmin), (ymax - ymin)),
+                                           interpolation=cv2.INTER_NEAREST)
+                    output_image[ymin:ymax, xmin:xmax] = rectangle
 
 
 class SendInferenceThread(thread_base.ThreadBase):
@@ -171,5 +172,4 @@ class ResultInferenceThread(thread_base.ThreadBase):
         else:
             frame.image_output = frame.image  # we output the original image
 
-        # self.input_queue.task_done()
         self.output_queue.put(frame)

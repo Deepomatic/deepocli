@@ -12,7 +12,7 @@ class Task(object):
             return ret
         while ret['next'] is not None and ret['status'] != 'SUCCESS':
             if ret['status'] in ('FAILURE', 'REVOKED'):
-                raise RuntimeError("Task {} stoped with status".format(task_id))
+                raise RuntimeError("Task {} stopped with status".format(task_id))
             elif ret['status'] == 'SUCCESS':
                 task_id = ret['next']
                 ret = self._helper.get('manage/tasks/{}/'.format(task_id))
