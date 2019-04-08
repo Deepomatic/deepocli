@@ -170,6 +170,6 @@ class ResultInferenceThread(thread_base.ThreadBase):
         if self.postprocessing is not None:
             self.postprocessing(frame)
         else:
-            frame.image_output = frame.image  # we output the original image
+            frame.output_image = frame.image  # we output the original image
 
         self.output_queue.put(frame)

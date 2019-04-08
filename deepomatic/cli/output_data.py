@@ -30,9 +30,7 @@ def save_json_to_file(json_data, json_path):
 
 def get_output(descriptor, kwargs):
     if descriptor is not None:
-        if DirectoryOutputData.is_valid(descriptor):
-            return DirectoryOutputData(descriptor, **kwargs)
-        elif ImageOutputData.is_valid(descriptor):
+        if ImageOutputData.is_valid(descriptor):
             return ImageOutputData(descriptor, **kwargs)
         elif VideoOutputData.is_valid(descriptor):
             return VideoOutputData(descriptor, **kwargs)
@@ -166,18 +164,6 @@ class VideoOutputData(OutputData):
                                                self._fps, (frame.output_image.shape[1],
                                                            frame.output_image.shape[0]))
             self._writer.write(frame.output_image)
-
-
-class DirectoryOutputData(OutputData):
-    @classmethod
-    def is_valid(cls, descriptor):
-        return (os.path.exists(descriptor) and os.path.isdir(descriptor))
-
-    def output_frame(self, frame):
-        path = os.path.join(self._descriptor, frame.name)
-        if frame.output_image is not None:
-            logging.info('Writing %s.jpeg' % path)
-            cv2.imwrite('%s.jpeg' % path, frame.output_image)
 
 
 class StdOutputData(OutputData):
