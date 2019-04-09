@@ -129,9 +129,15 @@ def input_loop(kwargs, postprocessing=None):
     output_thread.join()
     workflow.close()
     pbar.close()
-    if exit_event.is_set() or stop_asked > 0:
-        # At least one thread failed
+
+    # If the process encountered an error, the exit code is 1.
+    # If the process is interrupted using SIGINT (ctrl + C) or SIGTERM, the queues are emptied and processed by the
+    # threads, and the exit code is 0.
+    # If SIGINT or SIGTERM is sent again during this shutdown phase, the threads are killed, and the exit code is 2.
+    if exit_event.is_set():
         sys.exit(1)
+    elif stop_asked >= 2:
+        sys.exit(2)
 
 
 class InputData(object):
