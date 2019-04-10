@@ -62,11 +62,11 @@ def argparser_init():
     feedback_parser.add_argument('path', type=str, nargs='+', help='Path to an image file, images directory or json file or directory.')
     feedback_parser.add_argument('--json', dest='json_file', action='store_true', help='Look for JSON files instead of images.')
 
-    return argparser, studio_parser
+    return argparser
 
 
 def run(args):
     # Initialize the argparser
-    argparser, studio_parser = argparser_init()
+    argparser = argparser_init()
     args = argparser.parse_args(args)
     return args.func(vars(args))
