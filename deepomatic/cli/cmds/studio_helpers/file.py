@@ -12,7 +12,7 @@ from .task import Task
 from ...common import TqdmToLogger
 from ... import thread_base
 if sys.version_info >= (3, 0):
-    import queue as Queue
+    import queue as Queue, Empty
 else:
     import Queue
 
@@ -26,12 +26,11 @@ class UploadImageThread(thread_base.ThreadBase):
         self.args = kwargs
         self.on_progress = on_progress
         self._helper = helper
-        self._input_queue = input_queue
         self._task = task
 
     def loop_impl(self):
         try:
-            url, data, file = self._input_queue.get(timeout=thread_base.POP_TIMEOUT)
+            url, data, file = self.input_queue.get(timeout=thread_base.POP_TIMEOUT)
         except Empty:
             return
 
@@ -40,9 +39,10 @@ class UploadImageThread(thread_base.ThreadBase):
                 rq = self._helper.post(url, data={"meta": data}, content_type='multipart/form', files={"file": fd})
                 self._task.retrieve(rq['task_id'])
         except RuntimeError as e:
-            logging.error(e, file=sys.stderr)
+            logging.error(e)
+            logging.error("URL {} with file {} failed".format(url, file))
 
-        self._input_queue.task_done()
+        self.input_queue.task_done()
         if self.on_progress:
             self.on_progress()
 
@@ -53,7 +53,7 @@ class File(object):
         if not task:
             task = Task(helper)
         self._task = task
-        self._input_queue = Queue.Queue()
+        self.input_queue = Queue.Queue()
         self.total_files = 0
 
 
@@ -62,7 +62,7 @@ class File(object):
             # If it's an file, add it to the queue
             if file.split('.')[-1].lower() != 'json':
                 tmp_name = uuid.uuid4().hex
-                self._input_queue.put((
+                self.input_queue.put((
                     'v1-beta/datasets/{}/commits/{}/images/'.format(dataset_name, commit_pk),
                     json.dumps({'location': tmp_name}),
                     file
@@ -102,7 +102,7 @@ class File(object):
                         continue
                     image_key = uuid.uuid4().hex
                     img_json['location'] = image_key
-                    self._input_queue.put((
+                    self.input_queue.put((
                         'v1-beta/datasets/{}/commits/{}/images/'.format(dataset_name, commit_pk),
                         json.dumps(img_json),
                         file_path
@@ -133,7 +133,7 @@ class File(object):
         for i in range(THREAD_NUMBER):
             t = UploadImageThread(
                 exit_event,
-                self._input_queue,
+                self.input_queue,
                 self._helper,
                 self._task,
                 on_progress=lambda: pbar.update(1)
