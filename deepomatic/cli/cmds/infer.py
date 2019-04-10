@@ -40,7 +40,8 @@ class DrawImagePostprocessing(object):
     def __call__(self, frame):
         frame.output_image = frame.image.copy()
         output_image = frame.output_image
-        height, width, _ = output_image.shape
+        height = output_image.shape[0]
+        width = output_image.shape[1]
         tag_drawn = 0  # Used to store the number of tags already drawn
         for pred in frame.predictions['outputs'][0]['labels']['predicted']:
             # Build legend
@@ -109,7 +110,8 @@ class BlurImagePostprocessing(object):
     def __call__(self, frame):
         frame.output_image = frame.image.copy()
         output_image = frame.output_image
-        height, width, _ = output_image.shape
+        height = output_image.shape[0]
+        width = output_image.shape[1]
         for pred in frame.predictions['outputs'][0]['labels']['predicted']:
             # Check that we have a bounding box
             roi = pred.get('roi')
