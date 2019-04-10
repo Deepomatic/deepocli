@@ -219,7 +219,8 @@ class VideoInputData(InputData):
         desired_fps = min(self._fps_opt, raw_fps) if self._fps_opt else raw_fps
         # TODO: find a better name for fps, as it is actually a ratio indicating which frames number to process in the video (other are ignored)
         logging.info('Detected raw video fps of {}, using fps of {}'.format(raw_fps, desired_fps))
-        total_frames = int(self._cap.get(cv2.CAP_PROP_FRAME_COUNT) * desired_fps / raw_fps)
+        # Compute the total number of frames and ensure we always have at least one frame
+        total_frames = max(1, int(self._cap.get(cv2.CAP_PROP_FRAME_COUNT) * desired_fps / raw_fps))
         self._fps = desired_fps
         self._adjusted_frames = [round(frame * raw_fps / desired_fps) for frame in range(0, total_frames)]
         self._total_frames = len(self._adjusted_frames)
