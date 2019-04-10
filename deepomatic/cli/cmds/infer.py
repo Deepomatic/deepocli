@@ -22,6 +22,15 @@ def substract_tuple(tuple1, tuple2):
     return tuple(x - y for x, y in zip(tuple1, tuple2))
 
 
+def get_coordinates_from_roi(roi, width, height):
+    bbox = roi['bbox']
+    xmin = int(bbox['xmin'] * width)
+    ymin = int(bbox['ymin'] * height)
+    xmax = int(bbox['xmax'] * width)
+    ymax = int(bbox['ymax'] * height)
+    return (xmin, ymin, xmax, ymax)
+
+
 class DrawImagePostprocessing(object):
 
     def __init__(self, **kwargs):
@@ -41,21 +50,18 @@ class DrawImagePostprocessing(object):
             if self._draw_labels and self._draw_scores:
                 label += ' '
             if self._draw_scores:
-                label += str(round(pred['score'], 4))
+                label += str(round(pred['score'], SCORE_DECIMAL_PRECISION))
             # Make sure labels are ascii
-            label = label.encode('ascii', 'replace')
+            label = str(label.encode('ascii', 'replace'))
 
             # Get text draw parameters
-            ret, baseline = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, FONT_SCALE, SCORE_DECIMAL_PRECISION)
+            ret, baseline = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, FONT_SCALE, 1)
 
             # If we have a bounding box
-            if 'roi' in pred:
+            roi = pred.get('roi')
+            if roi is not None:
                 # Retrieve coordinates
-                bbox = pred['roi']['bbox']
-                xmin = int(bbox['xmin'] * width)
-                ymin = int(bbox['ymin'] * height)
-                xmax = int(bbox['xmax'] * width)
-                ymax = int(bbox['ymax'] * height)
+                xmin, ymin, xmax, ymax = get_coordinates_from_roi(roi, width, height)
 
                 # Draw bounding box
                 cv2.rectangle(output_image, (xmin, ymin), (xmax, ymax), BOX_COLOR, 1)
@@ -103,18 +109,13 @@ class BlurImagePostprocessing(object):
     def __call__(self, frame):
         frame.output_image = frame.image.copy()
         output_image = frame.output_image
-        h = output_image.shape[0]
-        w = output_image.shape[1]
+        height, width, _ = output_image.shape
         for pred in frame.predictions['outputs'][0]['labels']['predicted']:
             # Check that we have a bounding box
             roi = pred.get('roi')
             if roi is not None:
                 # Retrieve coordinates
-                bbox = roi['bbox']
-                xmin = int(bbox['xmin'] * w)
-                ymin = int(bbox['ymin'] * h)
-                xmax = int(bbox['xmax'] * w)
-                ymax = int(bbox['ymax'] * h)
+                xmin, ymin, xmax, ymax = get_coordinates_from_roi(roi, width, height)
 
                 # Draw
                 if self._method == 'black':
