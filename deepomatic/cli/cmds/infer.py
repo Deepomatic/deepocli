@@ -31,8 +31,7 @@ class DrawImagePostprocessing(object):
     def __call__(self, frame):
         frame.output_image = frame.image.copy()
         output_image = frame.output_image
-        height = output_image.shape[0]
-        width = output_image.shape[1]
+        height, width, _ = output_image.shape
         tag_drawn = 0  # Used to store the number of tags already drawn
         for pred in frame.predictions['outputs'][0]['labels']['predicted']:
             # Build legend
@@ -43,11 +42,13 @@ class DrawImagePostprocessing(object):
                 label += ' '
             if self._draw_scores:
                 label += str(round(pred['score'], 4))
+            # Make sure labels are ascii
+            label = label.encode('ascii', 'replace')
 
             # Get text draw parameters
             ret, baseline = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, FONT_SCALE, SCORE_DECIMAL_PRECISION)
 
-            # If we have a bounding box\
+            # If we have a bounding box
             if 'roi' in pred:
                 # Retrieve coordinates
                 bbox = pred['roi']['bbox']
@@ -79,7 +80,7 @@ class DrawImagePostprocessing(object):
                 # Finally draw everything
                 cv2.rectangle(output_image, background_corner1, background_corner2, BACKGROUND_COLOR, -1)
                 cv2.putText(output_image, label, text_corner, cv2.FONT_HERSHEY_SIMPLEX, FONT_SCALE, TEXT_COLOR, 1)
-            else:
+            elif label != '':
                 # First get ideal corners
                 if tag_drawn == 0:
                     background_corner1 = TAG_TEXT_CORNER
