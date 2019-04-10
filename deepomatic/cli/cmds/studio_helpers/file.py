@@ -11,10 +11,10 @@ from tqdm import tqdm
 from .task import Task
 from ...common import TqdmToLogger
 from ... import thread_base
-if sys.version_info >= (3, 0):
-    import queue as Queue, Empty
-else:
-    import Queue
+try:
+    from Queue import Queue, Empty
+except ImportError:
+    from queue import Queue, Empty
 
 
 THREAD_NUMBER = 5
@@ -52,7 +52,7 @@ class File(object):
         if not task:
             task = Task(helper)
         self._task = task
-        self.input_queue = Queue.Queue()
+        self.input_queue = Queue()
         self.total_files = 0
 
 
