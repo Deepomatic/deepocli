@@ -2,7 +2,6 @@ import os
 import cv2
 import sys
 import json
-import time
 import logging
 import threading
 from .cmds.infer import ResultInferenceThread, SendInferenceThread
@@ -205,26 +204,32 @@ class VideoInputData(InputData):
         super(VideoInputData, self).__init__(descriptor, **kwargs)
         self._i = 0
         self._name = '%s_%s_%s' % (self._name, '%05d', self._reco)
+        self._fps_opt = kwargs['fps']
+        self._open_video(raise_exc=False)
+
+    def _open_video(self, raise_exc=True):
         self._cap = cv2.VideoCapture(self._descriptor)
-        if self._cap is not None:
-            raw_fps = self._cap.get(cv2.CAP_PROP_FPS)
-            desired_fps = min(kwargs['fps'], raw_fps) if kwargs['fps'] else raw_fps
-            # TODO: find a better name for fps, as it is actually a ratio indicating which frames number to process in the video (other are ignored)
-            logging.info('Detected raw video fps of {}, using fps of {}'.format(raw_fps, desired_fps))
-            total_frames = int(self._cap.get(cv2.CAP_PROP_FRAME_COUNT) * desired_fps / raw_fps)
-            self._fps = desired_fps
-            self._adjusted_frames = [round(frame * raw_fps / desired_fps) for frame in range(0, total_frames)]
-            self._total_frames = len(self._adjusted_frames)
-        else:
-            self._fps = None
-            self._total_frames = None
-            self._adjusted_frames = None
+        if not self._cap.isOpened():
+            self._cap = None
+            if raise_exc:
+                raise Exception("Could not open video {}".format(self._descriptor))
+            return False
+
+        raw_fps = self._cap.get(cv2.CAP_PROP_FPS)
+        desired_fps = min(self._fps_opt, raw_fps) if self._fps_opt else raw_fps
+        # TODO: find a better name for fps, as it is actually a ratio indicating which frames number to process in the video (other are ignored)
+        logging.info('Detected raw video fps of {}, using fps of {}'.format(raw_fps, desired_fps))
+        total_frames = int(self._cap.get(cv2.CAP_PROP_FRAME_COUNT) * desired_fps / raw_fps)
+        self._fps = desired_fps
+        self._adjusted_frames = [round(frame * raw_fps / desired_fps) for frame in range(0, total_frames)]
+        self._total_frames = len(self._adjusted_frames)
+        self._i = 0
+        return True
 
     def __iter__(self):
         if self._cap is not None:
             self._cap.release()
-        self._cap = cv2.VideoCapture(self._descriptor)
-        self._i = 0
+        self._open_video()
         return self
 
     def __next__(self):
