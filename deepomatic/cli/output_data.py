@@ -18,9 +18,13 @@ DEFAULT_FPS = 25
 
 def save_json_to_file(json_data, json_path):
     try:
-        with open('%s.json' % json_path, 'w') as file:
+        with open('%s.json' % json_path, 'w') as f:
             logging.info('Writing %s.json' % json_path)
-            json.dump(json_data, file)
+            json.dump(json_data, f)
+            # force writing directly on the disk
+            # or it might be a bit delayed and makes sometimes the files
+            f.flush()
+            os.fsync(f.fileno())
     except Exception:
         logging.error("Could not save file {} in json format.".format(json_path))
         raise
