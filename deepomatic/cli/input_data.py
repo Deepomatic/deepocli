@@ -15,6 +15,8 @@ except ImportError:
     from queue import Queue, LifoQueue, Empty
 
 
+# don't set it to None if you don't know what you do
+# note that it could probably be dynamically calculated
 QUEUE_MAX_SIZE = 50
 
 
@@ -68,7 +70,7 @@ def input_loop(kwargs, postprocessing=None):
 
     # For realtime, queue should be LIFO
     # TODO: might need to rethink the whole pipeling for infinite streams
-
+    # IMPORTANT: maxsize is important, it allows to regulate the pipeline and avoid to pushes too many requests to rabbitmq when we are already waiting for many results
     queue_cls = LifoQueue if inputs.is_infinite() else Queue
     input_queue = queue_cls(maxsize=QUEUE_MAX_SIZE)
     worker_queue = queue_cls(maxsize=QUEUE_MAX_SIZE)

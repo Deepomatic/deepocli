@@ -138,8 +138,10 @@ class ResultInferenceThread(thread_base.ThreadBase):
                 new_discarded.append(prediction)
 
     def _run(self):
-        sleep_time = 0
+        sleep_time = 0.
+        sleep_time_inc = 0.005
         while not self.stop_asked:
+            # We try to get a whole batch
             for i in range(RESULT_BATCH_SIZE):
                 try:
                     frame = self.input_queue.get(timeout=thread_base.POP_TIMEOUT)
@@ -149,15 +151,17 @@ class ResultInferenceThread(thread_base.ThreadBase):
 
             time.sleep(sleep_time)
             not_done = 0
+            # We wait for the whole batch
             while self.batch:
                 frame = self.batch.pop(0)
 
                 predictions = frame.inference_async_result.get_predictions()
 
                 # If the prediction is not finished, then put the data back in the batch
+                # and increase the sleep time so that we use less cpu for the next batch
                 if predictions is None:
                     self.batch.append(frame)
-                    sleep_time += 0.005
+                    sleep_time += sleep_time_inc
                     not_done += 1
                     continue
 
@@ -182,4 +186,7 @@ class ResultInferenceThread(thread_base.ThreadBase):
                 self.output_queue.put(frame)
 
             if not_done == 0:
-                sleep_time = max(sleep_time - 0.005, 0)
+                # we adjust the sleep time depending on the speed of the worker(s)
+                # here everything was done in one iteration over the batch
+                # so we consider we can sleep less for the next batch
+                sleep_time = max(sleep_time - sleep_time_inc, 0.)
