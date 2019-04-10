@@ -83,7 +83,7 @@ def input_loop(kwargs, postprocessing=None):
     exit_event = threading.Event()
     send_inference_thread = SendInferenceThread(exit_event, input_queue, worker_queue, workflow, **kwargs)
     result_inference_thread = ResultInferenceThread(exit_event, worker_queue, output_queue, workflow, postprocessing=postprocessing, **kwargs)
-    output_thread = OutputThread(exit_event, output_queue, on_progress=lambda i: pbar.update(1), **kwargs)
+    output_thread = OutputThread(exit_event, output_queue, on_progress=lambda: pbar.update(1), **kwargs)
 
     stop_asked = 0
     # Start threads
