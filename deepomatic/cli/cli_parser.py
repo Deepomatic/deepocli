@@ -61,12 +61,12 @@ def argparser_init():
     feedback_parser.add_argument('path', type=str, nargs='+', help='Path to an image file, images directory or json file or directory.')
     feedback_parser.add_argument('--json', dest='json_file', action='store_true', help='Look for JSON files instead of images.')
 
-    return argparser
+    return argparser, studio_parser
 
 
 def run(args):
     # Initialize the argparser
-    argparser = argparser_init()
+    argparser, studio_parser = argparser_init()
     # Display the help section if no arguments are supplied
     if len(args) == 0:
         argparser.print_help(sys.stderr)
@@ -74,4 +74,9 @@ def run(args):
     # Otherwise parse the arguments and run the command
     else:
         args = argparser.parse_args(args)
+        # Display studio subhelp if needed
+        print(args)
+        if args.command == 'studio':
+            studio_parser.print_help(sys.stderr)
+            return
         return args.func(vars(args))
