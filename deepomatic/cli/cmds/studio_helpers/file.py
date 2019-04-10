@@ -39,8 +39,7 @@ class UploadImageThread(thread_base.ThreadBase):
                 rq = self._helper.post(url, data={"meta": data}, content_type='multipart/form', files={"file": fd})
                 self._task.retrieve(rq['task_id'])
         except RuntimeError as e:
-            logging.error(e)
-            logging.error("URL {} with file {} failed".format(url, file))
+            logging.error("URL {} with file {} failed: {}".format(url, file, e))
 
         self.input_queue.task_done()
         if self.on_progress:
