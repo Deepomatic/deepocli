@@ -75,7 +75,6 @@ def run(args):
     else:
         args = argparser.parse_args(args)
         # Display studio subhelp if needed
-        print(args)
         if args.command == 'studio':
             studio_parser.print_help(sys.stderr)
             return
