@@ -8,8 +8,18 @@ except ImportError:
 from .. import thread_base
 
 
-# Size of the font we draw in the image_output
-FONT_SCALE = 0.5
+# Draw parameters
+SCORE_DECIMAL_PRECISION = 4             # Prediction score decimal number precision
+FONT_SCALE = 0.5                        # Size of the font we draw in the image_output
+BOX_COLOR = (255, 0, 0)                 # Bounding box color (BGR)
+BACKGROUND_COLOR = (0, 0, 255)          # Text background color (BGR)
+TEXT_COLOR = (255, 255, 255)            # Text color (BGR)
+TAG_TEXT_CORNER = (10, 10)              # Beginning of text tag column (pixel)
+TAG_TEXT_INTERSPACE = 5                 # Vertical space between tags in tag column (pixel)
+
+
+def substract_tuple(tuple1, tuple2):
+    return tuple(x - y for x, y in zip(tuple1, tuple2))
 
 
 class DrawImagePostprocessing(object):
@@ -21,34 +31,67 @@ class DrawImagePostprocessing(object):
     def __call__(self, frame):
         frame.output_image = frame.image.copy()
         output_image = frame.output_image
-        h = output_image.shape[0]
-        w = output_image.shape[1]
+        height = output_image.shape[0]
+        width = output_image.shape[1]
+        tag_drawn = 0  # Used to store the number of tags already drawn
         for pred in frame.predictions['outputs'][0]['labels']['predicted']:
-            # Check that we have a bounding box
-            roi = pred.get('roi')
-            if roi is not None:
-                # Build legend
-                label = ''
-                if self._draw_labels:
-                    label += ', ' + pred['label_name']
-                if self._draw_labels and self._draw_scores:
-                    label += ' '
-                if self._draw_scores:
-                    label += str(pred['score'])
+            # Build legend
+            label = ''
+            if self._draw_labels:
+                label = pred['label_name']
+            if self._draw_labels and self._draw_scores:
+                label += ' '
+            if self._draw_scores:
+                label += str(round(pred['score'], 4))
 
+            # Get text draw parameters
+            ret, baseline = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, FONT_SCALE, SCORE_DECIMAL_PRECISION)
+
+            # If we have a bounding box\
+            if 'roi' in pred:
                 # Retrieve coordinates
-                bbox = roi['bbox']
-                xmin = int(bbox['xmin'] * w)
-                ymin = int(bbox['ymin'] * h)
-                xmax = int(bbox['xmax'] * w)
-                ymax = int(bbox['ymax'] * h)
+                bbox = pred['roi']['bbox']
+                xmin = int(bbox['xmin'] * width)
+                ymin = int(bbox['ymin'] * height)
+                xmax = int(bbox['xmax'] * width)
+                ymax = int(bbox['ymax'] * height)
 
                 # Draw bounding box
-                color = (255, 0, 0)
-                cv2.rectangle(output_image, (xmin, ymin), (xmax, ymax), color, 1)
-                ret, baseline = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, FONT_SCALE, 1)
-                cv2.rectangle(output_image, (xmin, ymax - ret[1] - baseline), (xmin + ret[0], ymax), (0, 0, 255), -1)
-                cv2.putText(output_image, label, (xmin, ymax - baseline), cv2.FONT_HERSHEY_SIMPLEX, FONT_SCALE, (255, 255, 255), 1)
+                cv2.rectangle(output_image, (xmin, ymin), (xmax, ymax), BOX_COLOR, 1)
+
+                # First get ideal corners
+                background_corner1 = (xmin, ymax + 2)
+                background_corner2 = (background_corner1[0] + ret[0], background_corner1[1] + ret[1] + baseline)
+                text_corner = (background_corner1[0], background_corner1[1] + ret[1])
+
+                # Then make sure they fit in the image
+                # For x-axis, simply shift the box to the left
+                # For y-axis, put the label at the top if it doesn't fit under the box
+                x_offset = max(0, background_corner2[0] - width + 1)
+                if background_corner2[1] > height - 1:
+                    y_offset = background_corner2[1] - ymin + 2
+                else:
+                    y_offset = 0
+                background_corner1 = substract_tuple(background_corner1, (x_offset, y_offset))
+                background_corner2 = substract_tuple(background_corner2, (x_offset, y_offset))
+                text_corner = substract_tuple(text_corner, (x_offset, y_offset))
+
+                # Finally draw everything
+                cv2.rectangle(output_image, background_corner1, background_corner2, BACKGROUND_COLOR, -1)
+                cv2.putText(output_image, label, text_corner, cv2.FONT_HERSHEY_SIMPLEX, FONT_SCALE, TEXT_COLOR, 1)
+            else:
+                # First get ideal corners
+                if tag_drawn == 0:
+                    background_corner1 = TAG_TEXT_CORNER
+                else:
+                    background_corner1 = (TAG_TEXT_CORNER[0], background_corner2[1] + TAG_TEXT_INTERSPACE)
+                background_corner2 = (background_corner1[0] + ret[0], background_corner1[1] + ret[1] + baseline)
+                text_corner = (background_corner1[0], background_corner1[1] + ret[1])
+
+                # Finally draw everything
+                cv2.rectangle(output_image, background_corner1, background_corner2, BACKGROUND_COLOR, -1)
+                cv2.putText(output_image, label, text_corner, cv2.FONT_HERSHEY_SIMPLEX, FONT_SCALE, TEXT_COLOR, 1)
+                tag_drawn += 1
 
 
 class BlurImagePostprocessing(object):
