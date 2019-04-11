@@ -36,7 +36,7 @@ def argparser_init():
     feedback_parser.set_defaults(func=feedback, recursive=False)
 
     for parser in [infer_parser, draw_parser, blur_parser, feedback_parser]:
-        parser.add_argument('-rec', '--recursive', dest='recursive', action='store_true', help='If a directory inputis used, goes through all files in subdirectories.')
+        parser.add_argument('-R', '--recursive', dest='recursive', action='store_true', help='If a directory input is used, goes through all files in subdirectories.')
 
     for parser in [infer_parser, draw_parser, blur_parser]:
         parser.add_argument('-i', '--input', required=True, help="Path on which inference should be run. It can be an image (supported formats: *{}), a video (supported formats: *{}) or a directory. If the given path is a directory, it will recursively run inference on all the supported files in this directory.".format(', *'.join(ImageInputData.supported_formats), ', *'.join(VideoInputData.supported_formats)))
@@ -45,17 +45,17 @@ def argparser_init():
         parser.add_argument('-u', '--amqp_url', help="AMQP url for on-premises deployments.")
         parser.add_argument('-k', '--routing_key', help="Recognition routing key for on-premises deployments.")
         parser.add_argument('-t', '--threshold', type=float, help="Threshold above which a prediction is considered valid.", default=None)
-        parser.add_argument('-fps', '--fps', type=int, help="Video frame rate if applicable.")
+        parser.add_argument('-f', '--fps', type=int, help="Video frame rate if applicable.")
         parser.add_argument('-s', '--studio_format', action='store_true', help="Convert deepomatic run predictions into deepomatic studio format.")
 
     for parser in [draw_parser, blur_parser]:
-        parser.add_argument('-fs', '--fullscreen', help="Fullscreen if window output.", action="store_true")
+        parser.add_argument('-F', '--fullscreen', help="Fullscreen if window output.", action="store_true")
 
-    draw_parser.add_argument('-ds', '--draw_scores', help="Overlays the prediction scores.", action="store_true")
-    draw_parser.add_argument('-dl', '--draw_labels', help="Overlays the prediction labels.", action="store_true")
+    draw_parser.add_argument('-S', '--draw_scores', help="Overlays the prediction scores.", action="store_true")
+    draw_parser.add_argument('-L', '--draw_labels', help="Overlays the prediction labels.", action="store_true")
 
-    blur_parser.add_argument('-bm', '--blur_method', help="Blur method to apply, either 'pixel', 'gaussian' or 'black', defaults to 'pixel'.", default='pixel', choices=['pixel', 'gaussian', 'black'])
-    blur_parser.add_argument('-bs', '--blur_strength', help="Blur strength, defaults to 10.", default=10)
+    blur_parser.add_argument('-M', '--blur_method', help="Blur method to apply, either 'pixel', 'gaussian' or 'black', defaults to 'pixel'.", default='pixel', choices=['pixel', 'gaussian', 'black'])
+    blur_parser.add_argument('-B', '--blur_strength', help="Blur strength, defaults to 10.", default=10)
 
     feedback_parser.add_argument('-d', '--dataset', required=True, help="Deepomatic Studio dataset name.", type=str)
     feedback_parser.add_argument('-o', '--organization', required=True, help="Deepomatic Studio organization slug.", type=str)
