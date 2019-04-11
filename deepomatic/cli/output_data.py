@@ -202,7 +202,11 @@ class DisplayOutputData(OutputData):
             logging.warning('No frame to output.')
         else:
             cv2.imshow(self._window_name, frame.output_image)
-            if cv2.waitKey(self._fps) & 0xFF == ord('q'):
+            try:
+                ms = 1000 // int(self._fps)
+            except:
+                ms = 1
+            if cv2.waitKey(ms) & 0xFF == ord('q'):
                 cv2.destroyAllWindows()
                 cv2.waitKey(1)
                 sys.exit()
