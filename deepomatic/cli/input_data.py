@@ -271,7 +271,7 @@ class DirectoryInputData(InputData):
         if self.is_valid(descriptor):
             _paths = [os.path.join(descriptor, name) for name in os.listdir(descriptor)]
             self._inputs = []
-            for path in _paths:
+            for path in sorted(_paths):
                 if ImageInputData.is_valid(path):
                     self._inputs.append(ImageInputData(path, **kwargs))
                 elif VideoInputData.is_valid(path):
