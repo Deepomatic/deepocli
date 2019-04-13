@@ -1,34 +1,55 @@
-import threading
 import time
 import logging
 import traceback
+import gevent
+from gevent.threadpool import ThreadPool
 
-POP_TIMEOUT = 1
+try:
+    from Queue import Empty, Full
+except ImportError:
+    from queue import Empty, Full
 
-
-class ThreadBase(threading.Thread):
-    def __init__(self, exit_event, name, input_queue=None):
-        super(ThreadBase, self).__init__(name=name)
+class ThreadBase(object):
+    """
+    Thread interface
+    """
+    def __init__(self, exit_event, input_queue=None, output_queue=None, name=None, loop_impl=None):
+        super(ThreadBase, self).__init__()
         self.input_queue = input_queue
+        self.output_queue = output_queue
         self.exit_event = exit_event
+        self.loop_impl_callable = loop_impl
         self.stop_asked = False
-        self.daemon = True
+        self.name = name or self.__class__.__name__
 
     def can_stop(self):
         if self.input_queue is not None:
             return self.input_queue.empty()
-        return True
+        raise Exception("No input_queue provided")
 
     def stop_when_no_input(self):
         while not self.can_stop():
-            time.sleep(0.2)
+            gevent.sleep(0.2)
         self.stop()
 
     def stop(self):
         self.stop_asked = True
 
     def loop_impl(self):
-        raise NotImplementedError()
+        if self.loop_impl_callable is None:
+            raise NotImplementedError()
+        self.loop_impl_callable()
+
+    def pop_input(self):
+        try:
+            msg = self.input_queue.get(block=True, timeout=1)
+            self.input_queue.task_done()
+            return msg
+        except Empty:
+            return None
+
+    def put_to_output(self, msg):
+        self.output_queue.put(msg)
 
     def init(self):
         pass
@@ -53,3 +74,77 @@ class ThreadBase(threading.Thread):
             except Exception:
                 logging.error(traceback.format_exc())
                 self.exit_event.set()
+        logging.info('Quitting {}'.format(self.name))
+
+
+class Thread(ThreadBase):
+    def __init__(self, *args, **kwargs):
+        super(Thread, self).__init__(*args, **kwargs)
+        self.thread = ThreadPool(1)
+
+    def start(self):
+        self.thread.spawn(self.run)
+
+    def join(self):
+        self.thread.join()
+
+
+class Greenlet(ThreadBase):
+    def __init__(self, *args, **kwargs):
+        super(Greenlet, self).__init__(*args, **kwargs)
+        self.greenlet = None
+
+    def start(self):
+        self.greenlet = gevent.spawn(self.run)
+
+    def join(self):
+        if self.greenlet is not None:
+            self.greenlet.join()
+
+    def put_to_output(self, msg):
+        while True:
+            try:
+                self.output_queue.put(msg, block=True, timeout=0.0001)
+                break
+            except Full:
+                # important: yield the execution to other greenlets
+                gevent.sleep(0)
+
+    def pop_input(self):
+        try:
+            msg = self.input_queue.get(block=True, timeout=0.0001)
+            self.input_queue.task_done()
+            return msg
+        except Empty:
+            # important: yield the execution to other greenlets
+            gevent.sleep(0)
+            return None
+
+
+class Pool(object):
+    def __init__(self, nb_thread, thread_cls=Thread, thread_args=(), thread_kwargs=None, name=None):
+        self.nb_thread = nb_thread
+        self.name = name or thread_cls.__name__
+        self.threads = []
+        self.thread_cls = thread_cls
+        self.thread_args = thread_args
+        self.thread_kwargs = thread_kwargs or {}
+
+    def start(self):
+        for i in range(self.nb_thread):
+            th = self.thread_cls(*self.thread_args, **self.thread_kwargs)
+            th.name = '{}_{}'.format(self.name, i)
+            self.threads.append(th)
+            th.start()
+
+    def stop_when_no_input(self):
+        for th in self.threads:
+            th.stop_when_no_input()
+
+    def stop(self):
+        for th in self.threads:
+            th.stop()
+
+    def join(self):
+        for th in self.threads:
+            th.join()

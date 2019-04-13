@@ -3,8 +3,13 @@ import cv2
 import sys
 import json
 import logging
+import signal
+import time
 import threading
-from .cmds.infer import ResultInferenceThread, SendInferenceThread
+import gevent
+from contextlib import contextmanager
+from .thread_base import Pool, Thread
+from .cmds.infer import SendInferenceGreenlet, ResultInferenceGreenlet, PrepareInferenceThread
 from tqdm import tqdm
 from .common import TqdmToLogger
 from .workflow import get_workflow
@@ -15,9 +20,30 @@ except ImportError:
     from queue import Queue, LifoQueue, Empty
 
 
-# don't set it to None if you don't know what you do
 # note that it could probably be dynamically calculated
 QUEUE_MAX_SIZE = 50
+
+
+@contextmanager
+def disable_keyboard_interrupt():
+    s = signal.signal(signal.SIGINT, signal.SIG_IGN)
+    try:
+        yield
+    finally:
+        signal.signal(signal.SIGINT, s)
+
+
+def clear_queues(queues):
+    # Makes sure all queues are empty
+    logging.info("Purging queues")
+    while True:
+        for queue in queues:
+            with queue.mutex:
+                queue.queue.clear()
+        time.sleep(0.01)
+        if all([queue.empty() for queue in queues]):
+            break
+    logging.info("Purging queues done")
 
 
 class Frame(object):
@@ -31,6 +57,11 @@ class Frame(object):
         self.inference_async_result = None  # an inference request object that will allow us to retrieve the predictions when ready
         self.predictions = None  # predictions result dict
         self.output_image = None  # frame to output (modified version of the image, check infer postprocessings draw/blur)
+        self.buf_bytes = None
+
+    def __str__(self):
+        return '<Frame name={} filename={} frame_number={} video_frame_index={}>'.format(
+            self.name, self.filename, self.frame_number, self.video_frame_index)
 
 
 def get_input(descriptor, kwargs):
@@ -58,6 +89,30 @@ def get_input(descriptor, kwargs):
         raise NameError('Unknown input')
 
 
+class InputThread(Thread):
+    def __init__(self, exit_event, input_queue, output_queue, inputs):
+        super(InputThread, self).__init__(exit_event, input_queue, output_queue)
+        self.inputs = inputs
+        self.frame_number = 0  # Used to keep input order, notably for video reconstruction
+
+    def loop_impl(self):
+        try:
+            frame = next(self.inputs)
+        except StopIteration:
+            self.stop()
+            return
+
+        frame.frame_number = self.frame_number
+        if self.inputs.is_infinite():
+            # Discard all previous inputs
+            with self.output_queue.mutex:
+                self.output_queue.clear()
+
+        # TODO: for a stream put should not be blocking
+        self.put_to_output(frame)
+        self.frame_number += 1
+
+
 def input_loop(kwargs, postprocessing=None):
     inputs = get_input(kwargs.get('input', 0), kwargs)
 
@@ -72,66 +127,67 @@ def input_loop(kwargs, postprocessing=None):
     # TODO: might need to rethink the whole pipeling for infinite streams
     # IMPORTANT: maxsize is important, it allows to regulate the pipeline and avoid to pushes too many requests to rabbitmq when we are already waiting for many results
     queue_cls = LifoQueue if inputs.is_infinite() else Queue
-    input_queue = queue_cls(maxsize=QUEUE_MAX_SIZE)
-    worker_queue = queue_cls(maxsize=QUEUE_MAX_SIZE)
-    output_queue = queue_cls(maxsize=QUEUE_MAX_SIZE)
+    queues = [queue_cls(maxsize=QUEUE_MAX_SIZE) for i in range(4)]
 
-    # Initialize workflow for mutual use between send_inference_thread and result_inference_thread
+    # Initialize workflow for mutual use between send_inference_pool and result_inference_pool
     workflow = get_workflow(kwargs)
 
-    # Define threads
-    #   - send_inference_thread: prepares input request and send it to worker
-    #   - result_inference_thread: retrieves prediction from worker
-    #   - output_thread: transforms predictions into outputs
     exit_event = threading.Event()
-    send_inference_thread = SendInferenceThread(exit_event, input_queue, worker_queue, workflow, **kwargs)
-    result_inference_thread = ResultInferenceThread(exit_event, worker_queue, output_queue, workflow, postprocessing=postprocessing, **kwargs)
-    output_thread = OutputThread(exit_event, output_queue, on_progress=lambda i: pbar.update(1), **kwargs)
+
+    on_progress = lambda: pbar.update(1)
+    pools = [
+        Pool(1, InputThread, thread_args=(exit_event, None, queues[0], inputs)),
+        # Encode image into jpeg
+        Pool(1, PrepareInferenceThread, thread_args=(exit_event, queues[0], queues[1])),
+        # Send inference
+        Pool(10, SendInferenceGreenlet, thread_args=(exit_event, queues[1], queues[2], workflow)),
+        # Gather inference predictions from the worker(s)
+        Pool(1, ResultInferenceGreenlet, thread_args=(exit_event, queues[2], queues[3], workflow), thread_kwargs=kwargs),
+        # # Output predictions
+        Pool(1, OutputThread, thread_args=(exit_event, queues[3], None, on_progress, postprocessing), thread_kwargs=kwargs)
+    ]
+
+    # disable receive of KeyboardInterrupt in greenlet
+    gevent.get_hub().NOT_ERROR += (KeyboardInterrupt,)
 
     stop_asked = 0
     # Start threads
-    send_inference_thread.start()
-    result_inference_thread.start()
-    output_thread.start()
+    for pool in pools:
+        pool.start()
 
     while True:
         try:
-            if not stop_asked:
-                frame_number = 0  # Used to keep input order, notably for video reconstruction
-                for frame in inputs:
-                    frame.frame_number = frame_number
-                    if inputs.is_infinite():
-                        # Discard all previous inputs
-                        while not input_queue.empty():
-                            try:
-                                input_queue.get(block=False)
-                                input_queue.task_done()
-                            except Empty:
-                                break
 
-                    input_queue.put(frame)
-                    frame_number += 1
+            for pool in pools[1:]:
+                pool.stop_when_no_input()
 
-            send_inference_thread.stop_when_no_input()
-            result_inference_thread.stop_when_no_input()
-            output_thread.stop_when_no_input()
             break
         except (KeyboardInterrupt, SystemExit):
-            stop_asked += 1
-            if stop_asked >= 2:
-                send_inference_thread.stop()
-                result_inference_thread.stop()
-                output_thread.stop()
-                logging.info("Hard stop")
-                break
-            else:
-                logging.info('Stop asked, waiting for threads to process queued messages.')
+            with disable_keyboard_interrupt():
+                stop_asked += 1
+                if stop_asked >= 2:
+                    logging.info("Hard stop")
+                    for pool in pools:
+                        pool.stop()
 
-    send_inference_thread.join()
-    result_inference_thread.join()
-    output_thread.join()
-    workflow.close()
-    pbar.close()
+                    # clearing queues to make sure a thread
+                    # is not blocked in a queue.put() because of maxsize
+                    clear_queues(queues)
+                    break
+                else:
+                    logging.info('Stop asked, waiting for threads to process queued messages.')
+                    # stopping inputs
+                    pools[0].stop()
+
+    with disable_keyboard_interrupt():
+        # Makes sure threads finish properly so that
+        # we can make sure the workflow is not used and can be closed
+        for pool in pools:
+            pool.join()
+
+        workflow.close()
+        pbar.close()
+
     if exit_event.is_set() or stop_asked > 0:
         # At least one thread failed
         sys.exit(1)

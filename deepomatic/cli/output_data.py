@@ -5,7 +5,8 @@ import json
 import copy
 import cv2
 import imutils
-from .thread_base import ThreadBase, POP_TIMEOUT
+import time
+from . import thread_base
 from .cmds.studio_helpers.vulcan2studio import transform_json_from_vulcan_to_studio
 
 try:
@@ -19,12 +20,13 @@ DEFAULT_FPS = 25
 def save_json_to_file(json_data, json_path):
     try:
         with open('%s.json' % json_path, 'w') as f:
-            logging.info('Writing %s.json' % json_path)
-            json.dump(json_data, f)
+            logging.info('Writing %s.json ..' % json_path)
+            # json.dump(json_data, f)
             # force writing directly on the disk
             # or it might be a bit delayed and makes sometimes the files
-            f.flush()
-            os.fsync(f.fileno())
+            # f.flush()
+            # os.fsync(f.fileno())
+            logging.info('Writing %s.json done' % json_path)
     except Exception:
         logging.error("Could not save file {} in json format.".format(json_path))
         raise
@@ -54,11 +56,12 @@ def get_outputs(descriptors, kwargs):
     return [get_output(descriptor, kwargs) for descriptor in descriptors]
 
 
-class OutputThread(ThreadBase):
-    def __init__(self, exit_event, input_queue, on_progress=None, **kwargs):
-        super(OutputThread, self).__init__(exit_event, 'OutputThread', input_queue)
+class OutputThread(thread_base.Thread):
+    def __init__(self, exit_event, input_queue, output_queue, on_progress, postprocessing, **kwargs):
+        super(OutputThread, self).__init__(exit_event, input_queue, output_queue)
         self.args = kwargs
         self.on_progress = on_progress
+        self.postprocessing = postprocessing
         self.outputs = get_outputs(self.args.get('outputs', None), self.args)
         self.frames_to_check_first = {}
         self.frame_to_output = 0
@@ -77,21 +80,24 @@ class OutputThread(ThreadBase):
         # looking into frames we popped earlier
         frame = self.frames_to_check_first.pop(self.frame_to_output, None)
         if frame is None:
-            try:
-                frame = self.input_queue.get(timeout=POP_TIMEOUT)
-                self.input_queue.task_done()
-            except Empty:
+            frame = self.pop_input()
+            if frame is None:
                 return
 
             if self.frame_to_output != frame.frame_number:
                 self.frames_to_check_first[frame.frame_number] = frame
                 return
 
+        if self.postprocessing is not None:
+            self.postprocessing(frame)
+        else:
+            frame.output_image = frame.image  # we output the original image
+
         for output in self.outputs:
             output.output_frame(frame)
         self.frame_to_output += 1
         if self.on_progress:
-            self.on_progress(self.frame_to_output)
+            self.on_progress()
 
 
 class OutputData(object):
@@ -262,8 +268,7 @@ class JsonOutputData(OutputData):
                     set(self._all_predictions['tags'] + predictions['tags'])
                 )
             else:
-                # we deepcopy to avoid surprises if another output modify the frame.predictions
-                self._all_predictions.append(copy.deepcopy(predictions))
+                self._all_predictions.append(predictions)
         # Otherwise we write them to file directly
         else:
             json_path = os.path.splitext(self._descriptor % self._i)[0]

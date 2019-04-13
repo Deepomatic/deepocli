@@ -1,18 +1,17 @@
 import cv2
 import os
 import time
+import logging
+import gevent
 
-try:
-    from Queue import Empty
-except ImportError:
-    from queue import Empty
-
+from ..workflow.workflow_abstraction import InferenceError
 from .. import thread_base
 
 
 # Size of the font we draw in the image_output
 FONT_SCALE = 0.5
-RESULT_BATCH_SIZE = int(os.getenv('RESULT_BATCH_SIZE', 10))
+RESULT_BATCH_SIZE = int(os.getenv('RESULT_BATCH_SIZE', 1))
+RESULT_BATCH_TIMEOUT = float(os.getenv('RESULT_BATCH_TIMEOUT', -1))
 
 
 class DrawImagePostprocessing(object):
@@ -92,43 +91,40 @@ class BlurImagePostprocessing(object):
                     output_image[ymin:ymax, xmin:xmax] = rectangle
 
 
-class SendInferenceThread(thread_base.ThreadBase):
-    def __init__(self, exit_event, input_queue, output_queue, workflow, **kwargs):
-        super(SendInferenceThread, self).__init__(exit_event, 'SendInferenceThread', input_queue)
-        self.output_queue = output_queue
-        self.workflow = workflow
-        self.args = kwargs
-
+class PrepareInferenceThread(thread_base.Thread):
     def loop_impl(self):
-        try:
-            frame = self.input_queue.get(timeout=thread_base.POP_TIMEOUT)
-        except Empty:
+        frame = self.pop_input()
+        if frame is None:
             return
 
-        _, buf = cv2.imencode('.jpeg', frame.image)
+        _, buf = cv2.imencode('.jpg', frame.image)
         buf_bytes = buf.tobytes()
-        frame.inference_async_result = self.workflow.infer(buf_bytes)
-
-        self.input_queue.task_done()
-        self.output_queue.put(frame)
+        frame.buf_bytes = buf_bytes
+        self.put_to_output(frame)
 
 
-class ResultInferenceThread(thread_base.ThreadBase):
-    def __init__(self, exit_event, input_queue, output_queue, workflow, **kwargs):
-        super(ResultInferenceThread, self).__init__(exit_event, 'ResultInferenceThread', input_queue)
-        self.output_queue = output_queue
+class SendInferenceGreenlet(thread_base.Greenlet):
+    def __init__(self, exit_event, input_queue, output_queue, workflow):
+        super(SendInferenceGreenlet, self).__init__(exit_event, input_queue, output_queue)
         self.workflow = workflow
-        self.args = kwargs
-        self.postprocessing = kwargs.get('postprocessing')
-        self.threshold = kwargs.get('threshold')
-        self.batch = []
+        self.push_client = workflow.new_client()
 
     def close(self):
-        self.batch = []
+        self.workflow.close_client(self.push_client)
 
-    def can_stop(self):
-        return super(ResultInferenceThread, self).can_stop() and \
-            len(self.batch) == 0
+    def loop_impl(self):
+        frame = self.pop_input()
+        if frame is None:
+            return
+        frame.inference_async_result = self.workflow.infer(frame.buf_bytes, self.push_client)
+        self.put_to_output(frame)
+
+
+class ResultInferenceGreenlet(thread_base.Greenlet):
+    def __init__(self, exit_event, input_queue, output_queue, workflow, **kwargs):
+        super(ResultInferenceGreenlet, self).__init__(exit_event, input_queue, output_queue)
+        self.workflow = workflow
+        self.threshold = kwargs.get('threshold')
 
     def fill_predictions(self, predictions, new_predicted, new_discarded):
         for prediction in predictions:
@@ -137,56 +133,25 @@ class ResultInferenceThread(thread_base.ThreadBase):
             else:
                 new_discarded.append(prediction)
 
-    def _run(self):
-        sleep_time = 0.
-        sleep_time_inc = 0.005
-        while not self.stop_asked:
-            # We try to get a whole batch
-            for i in range(RESULT_BATCH_SIZE):
-                try:
-                    frame = self.input_queue.get(timeout=thread_base.POP_TIMEOUT)
-                    self.batch.append(frame)
-                except Empty:
-                    break
+    def loop_impl(self):
+        frame = self.pop_input()
+        if frame is None:
+            return
+        #logging.error("Couldn't get predictions for the whole batch in enough time ({} seconds). Ignoring frames {}.".format(RESULT_BATCH_TIMEOUT, self.batch))
+        try:
+            predictions = frame.inference_async_result.get_predictions()
+            if self.threshold is not None:
+                # Keep only predictions higher than threshold
+                for output in predictions['outputs']:
+                    new_predicted = []
+                    new_discarded = []
+                    labels = output['labels']
+                    self.fill_predictions(labels['predicted'], new_predicted, new_discarded)
+                    self.fill_predictions(labels['discarded'], new_predicted, new_discarded)
+                    labels['predicted'] = new_predicted
+                    labels['discarded'] = new_discarded
 
-            time.sleep(sleep_time)
-            not_done = 0
-            # We wait for the whole batch
-            while self.batch:
-                frame = self.batch.pop(0)
-
-                predictions = frame.inference_async_result.get_predictions()
-
-                # If the prediction is not finished, then put the data back in the batch
-                # and increase the sleep time so that we use less cpu for the next batch
-                if predictions is None:
-                    self.batch.append(frame)
-                    sleep_time += sleep_time_inc
-                    not_done += 1
-                    continue
-
-                if self.threshold is not None:
-                    # Keep only predictions higher than threshold
-                    for output in predictions['outputs']:
-                        new_predicted = []
-                        new_discarded = []
-                        labels = output['labels']
-                        self.fill_predictions(labels['predicted'], new_predicted, new_discarded)
-                        self.fill_predictions(labels['discarded'], new_predicted, new_discarded)
-                        labels['predicted'] = new_predicted
-                        labels['discarded'] = new_discarded
-
-                frame.predictions = predictions
-
-                if self.postprocessing is not None:
-                    self.postprocessing(frame)
-                else:
-                    frame.output_image = frame.image  # we output the original image
-
-                self.output_queue.put(frame)
-
-            if not_done == 0:
-                # we adjust the sleep time depending on the speed of the worker(s)
-                # here everything was done in one iteration over the batch
-                # so we consider we can sleep less for the next batch
-                sleep_time = max(sleep_time - sleep_time_inc, 0.)
+            frame.predictions = predictions
+            self.put_to_output(frame)
+        except InferenceError as e:
+            logging.error('Error getting predictions for frame {}: {}'.format(frame, str(e)))
