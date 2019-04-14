@@ -115,7 +115,7 @@ class InputThread(Thread):
 
 
 def input_loop(kwargs, postprocessing=None):
-    inputs = get_input(kwargs.get('input', 0), kwargs)
+    inputs = iter(get_input(kwargs.get('input', 0), kwargs))
 
     # Initialize progress bar
     max_value = int(inputs.get_frame_count()) if inputs.get_frame_count() >= 0 else None
