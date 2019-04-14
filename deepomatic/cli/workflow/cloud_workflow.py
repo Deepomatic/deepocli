@@ -1,12 +1,13 @@
 import os
 import logging
-import cv2
 from .workflow_abstraction import AbstractWorkflow, InferenceError
 from .. import common
 import deepomatic.api.client
 import deepomatic.api.inputs
 import deepomatic.api.exceptions
 from deepomatic.api.resources.task import is_success_status, is_error_status
+
+LOGGER = logging.getLogger(__name__)
 
 
 class CloudRecognition(AbstractWorkflow):
@@ -39,7 +40,7 @@ class CloudRecognition(AbstractWorkflow):
         try:
             recognition_version_id = int(recognition_version_id)
         except ValueError:
-            logging.warning("Cannot cast recognition ID into a number, trying with a public recognition model")
+            LOGGER.warning("Cannot cast recognition ID into a number, trying with a public recognition model")
             self._model = self._client.RecognitionSpec.retrieve(recognition_version_id)
         if self._model is None:
             self._model = self._client.RecognitionVersion.retrieve(recognition_version_id)

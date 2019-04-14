@@ -1,4 +1,3 @@
-import time
 import logging
 import traceback
 import gevent
@@ -8,6 +7,9 @@ try:
     from Queue import Empty, Full
 except ImportError:
     from queue import Empty, Full
+
+LOGGER = logging.getLogger(__name__)
+
 
 class ThreadBase(object):
     """
@@ -29,7 +31,7 @@ class ThreadBase(object):
 
     def stop_when_no_input(self):
         while not self.can_stop():
-            gevent.sleep(0.2)
+            gevent.sleep(0.3)
         self.stop()
 
     def stop(self):
@@ -66,15 +68,15 @@ class ThreadBase(object):
             self.init()
             self._run()
         except Exception:
-            logging.error(traceback.format_exc())
+            LOGGER.error(traceback.format_exc())
             self.exit_event.set()
         finally:
             try:
                 self.close()
             except Exception:
-                logging.error(traceback.format_exc())
+                LOGGER.error(traceback.format_exc())
                 self.exit_event.set()
-        logging.info('Quitting {}'.format(self.name))
+        LOGGER.info('Quitting {}'.format(self.name))
 
 
 class Thread(ThreadBase):

@@ -2,10 +2,8 @@ import os
 import sys
 import logging
 import json
-import copy
 import cv2
 import imutils
-import time
 from . import thread_base
 from .cmds.studio_helpers.vulcan2studio import transform_json_from_vulcan_to_studio
 
@@ -14,21 +12,23 @@ try:
 except ImportError:
     from queue import Empty
 
+
+LOGGER = logging.getLogger(__name__)
 DEFAULT_FPS = 25
 
 
 def save_json_to_file(json_data, json_path):
     try:
         with open('%s.json' % json_path, 'w') as f:
-            logging.info('Writing %s.json ..' % json_path)
-            # json.dump(json_data, f)
+            LOGGER.info('Writing %s.json ..' % json_path)
+            json.dump(json_data, f)
             # force writing directly on the disk
             # or it might be a bit delayed and makes sometimes the files
-            # f.flush()
-            # os.fsync(f.fileno())
-            logging.info('Writing %s.json done' % json_path)
+            f.flush()
+            os.fsync(f.fileno())
+            LOGGER.info('Writing %s.json done' % json_path)
     except Exception:
-        logging.error("Could not save file {} in json format.".format(json_path))
+        LOGGER.error("Could not save file {} in json format.".format(json_path))
         raise
 
     return
@@ -134,10 +134,10 @@ class ImageOutputData(OutputData):
             pass
         finally:
             if frame.output_image is not None:
-                logging.info('Writing %s' % path)
+                LOGGER.info('Writing %s' % path)
                 cv2.imwrite(path, frame.output_image)
             else:
-                logging.warning('No frame to output.')
+                LOGGER.warning('No frame to output.')
 
 
 class VideoOutputData(OutputData):
@@ -166,10 +166,10 @@ class VideoOutputData(OutputData):
 
     def output_frame(self, frame):
         if frame.output_image is None:
-            logging.warning('No frame to output.')
+            LOGGER.warning('No frame to output.')
         else:
             if self._writer is None:
-                logging.info('Writing %s' % self._descriptor)
+                LOGGER.info('Writing %s' % self._descriptor)
                 self._writer = cv2.VideoWriter(self._descriptor, self._fourcc,
                                                self._fps, (frame.output_image.shape[1],
                                                            frame.output_image.shape[0]))
@@ -209,7 +209,7 @@ class DisplayOutputData(OutputData):
 
     def output_frame(self, frame):
         if frame.output_image is None:
-            logging.warning('No frame to output.')
+            LOGGER.warning('No frame to output.')
         else:
             cv2.imshow(self._window_name, frame.output_image)
             if cv2.waitKey(self._fps) & 0xFF == ord('q'):

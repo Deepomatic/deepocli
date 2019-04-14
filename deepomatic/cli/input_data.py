@@ -22,6 +22,7 @@ except ImportError:
 
 # note that it could probably be dynamically calculated
 QUEUE_MAX_SIZE = 50
+LOGGER = logging.getLogger(__name__)
 
 
 @contextmanager
@@ -35,7 +36,7 @@ def disable_keyboard_interrupt():
 
 def clear_queues(queues):
     # Makes sure all queues are empty
-    logging.info("Purging queues")
+    LOGGER.info("Purging queues")
     while True:
         for queue in queues:
             with queue.mutex:
@@ -43,7 +44,7 @@ def clear_queues(queues):
         time.sleep(0.01)
         if all([queue.empty() for queue in queues]):
             break
-    logging.info("Purging queues done")
+    LOGGER.info("Purging queues done")
 
 
 class Frame(object):
@@ -117,10 +118,8 @@ def input_loop(kwargs, postprocessing=None):
     inputs = get_input(kwargs.get('input', 0), kwargs)
 
     # Initialize progress bar
-    logging.basicConfig(level=logging.INFO)
-    logger = logging.getLogger()
     max_value = int(inputs.get_frame_count()) if inputs.get_frame_count() >= 0 else None
-    tqdmout = TqdmToLogger(logger, level=logging.INFO)
+    tqdmout = TqdmToLogger(LOGGER, level=logging.INFO)
     pbar = tqdm(total=max_value, file=tqdmout, desc='Input processing', smoothing=0)
 
     # For realtime, queue should be LIFO
@@ -166,7 +165,7 @@ def input_loop(kwargs, postprocessing=None):
             with disable_keyboard_interrupt():
                 stop_asked += 1
                 if stop_asked >= 2:
-                    logging.info("Hard stop")
+                    LOGGER.info("Hard stop")
                     for pool in pools:
                         pool.stop()
 
@@ -175,7 +174,7 @@ def input_loop(kwargs, postprocessing=None):
                     clear_queues(queues)
                     break
                 else:
-                    logging.info('Stop asked, waiting for threads to process queued messages.')
+                    LOGGER.info('Stop asked, waiting for threads to process queued messages.')
                     # stopping inputs
                     pools[0].stop()
 
@@ -276,7 +275,7 @@ class VideoInputData(InputData):
         raw_fps = self._cap.get(cv2.CAP_PROP_FPS)
         desired_fps = min(self._fps_opt, raw_fps) if self._fps_opt else raw_fps
         # TODO: find a better name for fps, as it is actually a ratio indicating which frames number to process in the video (other are ignored)
-        logging.info('Detected raw video fps of {}, using fps of {}'.format(raw_fps, desired_fps))
+        LOGGER.info('Detected raw video fps of {}, using fps of {}'.format(raw_fps, desired_fps))
         # Compute the total number of frames and ensure we always have at least one frame
         total_frames = max(1, int(self._cap.get(cv2.CAP_PROP_FRAME_COUNT) * desired_fps / raw_fps))
         self._fps = desired_fps

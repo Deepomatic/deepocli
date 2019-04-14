@@ -1,8 +1,10 @@
 import io
+import logging
 
 
 class DeepoCLIException(Exception):
     pass
+
 
 class TqdmToLogger(io.StringIO):
     """Tqdm output stream to play nice with logger."""

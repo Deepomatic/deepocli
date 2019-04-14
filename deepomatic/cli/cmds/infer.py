@@ -1,12 +1,11 @@
 import cv2
 import os
-import time
 import logging
-import gevent
 
 from ..workflow.workflow_abstraction import InferenceError
 from .. import thread_base
 
+LOGGER = logging.getLogger(__name__)
 
 # Size of the font we draw in the image_output
 FONT_SCALE = 0.5
@@ -137,7 +136,7 @@ class ResultInferenceGreenlet(thread_base.Greenlet):
         frame = self.pop_input()
         if frame is None:
             return
-        #logging.error("Couldn't get predictions for the whole batch in enough time ({} seconds). Ignoring frames {}.".format(RESULT_BATCH_TIMEOUT, self.batch))
+        #LOGGER.error("Couldn't get predictions for the whole batch in enough time ({} seconds). Ignoring frames {}.".format(RESULT_BATCH_TIMEOUT, self.batch))
         try:
             predictions = frame.inference_async_result.get_predictions()
             if self.threshold is not None:
@@ -154,4 +153,4 @@ class ResultInferenceGreenlet(thread_base.Greenlet):
             frame.predictions = predictions
             self.put_to_output(frame)
         except InferenceError as e:
-            logging.error('Error getting predictions for frame {}: {}'.format(frame, str(e)))
+            LOGGER.error('Error getting predictions for frame {}: {}'.format(frame, str(e)))
