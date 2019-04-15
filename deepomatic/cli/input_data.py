@@ -60,6 +60,10 @@ def get_input(descriptor, kwargs):
 def input_loop(kwargs, postprocessing=None):
     inputs = get_input(kwargs.get('input', 0), kwargs)
 
+    # If no fps is specified and input is a video, pass the fps parameter to the output
+    if isinstance(inputs, VideoInputData):
+        kwargs['fps'] = inputs.get_fps()
+
     # Initialize progress bar
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger()
