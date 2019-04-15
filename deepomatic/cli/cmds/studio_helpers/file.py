@@ -3,80 +3,60 @@ import os
 import sys
 import json
 import uuid
-import time
-import signal
 import logging
 import threading
 from tqdm import tqdm
 from .task import Task
-from ...common import TqdmToLogger
-if sys.version_info >= (3, 0):
-    import queue as Queue
-else:
-    import Queue
+from ...thread_base import Queue, Empty, Greenlet, Pool, run_pools
+
 
 LOGGER = logging.getLogger(__name__)
-
-# Define thread parameters
-THREAD_NUMBER = 5
-q = Queue.Queue()
-count = 0
-run = True
-lock = threading.Lock()
+GREENLET_NUMBER = 10
 
 
-def handler(signum, frame):
-    global run, q, pbar
-    run = False
-    pbar.close()
-    LOGGER.info("Stopping upload..")
-    while not q.empty():
-        q.get()
-        q.task_done()
-
-
-def worker(self):
-    global count, run, q, pbar
-    while run:
-        try:
-            url, data, file = q.get(timeout=2)
-            try:
-                with open(file, 'rb') as fd:
-                    rq = self._helper.post(url, data={"meta": data}, content_type='multipart/form', files={"file": fd})
-                self._task.retrieve(rq['task_id'])
-            except RuntimeError as e:
-                LOGGER.error('Annotation format for file named {} is incorrect'.format(file), file=sys.stderr)
-            pbar.update(1)
-            q.task_done()
-            lock.acquire()
-            count += 1
-            lock.release()
-        except Queue.Empty:
-            pass
-
-
-class File(object):
-    def __init__(self, helper, task=None):
+class UploadImageGreenlet(Greenlet):
+    def __init__(self, exit_event, input_queue, helper, task, on_progress=None, **kwargs):
+        super(UploadImageGreenlet, self).__init__(exit_event, input_queue)
+        self.args = kwargs
+        self.on_progress = on_progress
         self._helper = helper
-        if not task:
-            task = Task(helper)
         self._task = task
 
-    def post_files(self, dataset_name, files, org_slug, is_json=False):
-        global run, pbar
-        try:
-            ret = self._helper.get('datasets/' + dataset_name + '/')
-        except RuntimeError as err:
-            raise RuntimeError("Can't find the dataset {}".format(dataset_name))
-        commit_pk = ret['commits'][0]['uuid']
+    def loop_impl(self):
+        msg = self.pop_input()
+        if msg is None:
+            return
+        url, data, file = msg
 
-        # Build the queue
+        try:
+            with open(file, 'rb') as fd:
+                rq = self._helper.post(url, data={"meta": data}, content_type='multipart/form', files={"file": fd})
+                self._task.retrieve(rq['task_id'])
+        except RuntimeError as e:
+            LOGGER.error("URL {} with file {} failed: {}".format(url, file, e))
+
+        if self.on_progress:
+            self.on_progress()
+        self.task_done()
+
+
+class DatasetFiles(object):
+    def __init__(self, helper, output_queue):
+        self._helper = helper
+        self.output_queue = output_queue
+
+    def fill_queue(self, files, dataset_name, commit_pk):
         total_files = 0
+        print(len(files))
         for file in files:
             # If it's an file, add it to the queue
             if file.split('.')[-1].lower() != 'json':
                 tmp_name = uuid.uuid4().hex
-                q.put(('v1-beta/datasets/{}/commits/{}/images/'.format(dataset_name, commit_pk), json.dumps({'location': tmp_name}), file))
+                self.output_queue.put((
+                    'v1-beta/datasets/{}/commits/{}/images/'.format(dataset_name, commit_pk),
+                    json.dumps({'location': tmp_name}),
+                    file
+                ))
                 total_files += 1
             # If it's a json, deal with it accordingly
             else:
@@ -112,36 +92,20 @@ class File(object):
                         continue
                     image_key = uuid.uuid4().hex
                     img_json['location'] = image_key
-                    q.put(('v1-beta/datasets/{}/commits/{}/images/'.format(dataset_name, commit_pk), json.dumps(img_json), file_path))
+                    self.output_queue.put((
+                        'v1-beta/datasets/{}/commits/{}/images/'.format(dataset_name, commit_pk),
+                        json.dumps(img_json),
+                        file_path
+                    ))
                     total_files += 1
+        return total_files
 
-        # Initialize progressbar before starting workers
-        tqdmout = TqdmToLogger(LOGGER, level=logging.INFO)
-        pbar = tqdm(total=total_files, file=tqdmout, desc='Uploading images', smoothing=0)
-
-        # Initialize threads
-        run = True  # reset the value to True in case the program is run multiple times
-        threads = []
-        for i in range(THREAD_NUMBER):
-            t = threading.Thread(target=worker, args=(self, ))
-            t.daemon = True
-            t.start()
-            threads.append(t)
-        signal.signal(signal.SIGINT, handler)
-
-        # Process all files
-        while not q.empty() and run:
-            time.sleep(2)
-        run = False
-
-        # Close properly
-        q.join()
-        for t in threads:
-            t.join()
-        pbar.close()
-        if count == total_files:
-            LOGGER.info("All {} files have been uploaded.".format(count))
-        else:
-            LOGGER.info("{} files out of {} have been uploaded.".format(count, total_files))
-
-        return True
+    def post_files(self, dataset_name, files):
+        # Retrieve endpoint
+        try:
+            ret = self._helper.get('datasets/' + dataset_name + '/')
+        except RuntimeError:
+            raise RuntimeError("Can't find the dataset {}".format(dataset_name))
+        commit_pk = ret['commits'][0]['uuid']
+        # Fill the queue
+        return self.fill_queue(files, dataset_name, commit_pk)

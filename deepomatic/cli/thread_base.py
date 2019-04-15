@@ -1,14 +1,18 @@
 import logging
 import traceback
 import gevent
+import signal
+from contextlib import contextmanager
 from gevent.threadpool import ThreadPool
 
 try:
-    from Queue import Empty, Full
+    from Queue import Empty, Full, Queue, LifoQueue
 except ImportError:
-    from queue import Empty, Full
+    from queue import Empty, Full, Queue, LifoQueue
+
 
 LOGGER = logging.getLogger(__name__)
+QUEUE_MAX_SIZE = 50
 
 
 class ThreadBase(object):
@@ -159,3 +163,86 @@ class Pool(object):
     def join(self):
         for th in self.threads:
             th.join()
+
+
+def clear_queues(queues):
+    # Makes sure all queues are empty
+    LOGGER.info("Purging queues")
+    while True:
+        for queue in queues:
+            with queue.mutex:
+                queue.queue.clear()
+        gevent.sleep(0.01)
+        if all([queue.empty() for queue in queues]):
+            break
+    LOGGER.info("Purging queues done")
+
+
+def stop_when_pools_empty(pools):
+    while True:
+        can_stop = True
+        for pool in pools:
+            if not pool.can_stop():
+                can_stop = False
+                break
+        if can_stop:
+            break
+        gevent.sleep(0.3)
+
+    for pool in pools:
+        pool.stop()
+
+
+@contextmanager
+def disable_keyboard_interrupt():
+    s = signal.signal(signal.SIGINT, signal.SIG_IGN)
+    try:
+        yield
+    finally:
+        signal.signal(signal.SIGINT, s)
+
+
+def run_pools(pools, queues, pbar, cleanup=None, join_first_pool=True):
+    stop_asked = 0
+    # Start threads
+    for pool in pools:
+        pool.start()
+
+    while True:
+        try:
+            # The first pool is usually the pool that get data from somewhere and push them to the rest of the pipeline
+            # So we want to make sure everything has been pushed first before considering the pipeline over
+            # But in feedback command this is the main thread that do this so it is done before any pool is started
+            if join_first_pool:
+                pools[0].join()
+
+            stop_when_pools_empty(pools)
+
+            break
+        except (KeyboardInterrupt, SystemExit):
+            with disable_keyboard_interrupt():
+                stop_asked += 1
+                if stop_asked >= 2:
+                    LOGGER.info("Hard stop")
+                    for pool in pools:
+                        pool.stop()
+
+                    # clearing queues to make sure a thread
+                    # is not blocked in a queue.put() because of maxsize
+                    clear_queues(queues)
+                    break
+                else:
+                    LOGGER.info('Stop asked, waiting for threads to process queued messages.')
+                    # stopping inputs
+                    pools[0].stop()
+
+    with disable_keyboard_interrupt():
+        # Makes sure threads finish properly so that
+        # we can make sure the workflow is not used and can be closed
+        for pool in pools:
+            pool.join()
+
+        pbar.close()
+        if cleanup is not None:
+            cleanup()
+    return stop_asked

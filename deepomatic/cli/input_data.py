@@ -3,48 +3,18 @@ import cv2
 import sys
 import json
 import logging
-import signal
-import time
 import threading
 import gevent
-from contextlib import contextmanager
-from .thread_base import Pool, Thread
+from .thread_base import Pool, Thread, Queue, LifoQueue, run_pools, QUEUE_MAX_SIZE
 from .cmds.infer import SendInferenceGreenlet, ResultInferenceGreenlet, PrepareInferenceThread
 from tqdm import tqdm
 from .common import TqdmToLogger
 from .workflow import get_workflow
 from .output_data import OutputThread
-try:
-    from Queue import Queue, LifoQueue, Empty
-except ImportError:
-    from queue import Queue, LifoQueue, Empty
 
 
 # note that it could probably be dynamically calculated
-QUEUE_MAX_SIZE = 50
 LOGGER = logging.getLogger(__name__)
-
-
-@contextmanager
-def disable_keyboard_interrupt():
-    s = signal.signal(signal.SIGINT, signal.SIG_IGN)
-    try:
-        yield
-    finally:
-        signal.signal(signal.SIGINT, s)
-
-
-def clear_queues(queues):
-    # Makes sure all queues are empty
-    LOGGER.info("Purging queues")
-    while True:
-        for queue in queues:
-            with queue.mutex:
-                queue.queue.clear()
-        time.sleep(0.01)
-        if all([queue.empty() for queue in queues]):
-            break
-    LOGGER.info("Purging queues done")
 
 
 class Frame(object):
@@ -114,21 +84,6 @@ class InputThread(Thread):
         self.frame_number += 1
 
 
-def stop_when_pools_empty(pools):
-    while True:
-        can_stop = True
-        for pool in pools:
-            if not pool.can_stop():
-                can_stop = False
-                break
-        if can_stop:
-            break
-        gevent.sleep(0.3)
-
-    for pool in pools:
-        pool.stop()
-
-
 def input_loop(kwargs, postprocessing=None):
     inputs = iter(get_input(kwargs.get('input', 0), kwargs))
 
@@ -145,10 +100,8 @@ def input_loop(kwargs, postprocessing=None):
 
     # Initialize workflow for mutual use between send_inference_pool and result_inference_pool
     workflow = get_workflow(kwargs)
-
     exit_event = threading.Event()
 
-    on_progress = lambda: pbar.update(1)
     pools = [
         Pool(1, InputThread, thread_args=(exit_event, None, queues[0], inputs)),
         # Encode image into jpeg
@@ -158,53 +111,22 @@ def input_loop(kwargs, postprocessing=None):
         # Gather inference predictions from the worker(s)
         Pool(1, ResultInferenceGreenlet, thread_args=(exit_event, queues[2], queues[3], workflow), thread_kwargs=kwargs),
         # # Output predictions
-        Pool(1, OutputThread, thread_args=(exit_event, queues[3], None, on_progress, postprocessing), thread_kwargs=kwargs)
+        Pool(1, OutputThread, thread_args=(exit_event, queues[3], None, pbar.update, postprocessing), thread_kwargs=kwargs)
     ]
 
     # disable receive of KeyboardInterrupt in greenlet
     gevent.get_hub().NOT_ERROR += (KeyboardInterrupt, SystemExit)
 
-    stop_asked = 0
-    # Start threads
-    for pool in pools:
-        pool.start()
+    stop_asked = run_pools(pools, queues, pbar, lambda: workflow.close())
 
-    while True:
-        try:
-            pools[0].join()
-
-            stop_when_pools_empty(pools)
-
-            break
-        except (KeyboardInterrupt, SystemExit):
-            with disable_keyboard_interrupt():
-                stop_asked += 1
-                if stop_asked >= 2:
-                    LOGGER.info("Hard stop")
-                    for pool in pools:
-                        pool.stop()
-
-                    # clearing queues to make sure a thread
-                    # is not blocked in a queue.put() because of maxsize
-                    clear_queues(queues)
-                    break
-                else:
-                    LOGGER.info('Stop asked, waiting for threads to process queued messages.')
-                    # stopping inputs
-                    pools[0].stop()
-
-    with disable_keyboard_interrupt():
-        # Makes sure threads finish properly so that
-        # we can make sure the workflow is not used and can be closed
-        for pool in pools:
-            pool.join()
-
-        workflow.close()
-        pbar.close()
-
-    if exit_event.is_set() or stop_asked > 0:
-        # At least one thread failed
+    # If the process encountered an error, the exit code is 1.
+    # If the process is interrupted using SIGINT (ctrl + C) or SIGTERM, the queues are emptied and processed by the
+    # threads, and the exit code is 0.
+    # If SIGINT or SIGTERM is sent again during this shutdown phase, the threads are killed, and the exit code is 2.
+    if exit_event.is_set():
         sys.exit(1)
+    elif stop_asked >= 2:
+        sys.exit(2)
 
 
 class InputData(object):
@@ -345,7 +267,7 @@ class DirectoryInputData(InputData):
         if self.is_valid(descriptor):
             _paths = [os.path.join(descriptor, name) for name in os.listdir(descriptor)]
             self._inputs = []
-            for path in _paths:
+            for path in sorted(_paths):
                 if ImageInputData.is_valid(path):
                     self._inputs.append(ImageInputData(path, **kwargs))
                 elif VideoInputData.is_valid(path):

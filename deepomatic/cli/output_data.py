@@ -4,13 +4,8 @@ import logging
 import json
 import cv2
 import imutils
-from . import thread_base
+from .thread_base import Thread
 from .cmds.studio_helpers.vulcan2studio import transform_json_from_vulcan_to_studio
-
-try:
-    from Queue import Empty
-except ImportError:
-    from queue import Empty
 
 
 LOGGER = logging.getLogger(__name__)
@@ -56,7 +51,7 @@ def get_outputs(descriptors, kwargs):
     return [get_output(descriptor, kwargs) for descriptor in descriptors]
 
 
-class OutputThread(thread_base.Thread):
+class OutputThread(Thread):
     def __init__(self, exit_event, input_queue, output_queue, on_progress, postprocessing, **kwargs):
         super(OutputThread, self).__init__(exit_event, input_queue, output_queue)
         self.args = kwargs
@@ -213,7 +208,11 @@ class DisplayOutputData(OutputData):
             LOGGER.warning('No frame to output.')
         else:
             cv2.imshow(self._window_name, frame.output_image)
-            if cv2.waitKey(self._fps) & 0xFF == ord('q'):
+            try:
+                ms = 1000 // int(self._fps)
+            except:
+                ms = 1
+            if cv2.waitKey(ms) & 0xFF == ord('q'):
                 cv2.destroyAllWindows()
                 cv2.waitKey(1)
                 sys.exit()
