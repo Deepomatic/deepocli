@@ -23,16 +23,14 @@ class ThreadBase(object):
         self.loop_impl_callable = loop_impl
         self.stop_asked = False
         self.name = name or self.__class__.__name__
+        self.processing_item = False
 
     def can_stop(self):
+        if self.processing_item:
+            return False
         if self.input_queue is not None:
             return self.input_queue.empty()
-        raise Exception("No input_queue provided")
-
-    def stop_when_no_input(self):
-        while not self.can_stop():
-            gevent.sleep(0.3)
-        self.stop()
+        return True
 
     def stop(self):
         self.stop_asked = True
@@ -45,13 +43,20 @@ class ThreadBase(object):
     def pop_input(self):
         try:
             msg = self.input_queue.get(block=True, timeout=1)
-            self.input_queue.task_done()
+            self.processing_item = True
             return msg
         except Empty:
+            self.processing_item = False
             return None
 
     def put_to_output(self, msg):
         self.output_queue.put(msg)
+        self.task_done()
+
+    def task_done(self):
+        if self.input_queue is not None:
+            self.input_queue.task_done()
+        self.processing_item = False
 
     def init(self):
         pass
@@ -107,6 +112,7 @@ class Greenlet(ThreadBase):
         while True:
             try:
                 self.output_queue.put(msg, block=True, timeout=0.0001)
+                self.task_done()
                 break
             except Full:
                 # important: yield the execution to other greenlets
@@ -115,9 +121,10 @@ class Greenlet(ThreadBase):
     def pop_input(self):
         try:
             msg = self.input_queue.get(block=True, timeout=0.0001)
-            self.input_queue.task_done()
+            self.processing_item = True
             return msg
         except Empty:
+            self.processing_item = False
             # important: yield the execution to other greenlets
             gevent.sleep(0)
             return None
@@ -139,9 +146,11 @@ class Pool(object):
             self.threads.append(th)
             th.start()
 
-    def stop_when_no_input(self):
+    def can_stop(self):
         for th in self.threads:
-            th.stop_when_no_input()
+            if not th.can_stop():
+                return False
+        return True
 
     def stop(self):
         for th in self.threads:

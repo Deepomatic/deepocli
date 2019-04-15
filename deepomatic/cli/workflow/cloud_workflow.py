@@ -1,11 +1,10 @@
 import os
 import logging
-from .workflow_abstraction import AbstractWorkflow, InferenceError
+from .workflow_abstraction import AbstractWorkflow, InferenceError, InferenceTimeout
 from .. import common
 import deepomatic.api.client
 import deepomatic.api.inputs
-import deepomatic.api.exceptions
-from deepomatic.api.resources.task import is_success_status, is_error_status
+from deepomatic.api.exceptions import TaskError, TaskTimeout
 
 LOGGER = logging.getLogger(__name__)
 
@@ -15,13 +14,14 @@ class CloudRecognition(AbstractWorkflow):
         def __init__(self, task):
             self._task = task
 
-        def get_predictions(self):
-            self._task.refresh()
-            if is_success_status(self._task['status']):
+        def get_predictions(self, timeout):
+            try:
+                self._task.wait(timeout=timeout)
                 return self._task['data']
-            elif is_error_status(self._task['status']):
+            except TaskError:
                 raise InferenceError(self._task.data())
-            return None
+            except TaskTimeout:
+                raise InferenceTimeout(timeout)
 
     def close(self):
         self._client.http_helper.session.close()

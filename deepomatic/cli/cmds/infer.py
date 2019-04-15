@@ -1,16 +1,13 @@
 import cv2
-import os
 import logging
 
-from ..workflow.workflow_abstraction import InferenceError
+from ..workflow.workflow_abstraction import InferenceError, InferenceTimeout
 from .. import thread_base
 
 LOGGER = logging.getLogger(__name__)
 
 # Size of the font we draw in the image_output
 FONT_SCALE = 0.5
-RESULT_BATCH_SIZE = int(os.getenv('RESULT_BATCH_SIZE', 1))
-RESULT_BATCH_TIMEOUT = float(os.getenv('RESULT_BATCH_TIMEOUT', -1))
 
 
 class DrawImagePostprocessing(object):
@@ -95,7 +92,6 @@ class PrepareInferenceThread(thread_base.Thread):
         frame = self.pop_input()
         if frame is None:
             return
-
         _, buf = cv2.imencode('.jpg', frame.image)
         buf_bytes = buf.tobytes()
         frame.buf_bytes = buf_bytes
@@ -136,9 +132,8 @@ class ResultInferenceGreenlet(thread_base.Greenlet):
         frame = self.pop_input()
         if frame is None:
             return
-        #LOGGER.error("Couldn't get predictions for the whole batch in enough time ({} seconds). Ignoring frames {}.".format(RESULT_BATCH_TIMEOUT, self.batch))
         try:
-            predictions = frame.inference_async_result.get_predictions()
+            predictions = frame.inference_async_result.get_predictions(timeout=60)
             if self.threshold is not None:
                 # Keep only predictions higher than threshold
                 for output in predictions['outputs']:
@@ -154,3 +149,5 @@ class ResultInferenceGreenlet(thread_base.Greenlet):
             self.put_to_output(frame)
         except InferenceError as e:
             LOGGER.error('Error getting predictions for frame {}: {}'.format(frame, str(e)))
+        except InferenceTimeout as e:
+            LOGGER.error("Couldn't get predictions for the whole batch in enough time ({} seconds). Ignoring frames {}.".format(e.timeout, self.batch))

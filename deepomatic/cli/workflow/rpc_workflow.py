@@ -1,7 +1,7 @@
 import cv2
 import time
 import logging
-from .workflow_abstraction import AbstractWorkflow, InferenceError
+from .workflow_abstraction import AbstractWorkflow, InferenceError, InferenceTimeout
 from ..common import DeepoCLIException
 
 # First we test whether the deepomatic-rpc module is installed. An error here indicates we need to install it.
@@ -17,6 +17,7 @@ except ImportError:
 if RPC_PACKAGES_USABLE:
     from deepomatic.rpc import v07_ImageInput, BINARY_IMAGE_PREFIX
     from deepomatic.rpc.exceptions import ServerError
+    from deepomatic.rpc.amqp.exceptions import Timeout
     from deepomatic.rpc.response import wait_responses
     from deepomatic.rpc.helpers.v07_proto import create_recognition_command_mix
     from deepomatic.rpc.helpers.proto import create_v07_images_command
@@ -31,17 +32,17 @@ class RpcRecognition(AbstractWorkflow):
             self._correlation_id = correlation_id
             self._consumer = consumer
 
-        def get_predictions(self):
-            response = self._consumer.get(self._correlation_id)
-            if response is not None:
+        def get_predictions(self, timeout):
+            try:
+                response = self._consumer.get(self._correlation_id, timeout=timeout)
                 try:
                     outputs = response.to_parsed_result_buffer()
+                    predictions = {'outputs': [{'labels': MessageToDict(output.labels, including_default_value_fields=True, preserving_proto_field_name=True)} for output in outputs]}
+                    return predictions
                 except ServerError as e:
                     raise InferenceError({'error': str(e), 'code': e.code})
-                predictions = {'outputs': [{'labels': MessageToDict(output.labels, including_default_value_fields=True, preserving_proto_field_name=True)} for output in outputs]}
-                return predictions
-            else:
-                return None
+            except Timeout:
+                raise InferenceTimeout(timeout)
 
     def __init__(self, recognition_version_id, amqp_url, routing_key, recognition_cmd_kwargs=None):
         super(RpcRecognition, self).__init__('recognition_{}'.format(recognition_version_id))

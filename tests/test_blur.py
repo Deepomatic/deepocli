@@ -108,4 +108,4 @@ def test_e2e_image_blur_image_method_and_strenght():
 
 
 def test_e2e_image_blur_json_studio():
-    run_blur(IMAGE_INPUT, [JSON_OUTPUT], expect_nb_json=1, studio_format=True, extra_opts=['--studio-format'])
+    run_blur(IMAGE_INPUT, [JSON_OUTPUT], expect_nb_json=1, studio_format=True, extra_opts=['--studio_format'])

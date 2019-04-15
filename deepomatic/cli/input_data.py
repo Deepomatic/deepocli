@@ -114,6 +114,21 @@ class InputThread(Thread):
         self.frame_number += 1
 
 
+def stop_when_pools_empty(pools):
+    while True:
+        can_stop = True
+        for pool in pools:
+            if not pool.can_stop():
+                can_stop = False
+                break
+        if can_stop:
+            break
+        gevent.sleep(0.3)
+
+    for pool in pools:
+        pool.stop()
+
+
 def input_loop(kwargs, postprocessing=None):
     inputs = iter(get_input(kwargs.get('input', 0), kwargs))
 
@@ -147,7 +162,7 @@ def input_loop(kwargs, postprocessing=None):
     ]
 
     # disable receive of KeyboardInterrupt in greenlet
-    gevent.get_hub().NOT_ERROR += (KeyboardInterrupt,)
+    gevent.get_hub().NOT_ERROR += (KeyboardInterrupt, SystemExit)
 
     stop_asked = 0
     # Start threads
@@ -156,9 +171,9 @@ def input_loop(kwargs, postprocessing=None):
 
     while True:
         try:
+            pools[0].join()
 
-            for pool in pools[1:]:
-                pool.stop_when_no_input()
+            stop_when_pools_empty(pools)
 
             break
         except (KeyboardInterrupt, SystemExit):

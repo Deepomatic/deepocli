@@ -107,4 +107,4 @@ def test_e2e_image_draw_image_scores_and_labels():
 
 
 def test_e2e_image_draw_json_studio():
-    run_draw(IMAGE_INPUT, [JSON_OUTPUT], expect_nb_json=1, studio_format=True, extra_opts=['--studio-format'])
+    run_draw(IMAGE_INPUT, [JSON_OUTPUT], expect_nb_json=1, studio_format=True, extra_opts=['--studio_format'])

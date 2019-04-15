@@ -85,4 +85,4 @@ def test_e2e_image_infer_json_threshold():
 
 
 def test_e2e_image_infer_json_studio():
-    run_infer(IMAGE_INPUT, [JSON_OUTPUT], expect_nb_json=1, studio_format=True, extra_opts=['--studio-format'])
+    run_infer(IMAGE_INPUT, [JSON_OUTPUT], expect_nb_json=1, studio_format=True, extra_opts=['--studio_format'])

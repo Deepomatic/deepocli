@@ -98,6 +98,7 @@ class OutputThread(thread_base.Thread):
         self.frame_to_output += 1
         if self.on_progress:
             self.on_progress()
+        self.task_done()
 
 
 class OutputData(object):
