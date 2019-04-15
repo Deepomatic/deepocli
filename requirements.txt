@@ -2,6 +2,5 @@ opencv-python==3.4.3.18
 Pillow==5.3.0
 tqdm==4.31.1
 imutils==0.5.1
-unidecode==1.0.23
 requests>=2.19.0,<3  # will not work below in python3
 deepomatic-api==0.8.0

@@ -1,5 +1,4 @@
 import cv2
-import unidecode
 
 try:
     from Queue import Empty
@@ -46,7 +45,7 @@ class DrawImagePostprocessing(object):
         tag_drawn = 0  # Used to store the number of tags already drawn
         for pred in frame.predictions['outputs'][0]['labels']['predicted']:
             # Build legend
-            label = ''
+            label = u''
             if self._draw_labels:
                 label = pred['label_name']
             if self._draw_labels and self._draw_scores:
@@ -54,7 +53,7 @@ class DrawImagePostprocessing(object):
             if self._draw_scores:
                 label += str(round(pred['score'], SCORE_DECIMAL_PRECISION))
             # Make sure labels are ascii
-            label = unidecode.unidecode(label)
+            label = label.encode('ascii', 'replace').decode('ascii')
 
             # Get text draw parameters
             ret, baseline = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, FONT_SCALE, 1)
