@@ -3,6 +3,7 @@ import argparse
 from .cmds.feedback import main as feedback
 from .input_data import ImageInputData, VideoInputData, StreamInputData, input_loop
 from .cmds.infer import BlurImagePostprocessing, DrawImagePostprocessing
+from .version import __version__, __title__
 
 
 class ParserWithHelpOnError(argparse.ArgumentParser):
@@ -17,6 +18,10 @@ class ParserWithHelpOnError(argparse.ArgumentParser):
 
 def argparser_init():
     argparser = ParserWithHelpOnError(prog='deepo')
+    argparser.add_argument(
+        '-v', '--version', action='version',
+        version='{title} {version}'.format(title=__title__, version=__version__)
+    )
     subparsers = argparser.add_subparsers(dest='command', help='')
     subparsers.required = True
 
