@@ -37,10 +37,10 @@ def argparser_init():
     studio_parser = subparsers.add_parser('studio', help='Deepomatic Studio related commands')
     studio_subparser = studio_parser.add_subparsers(dest='studio_command', help='')
     studio_subparser.required = True
-    feedback_parser = studio_subparser.add_parser('add_images', help='Uploads images from the local machine to Deepomatic Studio.')
-    feedback_parser.set_defaults(func=feedback, recursive=False)
+    add_images_parser = studio_subparser.add_parser('add_images', help='Uploads images from the local machine to Deepomatic Studio.')
+    add_images_parser.set_defaults(func=feedback, recursive=False)
 
-    for parser in [infer_parser, draw_parser, blur_parser, feedback_parser]:
+    for parser in [infer_parser, draw_parser, blur_parser, add_images_parser]:
         parser.add_argument('-R', '--recursive', dest='recursive', action='store_true', help='If a directory input is used, goes through all files in subdirectories.')
 
     for parser in [infer_parser, draw_parser, blur_parser]:
@@ -50,7 +50,8 @@ def argparser_init():
         parser.add_argument('-u', '--amqp_url', help="AMQP url for on-premises deployments.")
         parser.add_argument('-k', '--routing_key', help="Recognition routing key for on-premises deployments.")
         parser.add_argument('-t', '--threshold', type=float, help="Threshold above which a prediction is considered valid.", default=None)
-        parser.add_argument('-f', '--fps', type=int, help="Video frame rate if applicable.")
+        parser.add_argument('--input_fps', type=int, help="FPS for input video frame extraction.", default=None)
+        parser.add_argument('--output_fps', type=int, help="FPS for output video reconstruction.", default=None)
         parser.add_argument('-s', '--studio_format', action='store_true', help="Convert deepomatic run predictions into deepomatic studio format.")
 
     for parser in [draw_parser, blur_parser]:
@@ -62,10 +63,10 @@ def argparser_init():
     blur_parser.add_argument('-M', '--blur_method', help="Blur method to apply, either 'pixel', 'gaussian' or 'black', defaults to 'pixel'.", default='pixel', choices=['pixel', 'gaussian', 'black'])
     blur_parser.add_argument('-B', '--blur_strength', help="Blur strength, defaults to 10.", default=10)
 
-    feedback_parser.add_argument('-d', '--dataset', required=True, help="Deepomatic Studio dataset name.", type=str)
-    feedback_parser.add_argument('-o', '--organization', required=True, help="Deepomatic Studio organization slug.", type=str)
-    feedback_parser.add_argument('path', type=str, nargs='+', help='Path to an image file, images directory or json file or directory.')
-    feedback_parser.add_argument('--json', dest='json_file', action='store_true', help='Look for JSON files instead of images.')
+    add_images_parser.add_argument('-d', '--dataset', required=True, help="Deepomatic Studio dataset name.", type=str)
+    add_images_parser.add_argument('-o', '--organization', required=True, help="Deepomatic Studio organization slug.", type=str)
+    add_images_parser.add_argument('path', type=str, nargs='+', help='Path to an image file, images directory or json file or directory.')
+    add_images_parser.add_argument('--json', dest='json_file', action='store_true', help='Look for JSON files instead of images.')
 
     return argparser
 

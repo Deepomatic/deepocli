@@ -146,7 +146,7 @@ class VideoOutputData(OutputData):
         elif ext == '.mp4':
             fourcc = cv2.VideoWriter_fourcc('m', 'p', '4', 'v')
         self._fourcc = fourcc
-        self._fps = kwargs['fps'] if kwargs['fps'] else DEFAULT_FPS
+        self._fps = kwargs['output_fps'] if kwargs['output_fps'] else DEFAULT_FPS
         self._writer = None
 
     def close(self):
@@ -181,7 +181,7 @@ class StdOutputData(OutputData):
 class DisplayOutputData(OutputData):
     def __init__(self, **kwargs):
         super(DisplayOutputData, self).__init__(None, **kwargs)
-        self._fps = kwargs.get('fps', DEFAULT_FPS)
+        self._fps = kwargs['output_fps'] if kwargs['output_fps'] else DEFAULT_FPS
         self._window_name = 'Deepomatic'
         self._fullscreen = kwargs.get('fullscreen', False)
 

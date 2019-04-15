@@ -60,10 +60,6 @@ def get_input(descriptor, kwargs):
 def input_loop(kwargs, postprocessing=None):
     inputs = get_input(kwargs.get('input', 0), kwargs)
 
-    # If no fps is specified and input is a video, pass the fps parameter to the output
-    if isinstance(inputs, VideoInputData):
-        kwargs['fps'] = inputs.get_fps()
-
     # Initialize progress bar
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger()
@@ -214,6 +210,7 @@ class VideoInputData(InputData):
         self._i = 0
         self._name = '%s_%s_%s' % (self._name, '%05d', self._reco)
         self._cap = cv2.VideoCapture(self._descriptor)
+        self._kwargs_fps = kwargs['input_fps']
         self._fps = self.get_fps()
 
     def __iter__(self):
@@ -238,23 +235,35 @@ class VideoInputData(InputData):
         raise StopIteration
 
     def get_fps(self):
+        # There are three different type of fps:
+        #   _video_fps: original video fps
+        #   _kwarg_fps: fps specified by the user through the CLI if any
+        #   _extract_fps: fps used for frame extraction
+
         if self._cap is not None:
             # Retrieve the original video fps if available
             try:
-                raw_fps = self._cap.get(cv2.CAP_PROP_FPS)
+                self._video_fps = self._cap.get(cv2.CAP_PROP_FPS)
             except Exception:
                 raise ValueError('Could not read fps for video {}, please specify it with --fps option.'.format(self._descriptor))
-            if raw_fps == 0:
+            if self._video_fps == 0:
                 raise ValueError('Null fps detected for video {}, please specify it with --fps option.'.format(self._descriptor))
             
-            # Use original video fps if lower than specified kwarg fps
-            desired_fps = min(kwargs['fps'], raw_fps) if kwargs['fps'] else raw_fps
-            logging.info('Detected raw video fps of {}, using fps of {}'.format(raw_fps, desired_fps))
+            # Compute fps for frame extraction so that we don't analyze useless frame that will be discarded later
+            if not self._kwargs_fps:
+                self._extract_fps = self._video_fps
+                logging.info('No keyword fps specified, using raw video fps of {}'.format(self._video_fps))
+            elif self._kwargs_fps < self._video_fps:
+                self._extract_fps = self._kwargs_fps
+                logging.info('Using keyword fps of {} instead of raw video fps of {}'.format(self._kwargs_fps, self._video_fps))
+            else:
+                self._extract_fps = self._video_fps
+                logging.info('Keyword fps of {} specified but using maximum raw video fps of {}'.format(self._kwargs_fps, self._video_fps))
 
             # Compute frames corresponding to the new fps
-            total_frames = int(self._cap.get(cv2.CAP_PROP_FRAME_COUNT) * desired_fps / raw_fps)
-            self._fps = desired_fps
-            self._adjusted_frames = [round(frame * raw_fps / desired_fps) for frame in range(0, total_frames)]
+            total_frames = int(self._cap.get(cv2.CAP_PROP_FRAME_COUNT) * self._extract_fps / self._video_fps)
+            self._fps = self._extract_fps
+            self._adjusted_frames = [round(frame * self._video_fps / self._fps) for frame in range(0, total_frames)]
             self._total_frames = len(self._adjusted_frames)
         else:
             self._fps = None
