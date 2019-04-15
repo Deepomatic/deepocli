@@ -50,8 +50,8 @@ def argparser_init():
         parser.add_argument('-u', '--amqp_url', help="AMQP url for on-premises deployments.")
         parser.add_argument('-k', '--routing_key', help="Recognition routing key for on-premises deployments.")
         parser.add_argument('-t', '--threshold', type=float, help="Threshold above which a prediction is considered valid.", default=None)
-        parser.add_argument('--input_fps', type=int, help="FPS for input video frame extraction.", default=None)
-        parser.add_argument('--output_fps', type=int, help="FPS for output video reconstruction.", default=None)
+        parser.add_argument('--input_fps', type=int, help="FPS used for input video frame skipping and extraction. If higher than the original video FPS, all frames will be analysed only once having the same effect as not using this parameter. If lower than the original video FPS, some frames will be discarded to simulate an input of the given FPS.", default=None)
+        parser.add_argument('--output_fps', type=int, help="FPS usef for output video reconstruction.", default=None)
         parser.add_argument('-s', '--studio_format', action='store_true', help="Convert deepomatic run predictions into deepomatic studio format.")
 
     for parser in [draw_parser, blur_parser]:
