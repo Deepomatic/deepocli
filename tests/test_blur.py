@@ -115,7 +115,8 @@ def test_e2e_image_blur_image_threshold(test_input=image_input, test_output=imag
 
 
 def test_e2e_video_blur_video_fps(test_input=video_input, test_output=video_output):
-    run(['blur', '-i', test_input, '-o', test_output, '-r', 'fashion-v4', '--fps', '2'])
+    run(['blur', '-i', test_input, '-o', test_output, '-r', 'fashion-v4', '--output_fps', '2'])
+    run(['blur', '-i', test_input, '-o', test_output, '-r', 'fashion-v4', '--input_fps', '2'])
 
 
 def test_e2e_image_blur_image_window(test_input=image_input, test_output='window'):
