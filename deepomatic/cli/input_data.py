@@ -214,19 +214,7 @@ class VideoInputData(InputData):
         self._i = 0
         self._name = '%s_%s_%s' % (self._name, '%05d', self._reco)
         self._cap = cv2.VideoCapture(self._descriptor)
-        if self._cap is not None:
-            raw_fps = self._cap.get(cv2.CAP_PROP_FPS)
-            desired_fps = min(kwargs['fps'], raw_fps) if kwargs['fps'] else raw_fps
-            # TODO: find a better name for fps, as it is actually a ratio indicating which frames number to process in the video (other are ignored)
-            logging.info('Detected raw video fps of {}, using fps of {}'.format(raw_fps, desired_fps))
-            total_frames = int(self._cap.get(cv2.CAP_PROP_FRAME_COUNT) * desired_fps / raw_fps)
-            self._fps = desired_fps
-            self._adjusted_frames = [round(frame * raw_fps / desired_fps) for frame in range(0, total_frames)]
-            self._total_frames = len(self._adjusted_frames)
-        else:
-            self._fps = None
-            self._total_frames = None
-            self._adjusted_frames = None
+        self._fps = self.get_fps()
 
     def __iter__(self):
         if self._cap is not None:
@@ -250,6 +238,28 @@ class VideoInputData(InputData):
         raise StopIteration
 
     def get_fps(self):
+        if self._cap is not None:
+            # Retrieve the original video fps if available
+            try:
+                raw_fps = self._cap.get(cv2.CAP_PROP_FPS)
+            except Exception:
+                raise ValueError('Could not read fps for video {}, please specify it with --fps option.'.format(self._descriptor))
+            if raw_fps == 0:
+                raise ValueError('Null fps detected for video {}, please specify it with --fps option.'.format(self._descriptor))
+            
+            # Use original video fps if lower than specified kwarg fps
+            desired_fps = min(kwargs['fps'], raw_fps) if kwargs['fps'] else raw_fps
+            logging.info('Detected raw video fps of {}, using fps of {}'.format(raw_fps, desired_fps))
+
+            # Compute frames corresponding to the new fps
+            total_frames = int(self._cap.get(cv2.CAP_PROP_FRAME_COUNT) * desired_fps / raw_fps)
+            self._fps = desired_fps
+            self._adjusted_frames = [round(frame * raw_fps / desired_fps) for frame in range(0, total_frames)]
+            self._total_frames = len(self._adjusted_frames)
+        else:
+            self._fps = None
+            self._total_frames = None
+            self._adjusted_frames = None
         return self._fps
 
     def get_frame_count(self):
@@ -324,6 +334,9 @@ class StreamInputData(VideoInputData):
     def is_infinite(self):
         return True
 
+    def get_fps(self):
+        return -1
+
 
 class DeviceInputData(VideoInputData):
 
@@ -340,6 +353,9 @@ class DeviceInputData(VideoInputData):
 
     def is_infinite(self):
         return True
+    
+    def get_fps(self):
+        return -1
 
 
 class JsonInputData(InputData):
