@@ -66,7 +66,7 @@ class InputThread(Thread):
         self.inputs = inputs
         self.frame_number = 0  # Used to keep input order, notably for video reconstruction
 
-    def loop_impl(self):
+    def process_msg(self, _unused):
         try:
             frame = next(self.inputs)
         except StopIteration:
@@ -80,7 +80,10 @@ class InputThread(Thread):
                 self.output_queue.clear()
 
         # TODO: for a stream put should not be blocking
-        self.put_to_output(frame)
+        return frame
+
+    def put_to_output(self, msg):
+        super(InputThread, self).put_to_output(msg)
         self.frame_number += 1
 
 

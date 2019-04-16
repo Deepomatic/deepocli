@@ -77,17 +77,17 @@ class OutputThread(Thread):
         return super(OutputThread, self).can_stop() and \
             len(self.frames_to_check_first) == 0
 
-    def loop_impl(self):
+    def pop_input(self):
         # looking into frames we popped earlier
         frame = self.frames_to_check_first.pop(self.frame_to_output, None)
         if frame is None:
-            frame = self.pop_input()
-            if frame is None:
-                return
+            frame = super(OutputThread, self).pop_input()
+        return frame
 
-            if self.frame_to_output != frame.frame_number:
-                self.frames_to_check_first[frame.frame_number] = frame
-                return
+    def process_msg(self, frame):
+        if self.frame_to_output != frame.frame_number:
+            self.frames_to_check_first[frame.frame_number] = frame
+            return
 
         if self.postprocessing is not None:
             self.postprocessing(frame)

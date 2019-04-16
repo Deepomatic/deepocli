@@ -22,10 +22,7 @@ class UploadImageGreenlet(Greenlet):
         self._helper = helper
         self._task = task
 
-    def loop_impl(self):
-        msg = self.pop_input()
-        if msg is None:
-            return
+    def process_msg(self, msg):
         url, data, file = msg
 
         try:

@@ -16,18 +16,18 @@ except ImportError:
 
 LOGGER = logging.getLogger(__name__)
 QUEUE_MAX_SIZE = 50
+SLEEP_TIME = 0.0005
 
 
 class ThreadBase(object):
     """
     Thread interface
     """
-    def __init__(self, exit_event, input_queue=None, output_queue=None, name=None, loop_impl=None):
+    def __init__(self, exit_event, input_queue=None, output_queue=None, name=None):
         super(ThreadBase, self).__init__()
         self.input_queue = input_queue
         self.output_queue = output_queue
         self.exit_event = exit_event
-        self.loop_impl_callable = loop_impl
         self.stop_asked = False
         self.name = name or self.__class__.__name__
         self.processing_item_lock = Lock()
@@ -43,7 +43,8 @@ class ThreadBase(object):
 
     def can_stop(self):
         if self.input_queue is not None:
-            return self.input_queue.empty()
+            if not self.input_queue.empty():
+                return False
         return True
 
     def stop(self):
@@ -51,29 +52,28 @@ class ThreadBase(object):
 
     def stop_when_empty(self):
         while True:
-            self.sleep(0)
             with self.lock() as acquired:
-                if not acquired:
-                    continue
-                if self.can_stop():
-                    self.stop()
-                    return
+                if acquired:
+                    if self.can_stop():
+                        self.stop()
+                        return
 
-    def loop_impl(self):
-        if self.loop_impl_callable is None:
-            raise NotImplementedError()
-        self.loop_impl_callable()
+            self.sleep(SLEEP_TIME)
+
+    def process_msg(self, msg):
+        raise NotImplementedError()
 
     def pop_input(self):
-        try:
-            msg = self.input_queue.get(block=True, timeout=0.1)
-            return msg
-        except Empty:
-            return None
+        return self.input_queue.get(block=False)
 
-    def put_to_output(self, msg):
-        self.output_queue.put(msg)
-        self.task_done()
+    def put_to_output(self, msg_out):
+        while True:
+            try:
+                self.output_queue.put(msg_out, block=False)
+                self.task_done()
+                break
+            except Full:
+                self.sleep(SLEEP_TIME)
 
     def task_done(self):
         if self.input_queue is not None:
@@ -87,11 +87,21 @@ class ThreadBase(object):
 
     def _run(self):
         while not self.stop_asked:
+            empty = False
             with self.lock() as acquired:
                 if acquired:
-                    self.loop_impl()
-            if acquired:
-                self.sleep(0.001)
+                    msg_in = None
+                    if self.input_queue is not None:
+                        try:
+                            msg_in = self.pop_input()
+                        except Empty:
+                            empty = True
+                    if self.input_queue is None or not empty:
+                        msg_out = self.process_msg(msg_in)
+                        if msg_out is not None:
+                            self.put_to_output(msg_out)
+
+            self.sleep(SLEEP_TIME)
 
     def run(self):
         try:
@@ -121,7 +131,8 @@ class Thread(ThreadBase):
         self.thread.join()
 
     def sleep(self, t):
-        time.sleep(t)
+        # time.sleep(t)
+        gevent.sleep(t)
 
 
 class Greenlet(ThreadBase):
@@ -135,25 +146,6 @@ class Greenlet(ThreadBase):
     def join(self):
         if self.greenlet is not None:
             self.greenlet.join()
-
-    def put_to_output(self, msg):
-        while True:
-            try:
-                self.output_queue.put(msg, block=True, timeout=0.0001)
-                self.task_done()
-                break
-            except Full:
-                # important: yield the execution to other greenlets
-                gevent.sleep(0)
-
-    def pop_input(self):
-        try:
-            msg = self.input_queue.get(block=True, timeout=0.0001)
-            return msg
-        except Empty:
-            # important: yield the execution to other greenlets
-            gevent.sleep(0)
-            return None
 
     def sleep(self, t):
         gevent.sleep(t)
@@ -175,12 +167,6 @@ class Pool(object):
             self.threads.append(th)
             th.start()
 
-    def can_stop(self):
-        for th in self.threads:
-            if not th.can_stop():
-                return False
-        return True
-
     def stop_when_empty(self):
         for th in self.threads:
             th.stop_when_empty()
@@ -201,7 +187,6 @@ def clear_queues(queues):
         for queue in queues:
             with queue.mutex:
                 queue.queue.clear()
-        gevent.sleep(0.01)
         if all([queue.empty() for queue in queues]):
             break
     LOGGER.info("Purging queues done")
@@ -251,6 +236,7 @@ def run_pools(pools, queues, pbar, cleanup=None, join_first_pool=True):
                     # stopping inputs
                     pools[0].stop()
 
+    print("Joining !")
     with disable_keyboard_interrupt():
         # Makes sure threads finish properly so that
         # we can make sure the workflow is not used and can be closed
