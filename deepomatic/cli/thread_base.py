@@ -16,7 +16,7 @@ except ImportError:
 
 LOGGER = logging.getLogger(__name__)
 QUEUE_MAX_SIZE = 50
-SLEEP_TIME = 0.0005
+SLEEP_TIME = 0.01  # don't touch until we have non performance regression tests
 
 
 class ThreadBase(object):
@@ -57,8 +57,8 @@ class ThreadBase(object):
                     if self.can_stop():
                         self.stop()
                         return
-
-            self.sleep(SLEEP_TIME)
+            # don't touch until we have non performance regression tests
+            gevent.sleep(SLEEP_TIME)
 
     def process_msg(self, msg):
         raise NotImplementedError()
@@ -73,7 +73,8 @@ class ThreadBase(object):
                 self.task_done()
                 break
             except Full:
-                self.sleep(SLEEP_TIME)
+                # don't touch until we have non performance regression tests
+                gevent.sleep(SLEEP_TIME)
 
     def task_done(self):
         if self.input_queue is not None:
@@ -100,8 +101,9 @@ class ThreadBase(object):
                         msg_out = self.process_msg(msg_in)
                         if msg_out is not None:
                             self.put_to_output(msg_out)
-
-            self.sleep(SLEEP_TIME)
+            if empty:
+                # don't touch until we have non performance regression tests
+                gevent.sleep(SLEEP_TIME)
 
     def run(self):
         try:
@@ -130,10 +132,6 @@ class Thread(ThreadBase):
     def join(self):
         self.thread.join()
 
-    def sleep(self, t):
-        # time.sleep(t)
-        gevent.sleep(t)
-
 
 class Greenlet(ThreadBase):
     def __init__(self, *args, **kwargs):
@@ -146,9 +144,6 @@ class Greenlet(ThreadBase):
     def join(self):
         if self.greenlet is not None:
             self.greenlet.join()
-
-    def sleep(self, t):
-        gevent.sleep(t)
 
 
 class Pool(object):
@@ -236,7 +231,6 @@ def run_pools(pools, queues, pbar, cleanup=None, join_first_pool=True):
                     # stopping inputs
                     pools[0].stop()
 
-    print("Joining !")
     with disable_keyboard_interrupt():
         # Makes sure threads finish properly so that
         # we can make sure the workflow is not used and can be closed
