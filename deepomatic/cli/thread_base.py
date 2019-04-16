@@ -2,8 +2,11 @@ import logging
 import traceback
 import gevent
 import signal
+import time
 from contextlib import contextmanager
 from gevent.threadpool import ThreadPool
+from gevent.lock import Semaphore
+from threading import Lock
 
 try:
     from Queue import Empty, Full, Queue, LifoQueue
@@ -27,17 +30,34 @@ class ThreadBase(object):
         self.loop_impl_callable = loop_impl
         self.stop_asked = False
         self.name = name or self.__class__.__name__
-        self.processing_item = False
+        self.processing_item_lock = Lock()
+
+    @contextmanager
+    def lock(self):
+        acquired = self.processing_item_lock.acquire(False)
+        try:
+            yield acquired
+        finally:
+            if acquired:
+                self.processing_item_lock.release()
 
     def can_stop(self):
-        if self.processing_item:
-            return False
         if self.input_queue is not None:
             return self.input_queue.empty()
         return True
 
     def stop(self):
         self.stop_asked = True
+
+    def stop_when_empty(self):
+        while True:
+            self.sleep(0)
+            with self.lock() as acquired:
+                if not acquired:
+                    continue
+                if self.can_stop():
+                    self.stop()
+                    return
 
     def loop_impl(self):
         if self.loop_impl_callable is None:
@@ -46,11 +66,9 @@ class ThreadBase(object):
 
     def pop_input(self):
         try:
-            msg = self.input_queue.get(block=True, timeout=1)
-            self.processing_item = True
+            msg = self.input_queue.get(block=True, timeout=0.1)
             return msg
         except Empty:
-            self.processing_item = False
             return None
 
     def put_to_output(self, msg):
@@ -60,7 +78,6 @@ class ThreadBase(object):
     def task_done(self):
         if self.input_queue is not None:
             self.input_queue.task_done()
-        self.processing_item = False
 
     def init(self):
         pass
@@ -70,7 +87,11 @@ class ThreadBase(object):
 
     def _run(self):
         while not self.stop_asked:
-            self.loop_impl()
+            with self.lock() as acquired:
+                if acquired:
+                    self.loop_impl()
+            if acquired:
+                self.sleep(0.001)
 
     def run(self):
         try:
@@ -99,6 +120,9 @@ class Thread(ThreadBase):
     def join(self):
         self.thread.join()
 
+    def sleep(self, t):
+        time.sleep(t)
+
 
 class Greenlet(ThreadBase):
     def __init__(self, *args, **kwargs):
@@ -125,13 +149,14 @@ class Greenlet(ThreadBase):
     def pop_input(self):
         try:
             msg = self.input_queue.get(block=True, timeout=0.0001)
-            self.processing_item = True
             return msg
         except Empty:
-            self.processing_item = False
             # important: yield the execution to other greenlets
             gevent.sleep(0)
             return None
+
+    def sleep(self, t):
+        gevent.sleep(t)
 
 
 class Pool(object):
@@ -156,6 +181,10 @@ class Pool(object):
                 return False
         return True
 
+    def stop_when_empty(self):
+        for th in self.threads:
+            th.stop_when_empty()
+
     def stop(self):
         for th in self.threads:
             th.stop()
@@ -176,21 +205,6 @@ def clear_queues(queues):
         if all([queue.empty() for queue in queues]):
             break
     LOGGER.info("Purging queues done")
-
-
-def stop_when_pools_empty(pools):
-    while True:
-        can_stop = True
-        for pool in pools:
-            if not pool.can_stop():
-                can_stop = False
-                break
-        if can_stop:
-            break
-        gevent.sleep(0.3)
-
-    for pool in pools:
-        pool.stop()
 
 
 @contextmanager
@@ -216,7 +230,8 @@ def run_pools(pools, queues, pbar, cleanup=None, join_first_pool=True):
             if join_first_pool:
                 pools[0].join()
 
-            stop_when_pools_empty(pools)
+            for pool in pools:
+                pool.stop_when_empty()
 
             break
         except (KeyboardInterrupt, SystemExit):

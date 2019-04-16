@@ -11,6 +11,12 @@ from .cmds.studio_helpers.vulcan2studio import transform_json_from_vulcan_to_stu
 LOGGER = logging.getLogger(__name__)
 DEFAULT_FPS = 25
 
+try:
+    # https://stackoverflow.com/questions/908331/how-to-write-binary-data-to-stdout-in-python-3
+    write_bytes_to_stdout = sys.stdout.buffer.write
+except AttributeError:
+    write_bytes_to_stdout = sys.stdout.write
+
 
 def save_json_to_file(json_data, json_path):
     try:
@@ -180,8 +186,7 @@ class StdOutputData(OutputData):
         if frame.output_image is None:
             print(json.dumps(frame.predictions))
         else:
-            # https://stackoverflow.com/questions/908331/how-to-write-binary-data-to-stdout-in-python-3
-            sys.stdout.buffer.write(frame.output_image[:, :, ::-1].tobytes())
+            write_bytes_to_stdout(frame.output_image[:, :, ::-1].tobytes())
 
 
 class DisplayOutputData(OutputData):
