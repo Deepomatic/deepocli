@@ -58,7 +58,29 @@ def get_input(descriptor, kwargs):
 
 
 def input_loop(kwargs, postprocessing=None):
+    # Adds smartness to fps handling
+    #   1) If both input_fps and output_fps are set, then use them as is.
+    #   2) If only one of the two is used, make both equal
+    #   3) If none is set:
+    #       * If the input is not a video, do nothing and use the default DEFAULT_FPS output value
+    #       * If the input is a video, use the input fps as the output fps
+    if kwargs['input_fps'] and kwargs['output_fps']:
+        pass
+    elif kwargs['input_fps']:
+        kwargs['output_fps'] = kwargs['input_fps']
+        logging.info('Input fps of {} specified, but no output fps specified. Using same value for both.'.format(kwargs['input_fps']))
+    elif kwargs['output_fps']:
+        kwargs['input_fps'] = kwargs['output_fps']
+        logging.info('Output fps of {} specified, but no input fps specified. Using same value for both.'.format(kwargs['output_fps']))
+    
+    # Compute inputs now to access actual input fps if it's a video
     inputs = get_input(kwargs.get('input', 0), kwargs)
+
+    # Deal with last case for fps
+    if not(kwargs['input_fps']) and not(kwargs['output_fps']) and isinstance(inputs, VideoInputData):
+        kwargs['input_fps'] = inputs.get_fps()
+        kwargs['output_fps'] = kwargs['input_fps']
+        logging.info('Input fps of {} automatically detected, but no output fps specified. Using same value for both.'.format(kwargs['input_fps']))
 
     # Initialize progress bar
     logging.basicConfig(level=logging.INFO)
