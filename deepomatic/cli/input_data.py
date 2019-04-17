@@ -101,7 +101,7 @@ def input_loop(kwargs, postprocessing=None):
     queue_cls = LifoQueue if inputs.is_infinite() else Queue
     queues = [queue_cls(maxsize=QUEUE_MAX_SIZE) for i in range(4)]
 
-    # Initialize workflow for mutual use between send_inference_pool and result_inference_pool
+    # Initialize workflow for mutual use between send inference pool and result inference pool
     workflow = get_workflow(kwargs)
     exit_event = threading.Event()
 

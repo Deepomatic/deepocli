@@ -55,9 +55,8 @@ class RpcRecognition(AbstractWorkflow):
         recognition_cmd_kwargs = recognition_cmd_kwargs or {'show_discarded': True, 'max_predictions': 1000}
 
         if RPC_PACKAGES_USABLE:
-            # Using one client for the push thread and one client for the consuming thread
+            # We declare the client that will be used for consuming in one thread only
             # RPC client is not thread safe
-            # TODO: those clients should probably be declared in each thread
             self._consume_client = Client(amqp_url)
             self._recognition = None
             try:
@@ -77,6 +76,8 @@ class RpcRecognition(AbstractWorkflow):
         client.amqp_client.ensured_connection.close()
 
     def new_client(self):
+        # Allow to create multiple clients for threads that will push
+        # Since RPC client is not thread safe
         return Client(self.amqp_url)
 
     def close(self):

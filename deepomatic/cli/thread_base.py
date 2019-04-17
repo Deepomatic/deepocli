@@ -231,7 +231,6 @@ class MainLoop(object):
         for pool in self.pools:
             pool.start()
 
-        # disable receive of KeyboardInterrupt in greenlet
         gevent.signal(gevent.signal.SIGINT, self.stop)
         gevent.signal(gevent.signal.SIGTERM, self.stop)
 

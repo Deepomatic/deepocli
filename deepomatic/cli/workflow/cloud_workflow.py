@@ -45,8 +45,8 @@ class CloudRecognition(AbstractWorkflow):
         if self._model is None:
             self._model = self._client.RecognitionVersion.retrieve(recognition_version_id)
 
-    def infer(self, encoded_image_bytes, push_client):
-        # push_client is useless for cloud
+    def infer(self, encoded_image_bytes, _useless_push_client):
+        # push_client is only used for rpc workflow
         return self.InferResult(self._model.inference(
             inputs=[deepomatic.api.inputs.ImageInput(encoded_image_bytes, encoding="binary")],
             show_discarded=True,

@@ -44,7 +44,6 @@ class DatasetFiles(object):
 
     def fill_queue(self, files, dataset_name, commit_pk):
         total_files = 0
-        print(len(files))
         for file in files:
             # If it's an file, add it to the queue
             if file.split('.')[-1].lower() != 'json':
