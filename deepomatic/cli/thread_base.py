@@ -53,15 +53,15 @@ class ThreadBase(object):
 
     def stop_when_empty(self):
         while True:
-            if not self.alive:
-                return
+            # don't touch until we have non performance regression tests
+            gevent.sleep(SLEEP_TIME)
             with self.lock() as acquired:
                 if acquired:
                     if self.can_stop():
                         self.stop()
                         return
-            # don't touch until we have non performance regression tests
-            gevent.sleep(SLEEP_TIME)
+            if not self.alive:
+                return
 
     def process_msg(self, msg):
         raise NotImplementedError()
@@ -125,6 +125,7 @@ class ThreadBase(object):
         LOGGER.info('Quitting {}'.format(self.name))
         self.alive = False
 
+
 class Thread(ThreadBase):
     def __init__(self, *args, **kwargs):
         super(Thread, self).__init__(*args, **kwargs)
@@ -179,18 +180,6 @@ class Pool(object):
             th.join()
 
 
-def clear_queues(queues):
-    # Makes sure all queues are empty
-    LOGGER.info("Purging queues")
-    while True:
-        for queue in queues:
-            with queue.mutex:
-                queue.queue.clear()
-        if all([queue.empty() for queue in queues]):
-            break
-    LOGGER.info("Purging queues done")
-
-
 class MainLoop(object):
     def __init__(self, pools, queues, pbar, cleanup_func=None):
         self.pools = pools
@@ -198,6 +187,17 @@ class MainLoop(object):
         self.pbar = pbar
         self.cleanup_func = cleanup_func
         self.stop_asked = 0
+
+    def clear_queues(self):
+        # Makes sure all queues are empty
+        LOGGER.info("Purging queues")
+        while True:
+            for queue in self.queues:
+                with queue.mutex:
+                    queue.queue.clear()
+            if all([queue.empty() for queue in self.queues]):
+                break
+        LOGGER.info("Purging queues done")
 
     @contextmanager
     def disable_exit_signals(self):
@@ -223,7 +223,7 @@ class MainLoop(object):
 
                 # clearing queues to make sure a thread
                 # is not blocked in a queue.put() because of maxsize
-                clear_queues(self.queues)
+                self.clear_queues(self.queues)
 
     def run_forever(self, join_first_pool=True):
 
