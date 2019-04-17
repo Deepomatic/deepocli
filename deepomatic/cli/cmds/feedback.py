@@ -9,7 +9,7 @@ from .studio_helpers.http_helper import HTTPHelper
 from .studio_helpers.file import DatasetFiles, UploadImageGreenlet
 from .studio_helpers.task import Task
 from ..common import TqdmToLogger
-from ..thread_base import Queue, Empty, Greenlet, Pool, Thread, run_pools, QUEUE_MAX_SIZE
+from ..thread_base import Queue, Empty, Greenlet, Pool, Thread, MainLoop, QUEUE_MAX_SIZE
 
 
 ###############################################################################
@@ -99,7 +99,8 @@ def main(args):
     ]
 
     # Start uploading
-    run_pools(pools, [queue], pbar, join_first_pool=False)
+    loop = MainLoop(pools, [queue], pbar)
+    loop.run_forever(join_first_pool=False)
 
     # If the process encountered an error, the exit code is 1.
     # If the process is interrupted using SIGINT (ctrl + C) or SIGTERM, the threads are stopped, and

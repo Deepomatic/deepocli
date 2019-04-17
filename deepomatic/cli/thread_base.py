@@ -31,6 +31,7 @@ class ThreadBase(object):
         self.stop_asked = False
         self.name = name or self.__class__.__name__
         self.processing_item_lock = Lock()
+        self.alive = False
 
     @contextmanager
     def lock(self):
@@ -52,6 +53,8 @@ class ThreadBase(object):
 
     def stop_when_empty(self):
         while True:
+            if not self.alive:
+                return
             with self.lock() as acquired:
                 if acquired:
                     if self.can_stop():
@@ -74,7 +77,8 @@ class ThreadBase(object):
                 break
             except Full:
                 # don't touch until we have non performance regression tests
-                gevent.sleep(SLEEP_TIME)
+                pass
+            gevent.sleep(SLEEP_TIME)
 
     def task_done(self):
         if self.input_queue is not None:
@@ -101,11 +105,11 @@ class ThreadBase(object):
                         msg_out = self.process_msg(msg_in)
                         if msg_out is not None:
                             self.put_to_output(msg_out)
-            if empty:
-                # don't touch until we have non performance regression tests
-                gevent.sleep(SLEEP_TIME)
+            # don't touch until we have non performance regression tests
+            gevent.sleep(SLEEP_TIME)
 
     def run(self):
+        self.alive = True
         try:
             self.init()
             self._run()
@@ -119,7 +123,7 @@ class ThreadBase(object):
                 LOGGER.error(traceback.format_exc())
                 self.exit_event.set()
         LOGGER.info('Quitting {}'.format(self.name))
-
+        self.alive = False
 
 class Thread(ThreadBase):
     def __init__(self, *args, **kwargs):
@@ -187,57 +191,69 @@ def clear_queues(queues):
     LOGGER.info("Purging queues done")
 
 
-@contextmanager
-def disable_keyboard_interrupt():
-    s = signal.signal(signal.SIGINT, signal.SIG_IGN)
-    try:
-        yield
-    finally:
-        signal.signal(signal.SIGINT, s)
+class MainLoop(object):
+    def __init__(self, pools, queues, pbar, cleanup_func=None):
+        self.pools = pools
+        self.queues = queues
+        self.pbar = pbar
+        self.cleanup_func = cleanup_func
+        self.stop_asked = 0
 
-
-def run_pools(pools, queues, pbar, cleanup=None, join_first_pool=True):
-    stop_asked = 0
-    # Start threads
-    for pool in pools:
-        pool.start()
-
-    while True:
+    @contextmanager
+    def disable_exit_signals(self):
+        gevent.signal(signal.SIGINT, lambda: signal.SIG_IGN)
+        gevent.signal(signal.SIGTERM, lambda: signal.SIG_IGN)
         try:
-            # The first pool is usually the pool that get data from somewhere and push them to the rest of the pipeline
-            # So we want to make sure everything has been pushed first before considering the pipeline over
-            # But in feedback command this is the main thread that do this so it is done before any pool is started
-            if join_first_pool:
-                pools[0].join()
+            yield
+        finally:
+            gevent.signal(signal.SIGINT, self.stop)
+            gevent.signal(signal.SIGTERM, self.stop)
 
-            for pool in pools:
-                pool.stop_when_empty()
+    def stop(self):
+        with self.disable_exit_signals():
+            self.stop_asked += 1
+            if self.stop_asked < 2:
+                LOGGER.info('Stop asked, waiting for threads to process queued messages.')
+                # stopping inputs
+                self.pools[0].stop()
+            elif self.stop_asked == 2:
+                LOGGER.info("Hard stop")
+                for pool in self.pools:
+                    pool.stop()
 
-            break
-        except (KeyboardInterrupt, SystemExit):
-            with disable_keyboard_interrupt():
-                stop_asked += 1
-                if stop_asked >= 2:
-                    LOGGER.info("Hard stop")
-                    for pool in pools:
-                        pool.stop()
+                # clearing queues to make sure a thread
+                # is not blocked in a queue.put() because of maxsize
+                clear_queues(self.queues)
 
-                    # clearing queues to make sure a thread
-                    # is not blocked in a queue.put() because of maxsize
-                    clear_queues(queues)
-                    break
-                else:
-                    LOGGER.info('Stop asked, waiting for threads to process queued messages.')
-                    # stopping inputs
-                    pools[0].stop()
+    def run_forever(self, join_first_pool=True):
 
-    with disable_keyboard_interrupt():
+        # Start threads
+        for pool in self.pools:
+            pool.start()
+
+        # disable receive of KeyboardInterrupt in greenlet
+        gevent.get_hub().NOT_ERROR += (KeyboardInterrupt,)
+        gevent.get_hub().SYSTEM_ERROR = (SystemError,)
+        gevent.signal(gevent.signal.SIGINT, self.stop)
+        gevent.signal(gevent.signal.SIGTERM, self.stop)
+
+        # The first pool is usually the pool that get data from somewhere and push them to the rest of the pipeline
+        # So we want to make sure everything has been pushed first before considering the pipeline over
+        # But in feedback command this is the main thread that do this so it is done before any pool is started
+        if join_first_pool:
+            self.pools[0].join()
+
+        for pool in self.pools:
+            pool.stop_when_empty()
+
+        gevent.signal(gevent.signal.SIGINT, lambda: signal.SIG_IGN)
+        gevent.signal(gevent.signal.SIGTERM, lambda: signal.SIG_IGN)
         # Makes sure threads finish properly so that
         # we can make sure the workflow is not used and can be closed
-        for pool in pools:
+        for pool in self.pools:
             pool.join()
 
-        pbar.close()
-        if cleanup is not None:
-            cleanup()
-    return stop_asked
+        self.pbar.close()
+        if self.cleanup_func is not None:
+            self.cleanup_func()
+        return self.stop_asked

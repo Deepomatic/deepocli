@@ -7,7 +7,7 @@ import logging
 import threading
 from tqdm import tqdm
 from .task import Task
-from ...thread_base import Queue, Empty, Greenlet, Pool, run_pools
+from ...thread_base import Queue, Empty, Greenlet, Pool
 
 
 LOGGER = logging.getLogger(__name__)

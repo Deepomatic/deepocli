@@ -5,7 +5,7 @@ import json
 import logging
 import threading
 import gevent
-from .thread_base import Pool, Thread, Queue, LifoQueue, run_pools, QUEUE_MAX_SIZE
+from .thread_base import Pool, Thread, Queue, LifoQueue, MainLoop, QUEUE_MAX_SIZE
 from .cmds.infer import SendInferenceGreenlet, ResultInferenceGreenlet, PrepareInferenceThread
 from tqdm import tqdm
 from .common import TqdmToLogger
@@ -111,16 +111,14 @@ def input_loop(kwargs, postprocessing=None):
         Pool(1, PrepareInferenceThread, thread_args=(exit_event, queues[0], queues[1])),
         # Send inference
         Pool(10, SendInferenceGreenlet, thread_args=(exit_event, queues[1], queues[2], workflow)),
-        # # Gather inference predictions from the worker(s)
+        # Gather inference predictions from the worker(s)
         Pool(1, ResultInferenceGreenlet, thread_args=(exit_event, queues[2], queues[3], workflow), thread_kwargs=kwargs),
-        # # # Output predictions
+        # Output predictions
         Pool(1, OutputThread, thread_args=(exit_event, queues[3], None, pbar.update, postprocessing), thread_kwargs=kwargs)
     ]
 
-    # disable receive of KeyboardInterrupt in greenlet
-    gevent.get_hub().NOT_ERROR += (KeyboardInterrupt, SystemExit)
-
-    stop_asked = run_pools(pools, queues, pbar, lambda: workflow.close())
+    loop = MainLoop(pools, queues, pbar, lambda: workflow.close())
+    stop_asked = loop.run_forever()
 
     # If the process encountered an error, the exit code is 1.
     # If the process is interrupted using SIGINT (ctrl + C) or SIGTERM, the queues are emptied and processed by the
