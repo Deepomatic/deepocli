@@ -240,11 +240,17 @@ class VideoInputData(InputData):
             self._cap.release()
         self._cap = cv2.VideoCapture(self._descriptor)
         self._i = 0
+        self._frames_iter = iter(self._adjusted_frames)
         return self
 
     def __next__(self):
         if self._cap.isOpened():
-            while self._i not in self._adjusted_frames:
+            try:
+                next_frame = next(self._frames_iter)
+            except StopIteration:
+                self._cap.release()
+                raise StopIteration
+            while self._i != next_frame:
                 self._i += 1
                 _, frame = self._cap.read()
                 if frame is None:
