@@ -53,7 +53,7 @@ class DrawImagePostprocessing(object):
                 label += ' '
             if self._draw_scores:
                 label += str(round(pred['score'], SCORE_DECIMAL_PRECISION))
-            # Make sure labels are ascii
+            # Make sure labels are ascii because cv2.FONT_HERSHEY_SIMPLEX doesn't support non-ascii
             label = unidecode(label)
             
 
