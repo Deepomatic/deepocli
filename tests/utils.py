@@ -33,7 +33,6 @@ def download(tmpdir, url, filepath):
 @contextmanager
 def create_tmp_dir():
     tmpdir = tempfile.mkdtemp()
-    print(tmpdir)
     try:
         yield tmpdir
     finally:
