@@ -2,10 +2,8 @@ import logging
 import traceback
 import gevent
 import signal
-import time
 from contextlib import contextmanager
 from gevent.threadpool import ThreadPool
-from gevent.lock import Semaphore
 from threading import Lock
 
 try:
