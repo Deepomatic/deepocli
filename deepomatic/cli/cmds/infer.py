@@ -53,9 +53,9 @@ class DrawImagePostprocessing(object):
                 label += ' '
             if self._draw_scores:
                 label += str(round(pred['score'], SCORE_DECIMAL_PRECISION))
-            label = unidecode(label)
             # Make sure labels are ascii
-            label = label.encode('ascii', 'replace').decode('ascii')
+            label = unidecode(label)
+            
 
             # Get text draw parameters
             ret, baseline = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, FONT_SCALE, 1)
