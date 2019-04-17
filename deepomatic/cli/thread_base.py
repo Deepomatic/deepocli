@@ -16,7 +16,7 @@ except ImportError:
 
 LOGGER = logging.getLogger(__name__)
 QUEUE_MAX_SIZE = 50
-SLEEP_TIME = 0.01  # don't touch until we have non performance regression tests
+SLEEP_TIME = 0.005  # don't touch until we have non performance regression tests
 
 
 class ThreadBase(object):
@@ -232,8 +232,6 @@ class MainLoop(object):
             pool.start()
 
         # disable receive of KeyboardInterrupt in greenlet
-        gevent.get_hub().NOT_ERROR += (KeyboardInterrupt,)
-        gevent.get_hub().SYSTEM_ERROR = (SystemError,)
         gevent.signal(gevent.signal.SIGINT, self.stop)
         gevent.signal(gevent.signal.SIGTERM, self.stop)
 
