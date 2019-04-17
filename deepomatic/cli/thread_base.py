@@ -223,7 +223,7 @@ class MainLoop(object):
 
                 # clearing queues to make sure a thread
                 # is not blocked in a queue.put() because of maxsize
-                self.clear_queues(self.queues)
+                self.clear_queues()
 
     def run_forever(self, join_first_pool=True):
 

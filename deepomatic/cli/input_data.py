@@ -110,7 +110,7 @@ def input_loop(kwargs, postprocessing=None):
         # Encode image into jpeg
         Pool(1, PrepareInferenceThread, thread_args=(exit_event, queues[0], queues[1])),
         # Send inference
-        Pool(10, SendInferenceGreenlet, thread_args=(exit_event, queues[1], queues[2], workflow)),
+        Pool(5, SendInferenceGreenlet, thread_args=(exit_event, queues[1], queues[2], workflow)),
         # Gather inference predictions from the worker(s)
         Pool(1, ResultInferenceGreenlet, thread_args=(exit_event, queues[2], queues[3], workflow), thread_kwargs=kwargs),
         # Output predictions
