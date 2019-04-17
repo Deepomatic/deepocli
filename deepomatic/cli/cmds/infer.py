@@ -1,4 +1,5 @@
 import cv2
+from text_unidecode import unidecode
 
 try:
     from Queue import Empty
@@ -52,6 +53,7 @@ class DrawImagePostprocessing(object):
                 label += ' '
             if self._draw_scores:
                 label += str(round(pred['score'], SCORE_DECIMAL_PRECISION))
+            label = unidecode(label)
             # Make sure labels are ascii
             label = label.encode('ascii', 'replace').decode('ascii')
 
