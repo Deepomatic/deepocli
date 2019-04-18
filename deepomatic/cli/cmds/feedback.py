@@ -8,8 +8,8 @@ from tqdm import tqdm
 from .studio_helpers.http_helper import HTTPHelper
 from .studio_helpers.file import DatasetFiles, UploadImageGreenlet
 from .studio_helpers.task import Task
-from ..common import TqdmToLogger
-from ..thread_base import Queue, Empty, Greenlet, Pool, Thread, MainLoop, QUEUE_MAX_SIZE
+from ..common import TqdmToLogger, Queue
+from ..thread_base import Pool, MainLoop
 
 
 ###############################################################################

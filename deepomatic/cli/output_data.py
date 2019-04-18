@@ -5,6 +5,7 @@ import json
 import cv2
 import imutils
 from .thread_base import Thread
+from .common import Empty
 from .cmds.studio_helpers.vulcan2studio import transform_json_from_vulcan_to_studio
 
 
@@ -54,18 +55,20 @@ def get_outputs(descriptors, kwargs):
 
 
 class OutputThread(Thread):
-    def __init__(self, exit_event, input_queue, output_queue, on_progress, postprocessing, **kwargs):
-        super(OutputThread, self).__init__(exit_event, input_queue, output_queue)
+    def __init__(self, exit_event, input_queue, output_queue, current_messages,
+                 on_progress, postprocessing, **kwargs):
+        super(OutputThread, self).__init__(exit_event, input_queue,
+                                           output_queue, current_messages)
         self.args = kwargs
         self.on_progress = on_progress
         self.postprocessing = postprocessing
         self.outputs = get_outputs(self.args.get('outputs', None), self.args)
         self.frames_to_check_first = {}
-        self.frame_to_output = 0
+        self.frame_to_output = None
 
     def close(self):
         self.frames_to_check_first = {}
-        self.frame_to_output = 0
+        self.frame_to_output = None
         for output in self.outputs:
             output.close()
 
@@ -75,6 +78,11 @@ class OutputThread(Thread):
 
     def pop_input(self):
         # looking into frames we popped earlier
+        if self.frame_to_output is None:
+            self.frame_to_output = self.current_messages.pop_oldest()
+            if self.frame_to_output is None:
+                raise Empty()
+
         frame = self.frames_to_check_first.pop(self.frame_to_output, None)
         if frame is None:
             frame = super(OutputThread, self).pop_input()
@@ -92,10 +100,10 @@ class OutputThread(Thread):
 
         for output in self.outputs:
             output.output_frame(frame)
-        self.frame_to_output += 1
         if self.on_progress:
             self.on_progress()
         self.task_done()
+        self.frame_to_output = None
 
 
 class OutputData(object):

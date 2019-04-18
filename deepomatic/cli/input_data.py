@@ -4,34 +4,17 @@ import sys
 import json
 import logging
 import threading
-import gevent
-from .thread_base import Pool, Thread, Queue, LifoQueue, MainLoop, QUEUE_MAX_SIZE
+from .thread_base import Pool, Thread, MainLoop, CurrentMessages, blocking_lock, QUEUE_MAX_SIZE
 from .cmds.infer import SendInferenceGreenlet, ResultInferenceGreenlet, PrepareInferenceThread
 from tqdm import tqdm
-from .common import TqdmToLogger
+from .common import TqdmToLogger, Queue, LifoQueue, clear_queue
+from threading import Lock
 from .workflow import get_workflow
 from .output_data import OutputThread
+from .frame import Frame, CurrentFrames
 
 
 LOGGER = logging.getLogger(__name__)
-
-
-class Frame(object):
-    def __init__(self, name, filename, image, video_frame_index=None):
-        # The Frame object is used as a data exchanged in the different queues
-        self.name = name  # name of the frame
-        self.filename = filename  # the original filename from which the frame was extracted
-        self.image = image  # an opencv loaded image (numpy array)
-        self.video_frame_index = video_frame_index  # index of the frame in the video sequence
-        self.frame_number = None  # frame_number since deepocli started (set by input_loop)
-        self.inference_async_result = None  # an inference request object that will allow us to retrieve the predictions when ready
-        self.predictions = None  # predictions result dict
-        self.output_image = None  # frame to output (modified version of the image, check infer postprocessings draw/blur)
-        self.buf_bytes = None
-
-    def __str__(self):
-        return '<Frame name={} filename={} frame_number={} video_frame_index={}>'.format(
-            self.name, self.filename, self.frame_number, self.video_frame_index)
 
 
 def get_input(descriptor, kwargs):
@@ -72,12 +55,11 @@ class InputThread(Thread):
             self.stop()
             return
 
-        frame.frame_number = self.frame_number
         if self.inputs.is_infinite():
             # Discard all previous inputs
-            with self.output_queue.mutex:
-                self.output_queue.clear()
+            clear_queue(self.output_queue)
 
+        frame.frame_number = self.frame_number
         # TODO: for a stream put should not be blocking
         return frame
 
@@ -104,16 +86,18 @@ def input_loop(kwargs, postprocessing=None):
     workflow = get_workflow(kwargs)
     exit_event = threading.Event()
 
+    current_frames = CurrentFrames()
+
     pools = [
         Pool(1, InputThread, thread_args=(exit_event, None, queues[0], inputs)),
         # Encode image into jpeg
-        Pool(1, PrepareInferenceThread, thread_args=(exit_event, queues[0], queues[1])),
+        Pool(1, PrepareInferenceThread, thread_args=(exit_event, queues[0], queues[1], current_frames)),
         # Send inference
-        Pool(5, SendInferenceGreenlet, thread_args=(exit_event, queues[1], queues[2], workflow)),
+        Pool(5, SendInferenceGreenlet, thread_args=(exit_event, queues[1], queues[2], current_frames, workflow)),
         # Gather inference predictions from the worker(s)
-        Pool(1, ResultInferenceGreenlet, thread_args=(exit_event, queues[2], queues[3], workflow), thread_kwargs=kwargs),
+        Pool(1, ResultInferenceGreenlet, thread_args=(exit_event, queues[2], queues[3], current_frames, workflow), thread_kwargs=kwargs),
         # Output predictions
-        Pool(1, OutputThread, thread_args=(exit_event, queues[3], None, pbar.update, postprocessing), thread_kwargs=kwargs)
+        Pool(1, OutputThread, thread_args=(exit_event, queues[3], None, current_frames, pbar.update, postprocessing), thread_kwargs=kwargs)
     ]
 
     loop = MainLoop(pools, queues, pbar, lambda: workflow.close())

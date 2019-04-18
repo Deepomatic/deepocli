@@ -1,15 +1,12 @@
 import logging
 import traceback
+import heapq
 import gevent
 import signal
 from contextlib import contextmanager
 from gevent.threadpool import ThreadPool
 from threading import Lock
-
-try:
-    from Queue import Empty, Full, Queue, LifoQueue
-except ImportError:
-    from queue import Empty, Full, Queue, LifoQueue
+from .common import clear_queue, Full, Empty
 
 
 LOGGER = logging.getLogger(__name__)
@@ -17,11 +14,70 @@ QUEUE_MAX_SIZE = 50
 SLEEP_TIME = 0.005  # don't touch until we have non performance regression tests
 
 
+@contextmanager
+def try_lock(lock):
+    acquired = lock.acquire(False)
+    try:
+        yield acquired
+    finally:
+        if acquired:
+            lock.release()
+
+
+@contextmanager
+def blocking_lock(lock, sleep_time=SLEEP_TIME):
+    while True:
+        # avoid lock totally the main thread and blocking greenlets
+        # it may take a little more time to lock if it is not lucky
+        # though you can decrease sleep_time to have more luck
+        gevent.sleep(sleep_time)
+        with try_lock(lock) as acquired:
+            if acquired:
+                yield
+                return
+
+
+class CurrentMessages(object):
+    """
+    Track all messages currently being processed in the Pipeline
+    """
+    def __init__(self):
+        self.heap_lock = Lock()
+        self.messages = []
+
+    def lock(self):
+        return blocking_lock(self.heap_lock)
+
+    def add_message(self, msg):
+        with self.lock():
+            heapq.heappush(self.messages, msg)
+
+    def get_min(self):
+        with self.lock():
+            if len(self.messages) > 0:
+                return heapq.nsmallest(1, self.messages)[0]
+        return None
+
+    def pop_min(self):
+        with self.lock():
+            if len(self.messages) > 0:
+                return heapq.heappop(self.messages)
+        return None
+
+    def forget_message(self, msg):
+        try:
+            with self.lock():
+                self.messages.remove(msg)
+                heapq.heapify(self.messages)
+        except ValueError as e:
+            LOGGER.error(e)
+
+
 class ThreadBase(object):
     """
     Thread interface
     """
-    def __init__(self, exit_event, input_queue=None, output_queue=None, name=None):
+    def __init__(self, exit_event, input_queue=None, output_queue=None, current_messages=None, name=None):
         super(ThreadBase, self).__init__()
         self.input_queue = input_queue
         self.output_queue = output_queue
@@ -29,16 +85,11 @@ class ThreadBase(object):
         self.stop_asked = False
         self.name = name or self.__class__.__name__
         self.processing_item_lock = Lock()
+        self.current_messages = current_messages
         self.alive = False
 
-    @contextmanager
-    def lock(self):
-        acquired = self.processing_item_lock.acquire(False)
-        try:
-            yield acquired
-        finally:
-            if acquired:
-                self.processing_item_lock.release()
+    def try_lock(self):
+        return try_lock(self.processing_item_lock)
 
     def can_stop(self):
         if self.input_queue is not None:
@@ -53,7 +104,7 @@ class ThreadBase(object):
         while True:
             # don't touch until we have non performance regression tests
             gevent.sleep(SLEEP_TIME)
-            with self.lock() as acquired:
+            with self.try_lock() as acquired:
                 if acquired:
                     if self.can_stop():
                         self.stop()
@@ -90,7 +141,7 @@ class ThreadBase(object):
     def _run(self):
         while not self.stop_asked:
             empty = False
-            with self.lock() as acquired:
+            with self.try_lock() as acquired:
                 if acquired:
                     msg_in = None
                     if self.input_queue is not None:
@@ -191,8 +242,7 @@ class MainLoop(object):
         LOGGER.info("Purging queues")
         while True:
             for queue in self.queues:
-                with queue.mutex:
-                    queue.queue.clear()
+                clear_queue(queue)
             if all([queue.empty() for queue in self.queues]):
                 break
         LOGGER.info("Purging queues done")

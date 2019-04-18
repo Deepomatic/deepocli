@@ -1,13 +1,9 @@
 # -*- coding: utf-8 -*-
 import os
-import sys
 import json
 import uuid
 import logging
-import threading
-from tqdm import tqdm
-from .task import Task
-from ...thread_base import Queue, Empty, Greenlet, Pool
+from ...thread_base import Greenlet
 
 
 LOGGER = logging.getLogger(__name__)

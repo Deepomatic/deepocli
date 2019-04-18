@@ -141,12 +141,13 @@ class PrepareInferenceThread(thread_base.Thread):
         _, buf = cv2.imencode('.jpg', frame.image)
         buf_bytes = buf.tobytes()
         frame.buf_bytes = buf_bytes
+        self.current_messages.add_frame(frame)
         return frame
 
 
 class SendInferenceGreenlet(thread_base.Greenlet):
-    def __init__(self, exit_event, input_queue, output_queue, workflow):
-        super(SendInferenceGreenlet, self).__init__(exit_event, input_queue, output_queue)
+    def __init__(self, exit_event, input_queue, output_queue, current_messages, workflow):
+        super(SendInferenceGreenlet, self).__init__(exit_event, input_queue, output_queue, current_messages)
         self.workflow = workflow
         self.push_client = workflow.new_client()
 
@@ -159,8 +160,8 @@ class SendInferenceGreenlet(thread_base.Greenlet):
 
 
 class ResultInferenceGreenlet(thread_base.Greenlet):
-    def __init__(self, exit_event, input_queue, output_queue, workflow, **kwargs):
-        super(ResultInferenceGreenlet, self).__init__(exit_event, input_queue, output_queue)
+    def __init__(self, exit_event, input_queue, output_queue, current_messages, workflow, **kwargs):
+        super(ResultInferenceGreenlet, self).__init__(exit_event, input_queue, output_queue, current_messages)
         self.workflow = workflow
         self.threshold = kwargs.get('threshold')
 
@@ -188,7 +189,9 @@ class ResultInferenceGreenlet(thread_base.Greenlet):
             frame.predictions = predictions
             return frame
         except InferenceError as e:
+            self.current_messages.forget_frame(frame)
             LOGGER.error('Error getting predictions for frame {}: {}'.format(frame, str(e)))
         except InferenceTimeout as e:
+            self.current_messages.forget_frame(frame)
             LOGGER.error("Couldn't get predictions for the whole batch in enough time ({} seconds). Ignoring frames {}.".format(e.timeout, self.batch))
         return None
