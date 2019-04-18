@@ -58,16 +58,18 @@ class OutputThread(ThreadBase):
         self.on_progress = on_progress
         self.frames_to_check_first = {}
         self.frame_to_output = 0
-        self.outputs = get_outputs(self.args.get('outputs', None), self.args)
         
         # Update output fps to default value if none was specified.
-        # Logs information only if one of the outputs uses fps.
+        # #Logs information only if one of the outputs uses fps.
         if not kwargs['output_fps']:
             kwargs['output_fps'] = DEFAULT_OUTPUT_FPS
+            self.outputs = get_outputs(self.args.get('outputs', None), self.args)
             for output in outputs:
                 if isinstance(output, VideoOutputData) or isinstance(output, DisplayOutputData):
                     logging.info('No --output_fps value specified for output, using default value of {}.'.format(DEFAULT_OUTPUT_FPS))
                     break
+        else:
+            self.outputs = get_outputs(self.args.get('outputs', None), self.args)
 
 
     def close(self):
