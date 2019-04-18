@@ -100,7 +100,7 @@ def main(args):
 
     # Start uploading
     loop = MainLoop(pools, [queue], pbar)
-    loop.run_forever(join_first_pool=False)
+    loop.run_forever()
 
     # If the process encountered an error, the exit code is 1.
     # If the process is interrupted using SIGINT (ctrl + C) or SIGTERM, the threads are stopped, and

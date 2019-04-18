@@ -23,7 +23,7 @@ class UploadImageGreenlet(Greenlet):
         try:
             with open(file, 'rb') as fd:
                 rq = self._helper.post(url, data={"meta": data}, content_type='multipart/form', files={"file": fd})
-                self._task.retrieve(rq['task_id'])
+            self._task.retrieve(rq['task_id'])
         except RuntimeError as e:
             LOGGER.error("URL {} with file {} failed: {}".format(url, file, e))
 

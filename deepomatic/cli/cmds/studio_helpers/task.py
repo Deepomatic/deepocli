@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import time
+import gevent
 
 
 class Task(object):
@@ -10,6 +10,7 @@ class Task(object):
         ret = self._helper.get('manage/tasks/{}/'.format(task_id))
         if not wait:
             return ret
+        sleep_time = 0.3
         while ret['next'] is not None and ret['status'] != 'SUCCESS':
             if ret['status'] in ('FAILURE', 'REVOKED'):
                 raise RuntimeError("Task {} stopped with status".format(task_id))
@@ -17,6 +18,7 @@ class Task(object):
                 task_id = ret['next']
                 ret = self._helper.get('manage/tasks/{}/'.format(task_id))
             else:
-                time.sleep(5)
+                gevent.sleep(sleep_time)
+                sleep_time = min(sleep_time + 0.5, 5)
                 ret = self._helper.get('manage/tasks/{}/'.format(task_id))
         return ret

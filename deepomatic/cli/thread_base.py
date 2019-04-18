@@ -10,8 +10,8 @@ from .common import clear_queue, Full, Empty
 
 
 LOGGER = logging.getLogger(__name__)
-QUEUE_MAX_SIZE = 30
-SLEEP_TIME = 0.0005  # don't touch until we have non performance regression tests
+QUEUE_MAX_SIZE = 50
+SLEEP_TIME = 0.0001  # don't touch until we have non performance regression tests
 
 
 @contextmanager
@@ -101,14 +101,20 @@ class ThreadBase(object):
         self.stop_asked = True
 
     def stop_when_empty(self):
+        long_sleep = 0.05
+        sleep_time = long_sleep
         while True:
             # don't touch until we have non performance regression tests
-            gevent.sleep(SLEEP_TIME)
+            gevent.sleep(sleep_time)
+            # try to acquire only sometimes
             with self.try_lock() as acquired:
                 if acquired:
+                    sleep_time = long_sleep
                     if self.can_stop():
                         self.stop()
                         return
+                else:
+                    sleep_time = SLEEP_TIME
             if not self.alive:
                 return
 
@@ -273,7 +279,7 @@ class MainLoop(object):
                 # is not blocked in a queue.put() because of maxsize
                 self.clear_queues()
 
-    def run_forever(self, join_first_pool=True):
+    def run_forever(self):
 
         # Start threads
         for pool in self.pools:
@@ -281,12 +287,6 @@ class MainLoop(object):
 
         gevent.signal(gevent.signal.SIGINT, self.stop)
         gevent.signal(gevent.signal.SIGTERM, self.stop)
-
-        # The first pool is usually the pool that get data from somewhere and push them to the rest of the pipeline
-        # So we want to make sure everything has been pushed first before considering the pipeline over
-        # But in feedback command this is the main thread that do this so it is done before any pool is started
-        if join_first_pool:
-            self.pools[0].join()
 
         for pool in self.pools:
             pool.stop_when_empty()
