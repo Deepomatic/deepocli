@@ -273,20 +273,20 @@ class VideoInputData(InputData):
             try:
                 self._video_fps = self._cap.get(cv2.CAP_PROP_FPS)
             except Exception:
-                raise ValueError('Could not read fps for video {}, please specify it with --fps option.'.format(self._descriptor))
+                raise ValueError('Could not read fps for video {}, please specify it with --input_fps option.'.format(self._descriptor))
             if self._video_fps == 0:
-                raise ValueError('Null fps detected for video {}, please specify it with --fps option.'.format(self._descriptor))
+                raise ValueError('Null fps detected for video {}, please specify it with --input_fps option.'.format(self._descriptor))
             
             # Compute fps for frame extraction so that we don't analyze useless frame that will be discarded later
             if not self._kwargs_fps:
                 self._extract_fps = self._video_fps
-                logging.info('No keyword fps specified, using raw video fps of {}'.format(self._video_fps))
+                logging.info('No --input_fps specified, using raw video fps of {}'.format(self._video_fps))
             elif self._kwargs_fps < self._video_fps:
                 self._extract_fps = self._kwargs_fps
-                logging.info('Using keyword fps of {} instead of raw video fps of {}'.format(self._kwargs_fps, self._video_fps))
+                logging.info('Using user-specified --input_fps of {} instead of raw video fps of {}'.format(self._kwargs_fps, self._video_fps))
             else:
                 self._extract_fps = self._video_fps
-                logging.info('Keyword fps of {} specified but using maximum raw video fps of {}'.format(self._kwargs_fps, self._video_fps))
+                logging.info('User-specified --input_fps of {} specified but using maximum raw video fps of {}'.format(self._kwargs_fps, self._video_fps))
 
             # Compute frames corresponding to the new fps
             total_frames = int(self._cap.get(cv2.CAP_PROP_FRAME_COUNT) * self._extract_fps / self._video_fps)
