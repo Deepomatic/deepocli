@@ -204,7 +204,6 @@ class VideoInputData(InputData):
         super(VideoInputData, self).__init__(descriptor, **kwargs)
         self._i = 0
         self._name = '%s_%s_%s' % (self._name, '%05d', self._reco)
-        self._fps_opt = kwargs['fps']
         self._cap = None
         self._open_video()
         self._kwargs_fps = kwargs['input_fps']
