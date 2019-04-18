@@ -10,8 +10,8 @@ from .common import clear_queue, Full, Empty
 
 
 LOGGER = logging.getLogger(__name__)
-QUEUE_MAX_SIZE = 50
-SLEEP_TIME = 0.005  # don't touch until we have non performance regression tests
+QUEUE_MAX_SIZE = 30
+SLEEP_TIME = 0.0005  # don't touch until we have non performance regression tests
 
 
 @contextmanager
