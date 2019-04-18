@@ -1,5 +1,6 @@
 import cv2
 import logging
+from text_unidecode import unidecode
 
 from ..workflow.workflow_abstraction import InferenceError, InferenceTimeout
 from .. import thread_base
@@ -43,15 +44,16 @@ class DrawImagePostprocessing(object):
         tag_drawn = 0  # Used to store the number of tags already drawn
         for pred in frame.predictions['outputs'][0]['labels']['predicted']:
             # Build legend
-            label = ''
+            label = u''
             if self._draw_labels:
                 label = pred['label_name']
             if self._draw_labels and self._draw_scores:
                 label += ' '
             if self._draw_scores:
                 label += str(round(pred['score'], SCORE_DECIMAL_PRECISION))
-            # Make sure labels are ascii
-            label = str(label.encode('ascii', 'replace'))
+            # Make sure labels are ascii because cv2.FONT_HERSHEY_SIMPLEX doesn't support non-ascii
+            label = unidecode(label)
+
 
             # Get text draw parameters
             ret, baseline = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, FONT_SCALE, 1)
