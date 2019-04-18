@@ -105,7 +105,7 @@ def run_cmd(cmds, inp, outputs, *args, **kwargs):
     absolute_outputs = []
     with create_tmp_dir() as tmpdir:
         for output in outputs:
-            if output == STD_OUTPUT:
+            if output in {STD_OUTPUT, WINDOW_OUTPUT}:
                 absolute_outputs.append(output)
             else:
                 absolute_outputs.append(os.path.join(tmpdir, output))

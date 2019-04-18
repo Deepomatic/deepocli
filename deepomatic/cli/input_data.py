@@ -13,7 +13,6 @@ from .workflow import get_workflow
 from .output_data import OutputThread
 
 
-# note that it could probably be dynamically calculated
 LOGGER = logging.getLogger(__name__)
 
 

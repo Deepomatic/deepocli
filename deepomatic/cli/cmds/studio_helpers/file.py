@@ -11,7 +11,6 @@ from ...thread_base import Queue, Empty, Greenlet, Pool
 
 
 LOGGER = logging.getLogger(__name__)
-GREENLET_NUMBER = 10
 
 
 class UploadImageGreenlet(Greenlet):

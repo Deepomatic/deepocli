@@ -81,7 +81,7 @@ def main(args):
     files = get_all_files(paths=paths, find_json=json_file, recursive=recursive)
 
     # TODO: add a maxsize to avoid taking too much memories
-    # This implied reading twice to get the total_files
+    # This implies reading twice to get the total_files
     queue = Queue()
 
     dataset_files = DatasetFiles(clt.http_helper, queue)

@@ -23,10 +23,6 @@ def save_json_to_file(json_data, json_path):
         with open('%s.json' % json_path, 'w') as f:
             LOGGER.info('Writing %s.json ..' % json_path)
             json.dump(json_data, f)
-            # force writing directly on the disk
-            # or it might be a bit delayed and makes sometimes the files
-            f.flush()
-            os.fsync(f.fileno())
             LOGGER.info('Writing %s.json done' % json_path)
     except Exception:
         LOGGER.error("Could not save file {} in json format.".format(json_path))
