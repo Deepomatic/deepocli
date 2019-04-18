@@ -86,7 +86,8 @@ def test_e2e_image_draw_image_threshold():
 
 
 def test_e2e_video_draw_video_fps():
-    run_draw(VIDEO_INPUT, [VIDEO_OUTPUT], expect_nb_video=1, extra_opts=['--fps', '2'])
+    run_draw(VIDEO_INPUT, [VIDEO_OUTPUT], expect_nb_video=1, extra_opts=['--output_fps', '2'])
+    run_draw(VIDEO_INPUT, [VIDEO_OUTPUT], expect_nb_video=1, extra_opts=['--input_fps', '2'])
 
 
 def test_e2e_image_draw_image_window():

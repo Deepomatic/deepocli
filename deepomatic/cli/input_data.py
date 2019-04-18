@@ -69,7 +69,29 @@ class InputThread(Thread):
 
 
 def input_loop(kwargs, postprocessing=None):
+    # Adds smartness to fps handling
+    #   1) If both input_fps and output_fps are set, then use them as is.
+    #   2) If only one of the two is used, make both equal
+    #   3) If none is set:
+    #       * If the input is not a video, do nothing and use the default DEFAULT_FPS output value
+    #       * If the input is a video, use the input fps as the output fps
+    if kwargs['input_fps'] and kwargs['output_fps']:
+        pass
+    elif kwargs['input_fps']:
+        kwargs['output_fps'] = kwargs['input_fps']
+        logging.info('Input fps of {} specified, but no output fps specified. Using same value for both.'.format(kwargs['input_fps']))
+    elif kwargs['output_fps']:
+        kwargs['input_fps'] = kwargs['output_fps']
+        logging.info('Output fps of {} specified, but no input fps specified. Using same value for both.'.format(kwargs['output_fps']))
+
+    # Compute inputs now to access actual input fps if it's a video
     inputs = iter(get_input(kwargs.get('input', 0), kwargs))
+
+    # Deal with last case for fps
+    if not(kwargs['input_fps']) and not(kwargs['output_fps']) and isinstance(inputs, VideoInputData):
+        kwargs['input_fps'] = inputs.get_fps()
+        kwargs['output_fps'] = kwargs['input_fps']
+        logging.info('Input fps of {} automatically detected, but no output fps specified. Using same value for both.'.format(kwargs['input_fps']))
 
     # Initialize progress bar
     max_value = int(inputs.get_frame_count()) if inputs.get_frame_count() >= 0 else None
@@ -183,49 +205,78 @@ class VideoInputData(InputData):
         self._i = 0
         self._name = '%s_%s_%s' % (self._name, '%05d', self._reco)
         self._fps_opt = kwargs['fps']
-        self._open_video(raise_exc=False)
+        self._cap = None
+        self._open_video()
+        self._kwargs_fps = kwargs['input_fps']
+        self._fps = self.get_fps()
 
     def _open_video(self, raise_exc=True):
+        if self._cap is not None:
+            self._cap.release()
         self._cap = cv2.VideoCapture(self._descriptor)
+
         if not self._cap.isOpened():
             self._cap = None
             if raise_exc:
                 raise Exception("Could not open video {}".format(self._descriptor))
             return False
-
-        raw_fps = self._cap.get(cv2.CAP_PROP_FPS)
-        desired_fps = min(self._fps_opt, raw_fps) if self._fps_opt else raw_fps
-        # TODO: find a better name for fps, as it is actually a ratio indicating which frames number to process in the video (other are ignored)
-        LOGGER.info('Detected raw video fps of {}, using fps of {}'.format(raw_fps, desired_fps))
-        # Compute the total number of frames and ensure we always have at least one frame
-        total_frames = max(1, int(self._cap.get(cv2.CAP_PROP_FRAME_COUNT) * desired_fps / raw_fps))
-        self._fps = desired_fps
-        self._adjusted_frames = [round(frame * raw_fps / desired_fps) for frame in range(0, total_frames)]
-        self._total_frames = len(self._adjusted_frames)
-        self._i = 0
         return True
 
     def __iter__(self):
-        if self._cap is not None:
-            self._cap.release()
         self._open_video()
+        self._i = 0
+        self._frames_iter = iter(self._adjusted_frames)
         return self
 
     def __next__(self):
         if self._cap.isOpened():
-            while self._i not in self._adjusted_frames:
+            try:
+                next_frame = next(self._frames_iter)
+            except StopIteration:
+                self._cap.release()
+                raise StopIteration()
+            while self._i != next_frame:
                 self._i += 1
                 _, frame = self._cap.read()
                 if frame is None:
                     self._cap.release()
-                    raise StopIteration
+                    raise StopIteration()
             self._i += 1
             _, frame = self._cap.read()
             return Frame(self._name % self._i, self._filename, frame, self._i)
         self._cap.release()
-        raise StopIteration
+        raise StopIteration()
 
     def get_fps(self):
+        # There are three different type of fps:
+        #   _video_fps: original video fps
+        #   _kwarg_fps: fps specified by the user through the CLI if any
+        #   _extract_fps: fps used for frame extraction
+        assert(self._cap is not None)
+        # Retrieve the original video fps if available
+        try:
+            self._video_fps = self._cap.get(cv2.CAP_PROP_FPS)
+        except Exception:
+            raise ValueError('Could not read fps for video {}, please specify it with --input_fps option.'.format(self._descriptor))
+        if self._video_fps == 0:
+            raise ValueError('Null fps detected for video {}, please specify it with --input_fps option.'.format(self._descriptor))
+
+        # Compute fps for frame extraction so that we don't analyze useless frame that will be discarded later
+        if not self._kwargs_fps:
+            self._extract_fps = self._video_fps
+            logging.info('No --input_fps specified, using raw video fps of {}'.format(self._video_fps))
+        elif self._kwargs_fps < self._video_fps:
+            self._extract_fps = self._kwargs_fps
+            logging.info('Using user-specified --input_fps of {} instead of raw video fps of {}'.format(self._kwargs_fps, self._video_fps))
+        else:
+            self._extract_fps = self._video_fps
+            logging.info('User-specified --input_fps of {} specified but using maximum raw video fps of {}'.format(self._kwargs_fps, self._video_fps))
+
+        # Compute frames corresponding to the new fps
+        total_frames = int(self._cap.get(cv2.CAP_PROP_FRAME_COUNT) * self._extract_fps / self._video_fps)
+        self._fps = self._extract_fps
+        self._adjusted_frames = [round(frame * self._video_fps / self._fps) for frame in range(0, total_frames)]
+        self._total_frames = len(self._adjusted_frames)
         return self._fps
 
     def get_frame_count(self):
@@ -300,6 +351,9 @@ class StreamInputData(VideoInputData):
     def is_infinite(self):
         return True
 
+    def get_fps(self):
+        return -1
+
 
 class DeviceInputData(VideoInputData):
 
@@ -316,6 +370,9 @@ class DeviceInputData(VideoInputData):
 
     def is_infinite(self):
         return True
+
+    def get_fps(self):
+        return -1
 
 
 class JsonInputData(InputData):

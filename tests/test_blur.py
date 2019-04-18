@@ -87,7 +87,8 @@ def test_e2e_image_blur_image_threshold():
 
 
 def test_e2e_video_blur_video_fps():
-    run_blur(VIDEO_INPUT, [VIDEO_OUTPUT], expect_nb_video=1, extra_opts=['--fps', '2'])
+    run_blur(VIDEO_INPUT, [VIDEO_OUTPUT], expect_nb_video=1, extra_opts=['--output_fps', '2'])
+    run_blur(VIDEO_INPUT, [VIDEO_OUTPUT], expect_nb_video=1, extra_opts=['--input_fps', '2'])
 
 
 def test_e2e_image_blur_image_window():

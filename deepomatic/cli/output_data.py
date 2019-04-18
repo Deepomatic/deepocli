@@ -10,7 +10,8 @@ from .cmds.studio_helpers.vulcan2studio import transform_json_from_vulcan_to_stu
 
 
 LOGGER = logging.getLogger(__name__)
-DEFAULT_FPS = 25
+DEFAULT_OUTPUT_FPS = 25
+
 
 try:
     # https://stackoverflow.com/questions/908331/how-to-write-binary-data-to-stdout-in-python-3
@@ -62,9 +63,19 @@ class OutputThread(Thread):
         self.args = kwargs
         self.on_progress = on_progress
         self.postprocessing = postprocessing
-        self.outputs = get_outputs(self.args.get('outputs', None), self.args)
         self.frames_to_check_first = {}
         self.frame_to_output = None
+        # Update output fps to default value if none was specified.
+        # Logs information only if one of the outputs uses fps.
+        if not kwargs['output_fps']:
+            kwargs['output_fps'] = DEFAULT_OUTPUT_FPS
+            self.outputs = get_outputs(self.args.get('outputs', None), self.args)
+            for output in self.outputs:
+                if isinstance(output, VideoOutputData) or isinstance(output, DisplayOutputData):
+                    logging.info('No --output_fps value specified for output, using default value of {}.'.format(DEFAULT_OUTPUT_FPS))
+                    break
+        else:
+            self.outputs = get_outputs(self.args.get('outputs', None), self.args)
 
     def close(self):
         self.frames_to_check_first = {}
@@ -162,7 +173,7 @@ class VideoOutputData(OutputData):
         elif ext == '.mp4':
             fourcc = cv2.VideoWriter_fourcc('m', 'p', '4', 'v')
         self._fourcc = fourcc
-        self._fps = kwargs['fps'] if kwargs['fps'] else DEFAULT_FPS
+        self._fps = kwargs['output_fps']
         self._writer = None
 
     def close(self):
@@ -196,7 +207,7 @@ class StdOutputData(OutputData):
 class DisplayOutputData(OutputData):
     def __init__(self, **kwargs):
         super(DisplayOutputData, self).__init__(None, **kwargs)
-        self._fps = kwargs.get('fps', DEFAULT_FPS)
+        self._fps = kwargs['output_fps']
         self._window_name = 'Deepomatic'
         self._fullscreen = kwargs.get('fullscreen', False)
 
