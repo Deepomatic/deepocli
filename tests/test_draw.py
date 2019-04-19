@@ -1,112 +1,111 @@
-import os
-from download_files import init_files_setup
-from deepomatic.cli.cli_parser import run
+import pytest
+from utils import (init_files_setup, run_cmd, IMAGE_OUTPUT, VIDEO_OUTPUT,
+                   STD_OUTPUT, JSON_OUTPUT, OUTPUTS, WINDOW_OUTPUT)
 
 
 # ------- Files setup ------------------------------------------------------------------------------------------------ #
 
 # Input to test: Image, Video, Directory, Json
-image_input, video_input, directory_input, json_input, dir_output = init_files_setup()
-# Output to test: Image, Video, Stdout, Json, Directory
-std_output = 'stdout'
-image_output = os.path.join(dir_output, 'image_output%4d.jpg')
-video_output = os.path.join(dir_output, 'video_output%4d.mp4')
-json_output = os.path.join(dir_output, 'test_output%4d.json')
-directory_output = dir_output
+IMAGE_INPUT, VIDEO_INPUT, DIRECTORY_INPUT, JSON_INPUT = init_files_setup()
+
+
+def run_draw(*args, **kwargs):
+    run_cmd(['draw'], *args, **kwargs)
 
 
 # ------- Image Input Tests ------------------------------------------------------------------------------------------ #
 
-def test_e2e_image_draw_image(test_input=image_input, test_output=image_output):
-    run(['draw', '-i', test_input, '-o', test_output, '-r', 'fashion-v4'])
-
-def test_e2e_image_draw_video(test_input=image_input, test_output=video_output):
-    run(['draw', '-i', test_input, '-o', test_output, '-r', 'fashion-v4'])
-
-def test_e2e_image_draw_stdout(test_input=image_input, test_output=std_output):
-    run(['draw', '-i', test_input, '-o', test_output, '-r', 'fashion-v4'])
-
-def test_e2e_image_draw_json(test_input=image_input, test_output=json_output):
-    run(['draw', '-i', test_input, '-o', test_output, '-r', 'fashion-v4'])
-
-def test_e2e_image_draw_directory(test_input=image_input, test_output=directory_output):
-    run(['draw', '-i', test_input, '-o', test_output, '-r', 'fashion-v4'])
+@pytest.mark.parametrize(
+    'outputs,expected',
+    [
+        ([IMAGE_OUTPUT], {'expect_nb_image': 1}),
+        ([VIDEO_OUTPUT], {'expect_nb_video': 1}),
+        ([STD_OUTPUT], {}),
+        ([JSON_OUTPUT], {'expect_nb_json': 1}),
+        (OUTPUTS, {'expect_nb_json': 1, 'expect_nb_image': 1, 'expect_nb_video': 1}),
+    ]
+)
+def test_e2e_image_draw(outputs, expected):
+    run_draw(IMAGE_INPUT, outputs, **expected)
 
 
 # ------- Video Input Tests ------------------------------------------------------------------------------------------ #
 
-def test_e2e_video_draw_image(test_input=video_input, test_output=image_output):
-    run(['draw', '-i', test_input, '-o', test_output, '-r', 'fashion-v4'])
 
-def test_e2e_video_draw_video(test_input=video_input, test_output=video_output):
-    run(['draw', '-i', test_input, '-o', test_output, '-r', 'fashion-v4'])
-
-def test_e2e_video_draw_stdout(test_input=video_input, test_output=std_output):
-    run(['draw', '-i', test_input, '-o', test_output, '-r', 'fashion-v4'])
-
-def test_e2e_video_draw_json(test_input=video_input, test_output=json_output):
-    run(['draw', '-i', test_input, '-o', test_output, '-r', 'fashion-v4'])
-
-def test_e2e_video_draw_directory(test_input=video_input, test_output=directory_output):
-    run(['draw', '-i', test_input, '-o', test_output, '-r', 'fashion-v4'])
+@pytest.mark.parametrize(
+    'outputs,expected',
+    [
+        ([IMAGE_OUTPUT], {'expect_nb_image': 21}),
+        ([VIDEO_OUTPUT], {'expect_nb_video': 1}),
+        ([STD_OUTPUT], {}),
+        ([JSON_OUTPUT], {'expect_nb_json': 21}),
+        (OUTPUTS, {'expect_nb_json': 21, 'expect_nb_image': 21, 'expect_nb_video': 1}),
+    ]
+)
+def test_e2e_video_draw(outputs, expected):
+    run_draw(VIDEO_INPUT, outputs, **expected)
 
 
 # ------- Directory Input Tests -------------------------------------------------------------------------------------- #
 
-def test_e2e_directory_draw_image(test_input=directory_input, test_output=image_output):
-    run(['draw', '-i', test_input, '-o', test_output, '-r', 'fashion-v4'])
-
-def test_e2e_directory_draw_video(test_input=directory_input, test_output=video_output):
-    run(['draw', '-i', test_input, '-o', test_output, '-r', 'fashion-v4'])
-
-def test_e2e_directory_draw_stdout(test_input=directory_input, test_output=std_output):
-    run(['draw', '-i', test_input, '-o', test_output, '-r', 'fashion-v4'])
-
-def test_e2e_directory_draw_json(test_input=directory_input, test_output=json_output):
-    run(['draw', '-i', test_input, '-o', test_output, '-r', 'fashion-v4'])
-
-def test_e2e_directory_draw_directory(test_input=directory_input, test_output=directory_output):
-    run(['draw', '-i', test_input, '-o', test_output, '-r', 'fashion-v4'])
+@pytest.mark.parametrize(
+    'outputs,expected',
+    [
+        ([IMAGE_OUTPUT], {'expect_nb_image': 2}),
+        ([VIDEO_OUTPUT], {'expect_nb_video': 1}),
+        ([STD_OUTPUT], {}),
+        ([JSON_OUTPUT], {'expect_nb_json': 2}),
+        (OUTPUTS, {'expect_nb_json': 2, 'expect_nb_image': 2, 'expect_nb_video': 1}),
+    ]
+)
+def test_e2e_directory_draw(outputs, expected):
+    run_draw(DIRECTORY_INPUT, outputs, **expected)
 
 
 # ------- Json Input Tests ------------------------------------------------------------------------------------------- #
 
-def test_e2e_json_draw_image(test_input=json_input, test_output=image_output):
-    run(['draw', '-i', test_input, '-o', test_output, '-r', 'fashion-v4'])
 
-def test_e2e_json_draw_video(test_input=json_input, test_output=video_output):
-    run(['draw', '-i', test_input, '-o', test_output, '-r', 'fashion-v4'])
-
-def test_e2e_json_draw_stdout(test_input=json_input, test_output=std_output):
-    run(['draw', '-i', test_input, '-o', test_output, '-r', 'fashion-v4'])
-
-def test_e2e_json_draw_json(test_input=json_input, test_output=json_output):
-    run(['draw', '-i', test_input, '-o', test_output, '-r', 'fashion-v4'])
-
-def test_e2e_json_draw_directory(test_input=json_input, test_output=directory_output):
-    run(['draw', '-i', test_input, '-o', test_output, '-r', 'fashion-v4'])
+@pytest.mark.parametrize(
+    'outputs,expected',
+    [
+        ([IMAGE_OUTPUT], {'expect_nb_image': 1}),
+        ([VIDEO_OUTPUT], {'expect_nb_video': 1}),
+        ([STD_OUTPUT], {}),
+        ([JSON_OUTPUT], {'expect_nb_json': 1}),
+        (OUTPUTS, {'expect_nb_json': 1, 'expect_nb_image': 1, 'expect_nb_video': 1}),
+    ]
+)
+def test_e2e_json_draw(outputs, expected):
+    run_draw(JSON_INPUT, outputs, **expected)
 
 
 # ------- Special Options Tests -------------------------------------------------------------------------------------- #
 
-def test_e2e_image_draw_image_threshold(test_input=image_input, test_output=image_output):
-    run(['draw', '-i', test_input, '-o', test_output, '-r', 'fashion-v4', '-t', '0.5'])
+def test_e2e_image_draw_image_threshold():
+    run_draw(IMAGE_INPUT, [IMAGE_OUTPUT], expect_nb_image=1, extra_opts=['-t', '0.5'])
 
-def test_e2e_video_draw_video_fps(test_input=video_input, test_output=video_output):
-    run(['draw', '-i', test_input, '-o', test_output, '-r', 'fashion-v4', '--output_fps', '2'])
 
-def test_e2e_image_draw_image_window(test_input=image_input, test_output='window'):
+def test_e2e_video_draw_video_fps():
+    run_draw(VIDEO_INPUT, [VIDEO_OUTPUT], expect_nb_video=1, extra_opts=['--output_fps', '2'])
+    run_draw(VIDEO_INPUT, [VIDEO_OUTPUT], expect_nb_video=1, extra_opts=['--input_fps', '2'])
+
+
+def test_e2e_image_draw_image_window():
     return  # window not handled by test
-    run(['draw', '-i', test_input, '-o', test_output, '-r', 'fashion-v4', '--fullscreen'])
+    run_draw(IMAGE_INPUT, [WINDOW_OUTPUT], expect_nb_image=1, extra_opts=['--fullscreen'])
 
-def test_e2e_image_draw_image_json(test_input=image_input, test_output=image_output):
-    run(['draw', '-i', test_input, '-o', test_output, '-r', 'fashion-v4', '--json'])
 
-def test_e2e_image_draw_image_scores(test_input=image_input, test_output=image_output):
-    run(['draw', '-i', test_input, '-o', test_output, '-r', 'fashion-v4', '--draw_scores'])
+def test_e2e_image_draw_image_scores():
+    run_draw(IMAGE_INPUT, [IMAGE_OUTPUT], expect_nb_image=1, extra_opts=['--draw_scores'])
 
-def test_e2e_image_draw_image_labels(test_input=image_input, test_output=image_output):
-    run(['draw', '-i', test_input, '-o', test_output, '-r', 'fashion-v4', '--draw_labels'])
 
-def test_e2e_image_draw_image_scores_and_labels(test_input=image_input, test_output=image_output):
-    run(['draw', '-i', test_input, '-o', test_output, '-r', 'fashion-v4', '--draw_scores', '--draw_labels'])
+def test_e2e_image_draw_image_labels():
+    run_draw(IMAGE_INPUT, [IMAGE_OUTPUT], expect_nb_image=1, extra_opts=['--draw_labels'])
+
+
+def test_e2e_image_draw_image_scores_and_labels():
+    run_draw(IMAGE_INPUT, [IMAGE_OUTPUT], expect_nb_image=1, extra_opts=['--draw_scores', '--draw_labels'])
+
+
+def test_e2e_image_draw_json_studio():
+    run_draw(IMAGE_INPUT, [JSON_OUTPUT], expect_nb_json=1, studio_format=True, extra_opts=['--studio_format'])

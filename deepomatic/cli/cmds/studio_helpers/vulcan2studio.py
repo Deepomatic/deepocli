@@ -1,8 +1,3 @@
-import json
-
-def pretty_print(inline_json):
-    """Prints a json in easily-readable format."""
-    print(json.dumps(inline_json, indent=4, sort_keys=True))
 
 def transform_json_from_vulcan_to_studio(vulcan_json, name, filename):
     """Transforms a json from the vulcan format to the Studio format."""
@@ -12,8 +7,7 @@ def transform_json_from_vulcan_to_studio(vulcan_json, name, filename):
 
     # Loop through all images
     img_studio = {'annotated_regions': []}
-    all_predictions = vulcan_json['outputs'][0]['labels']['predicted'] + \
-                      vulcan_json['outputs'][0]['labels']['discarded']
+    all_predictions = vulcan_json['outputs'][0]['labels']['predicted']
     for prediction in all_predictions:
         # Build studio annotation
         annotation = {
