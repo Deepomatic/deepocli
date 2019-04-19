@@ -278,7 +278,7 @@ class VideoInputData(InputData):
             else:
                 self._frames_to_skip = self._skip_frame
 
-            return self._decode_next()
+            return self._read_next()
 
     def get_fps(self):
         # There are three different type of fps:
