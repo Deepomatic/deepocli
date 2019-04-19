@@ -238,7 +238,7 @@ class VideoInputData(InputData):
         grabbed = self._cap.grab()
         if not grabbed:
             self._stop_video()
-    
+
     def _decode_next(self):
         decoded, frame = self._cap.retrieve()
         if not decoded:
@@ -254,14 +254,11 @@ class VideoInputData(InputData):
             return Frame(self._name % self._i, self._filename, frame, self._i)
         else:
             self._stop_video()
-    
+
     def __next__(self):
         # make sure we don't enter infinite loop
         assert self._frames_to_skip >= 0
         assert self._extract_fps >= 0
-
-        logging.info(self._frames_to_skip)
-        logging.info(self._extract_fps)
 
         while True:
             # first, check if the frame should be skipped because of extract fps
@@ -271,7 +268,7 @@ class VideoInputData(InputData):
                     self._should_skip_fps += self._extract_fps
                     continue
                 else:
-                    self._should_skip_fps -= self._video_fps
+                    self._should_skip_fps += self._extract_fps - self._video_fps
 
             # then, check if the frame should be skipped because of skipped frame
             if self._frames_to_skip:
@@ -281,7 +278,7 @@ class VideoInputData(InputData):
             else:
                 self._frames_to_skip = self._skip_frame
 
-            return self._read_next()
+            return self._decode_next()
 
     def get_fps(self):
         # There are three different type of fps:
