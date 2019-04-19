@@ -207,6 +207,7 @@ class VideoInputData(InputData):
         self._cap = None
         self._open_video()
         self._kwargs_fps = kwargs['input_fps']
+        self._skip_frame = kwargs['skip_frame']
         self._fps = self.get_fps()
 
     def _open_video(self, raise_exc=True):
@@ -224,27 +225,63 @@ class VideoInputData(InputData):
     def __iter__(self):
         self._open_video()
         self._i = 0
-        self._frames_iter = iter(self._adjusted_frames)
+        self._frames_to_skip = 0
+        self._should_skip_fps = self._video_fps
         return self
 
-    def __next__(self):
-        if self._cap.isOpened():
-            try:
-                next_frame = next(self._frames_iter)
-            except StopIteration:
-                self._cap.release()
-                raise StopIteration()
-            while self._i != next_frame:
-                self._i += 1
-                _, frame = self._cap.read()
-                if frame is None:
-                    self._cap.release()
-                    raise StopIteration()
-            self._i += 1
-            _, frame = self._cap.read()
-            return Frame(self._name % self._i, self._filename, frame, self._i)
+    def _stop_video(self, raise_exc=True):
         self._cap.release()
-        raise StopIteration()
+        if raise_exc:
+            raise StopIteration()
+
+    def _grab_next(self):
+        grabbed = self._cap.grab()
+        if not grabbed:
+            self._stop_video()
+    
+    def _decode_next(self):
+        decoded, frame = self._cap.retrieve()
+        if not decoded:
+            self._stop_video()
+        else:
+            self._i += 1
+            return Frame(self._name % self._i, self._filename, frame, self._i)
+
+    def _read_next(self):
+        read, frame = self._cap.read()
+        if read:
+            self._i += 1
+            return Frame(self._name % self._i, self._filename, frame, self._i)
+        else:
+            self._stop_video()
+    
+    def __next__(self):
+        # make sure we don't enter infinite loop
+        assert self._frames_to_skip >= 0
+        assert self._extract_fps >= 0
+
+        logging.info(self._frames_to_skip)
+        logging.info(self._extract_fps)
+
+        while True:
+            # first, check if the frame should be skipped because of extract fps
+            if self._extract_fps > 0:
+                if self._should_skip_fps < self._video_fps:
+                    self._grab_next()
+                    self._should_skip_fps += self._extract_fps
+                    continue
+                else:
+                    self._should_skip_fps -= self._video_fps
+
+            # then, check if the frame should be skipped because of skipped frame
+            if self._frames_to_skip:
+                self._grab_next()
+                self._frames_to_skip -= 1
+                continue
+            else:
+                self._frames_to_skip = self._skip_frame
+
+            return self._read_next()
 
     def get_fps(self):
         # There are three different type of fps:
@@ -271,15 +308,18 @@ class VideoInputData(InputData):
             self._extract_fps = self._video_fps
             logging.info('User-specified --input_fps of {} specified but using maximum raw video fps of {}'.format(self._kwargs_fps, self._video_fps))
 
-        # Compute frames corresponding to the new fps
-        total_frames = int(self._cap.get(cv2.CAP_PROP_FRAME_COUNT) * self._extract_fps / self._video_fps)
-        self._fps = self._extract_fps
-        self._adjusted_frames = [round(frame * self._video_fps / self._fps) for frame in range(0, total_frames)]
-        self._total_frames = len(self._adjusted_frames)
-        return self._fps
+        return self._extract_fps
 
     def get_frame_count(self):
-        return self._total_frames
+        assert self._video_fps > 0
+
+        fps_ratio = self._extract_fps / self._video_fps
+        skip_ratio = 1. / (1 + self._skip_frame)
+        try:
+            return int(self._cap.get(cv2.CAP_PROP_FRAME_COUNT) * fps_ratio * skip_ratio)
+        except:
+            logging.warning('Cannot compute the total frame count')
+            return 0
 
     def is_infinite(self):
         return False
@@ -350,9 +390,6 @@ class StreamInputData(VideoInputData):
     def is_infinite(self):
         return True
 
-    def get_fps(self):
-        return -1
-
 
 class DeviceInputData(VideoInputData):
 
@@ -369,9 +406,6 @@ class DeviceInputData(VideoInputData):
 
     def is_infinite(self):
         return True
-
-    def get_fps(self):
-        return -1
 
 
 class JsonInputData(InputData):
