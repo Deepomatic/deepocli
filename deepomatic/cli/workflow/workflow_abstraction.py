@@ -13,7 +13,7 @@ class InferenceTimeout(Exception):
         error = 'timeout reached'
         if timeout is not None:
             error += ' after {}'.format(timeout)
-        super(InferenceError, self).__init__(error)
+        super(InferenceTimeout, self).__init__(error)
 
 
 class AbstractWorkflow(object):
