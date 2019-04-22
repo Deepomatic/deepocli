@@ -164,7 +164,7 @@ class InputData(object):
 
 
 class ImageInputData(InputData):
-    supported_formats = ['.bmp', '.jpeg', '.jpg', '.jpe', '.png']
+    supported_formats = ['.bmp', '.jpeg', '.jpg', '.jpe', '.png', '.tif', '.tiff']
 
     @classmethod
     def is_valid(cls, descriptor):
