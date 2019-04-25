@@ -296,6 +296,7 @@ class JsonOutputData(OutputData):
             json_path = os.path.splitext(self._descriptor % self._i)[0]
             save_json_to_file(predictions, json_path)
 
+
 class DirectoryOutputData(OutputData):
     @classmethod
     def is_valid(cls, descriptor):
@@ -305,10 +306,9 @@ class DirectoryOutputData(OutputData):
         super(DirectoryOutputData, self).__init__(descriptor, **kwargs)
 
     def output_frame(self, frame):
-        path = os.path.join(self._descriptor, frame.filename)
+        path = os.path.join(self._descriptor, "{}.jpg".format(frame.name))
         if frame.output_image is not None:
             LOGGER.info('Writing %s' % path)
             cv2.imwrite(path, frame.output_image)
         else:
             LOGGER.warning('No frame to output.')
-            
