@@ -48,7 +48,6 @@ def get_output(descriptor, kwargs):
         elif descriptor == 'window':
             return DisplayOutputData(**kwargs)
         else:
-            print('LEOLEOLEO')
             raise NameError("Unknown output '{}'".format(descriptor))
     else:
         return DisplayOutputData(**kwargs)
@@ -300,18 +299,16 @@ class JsonOutputData(OutputData):
 class DirectoryOutputData(OutputData):
     @classmethod
     def is_valid(cls, descriptor):
-        print('a')
         return (os.path.exists(descriptor) and os.path.isdir(descriptor))
 
     def __init__(self, descriptor, **kwargs):
         super(DirectoryOutputData, self).__init__(descriptor, **kwargs)
 
     def output_frame(self, frame):
-        print(frame)
-        return
-        # path = os.path.join(self._descriptor. frame.)
+        path = os.path.join(self._descriptor, frame.filename)
         if frame.output_image is not None:
             LOGGER.info('Writing %s' % path)
             cv2.imwrite(path, frame.output_image)
         else:
             LOGGER.warning('No frame to output.')
+            
