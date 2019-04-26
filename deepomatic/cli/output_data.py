@@ -5,7 +5,7 @@ import json
 import cv2
 import imutils
 from .thread_base import Thread
-from .common import Empty
+from .common import Empty, write_frame_to_disk
 from .cmds.studio_helpers.vulcan2studio import transform_json_from_vulcan_to_studio
 
 
@@ -152,11 +152,7 @@ class ImageOutputData(OutputData):
         except TypeError:
             pass
         finally:
-            if frame.output_image is not None:
-                LOGGER.info('Writing %s' % path)
-                cv2.imwrite(path, frame.output_image)
-            else:
-                LOGGER.warning('No frame to output.')
+            write_frame_to_disk(frame, path)
 
 
 class VideoOutputData(OutputData):
@@ -304,11 +300,36 @@ class DirectoryOutputData(OutputData):
 
     def __init__(self, descriptor, **kwargs):
         super(DirectoryOutputData, self).__init__(descriptor, **kwargs)
+        self._input = self._args['input']
 
     def output_frame(self, frame):
-        path = os.path.join(self._descriptor, "{}.jpg".format(frame.name))
-        if frame.output_image is not None:
-            LOGGER.info('Writing %s' % path)
-            cv2.imwrite(path, frame.output_image)
+        # If the input is a directory, then preserve directory structure, see below
+        # - Command: deepo -i dir1/ -R -o dir2/subdir2/ -r 123...
+        # - Input directory structure:
+        #     dir1
+        #     ├── subdir1
+        #     │   ├── img1.jpg
+        #     │   └── img2.jpg
+        #     └── video.mp4
+        # - Output directory structure:
+        #     dir2
+        #     └── subdir2
+        #         ├── subdir1
+        #         │   ├── img1_123.jpg
+        #         │   └── img2_123.jpg
+        #         ├── video_00001_123.jpg
+        #         ├── ...
+        #         └── video_xxxxx_123.jpg
+        # Otherwise implement a flat directory structure
+        if os.path.isdir(self._input):
+            rel_path = os.path.relpath(frame.filename, self._input)
+            rel_dir = os.path.dirname(rel_path)
+            root_dir = os.path.join(self._descriptor, rel_dir)
         else:
-            LOGGER.warning('No frame to output.')
+            root_dir = self._descriptor
+        if not os.path.isdir(root_dir):
+            os.makedirs(root_dir)
+
+        # Finally write the image to file with its name
+        path = os.path.join(root_dir, "{}.jpg".format(frame.name))
+        write_frame_to_disk(frame, path)

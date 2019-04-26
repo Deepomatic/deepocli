@@ -1,9 +1,13 @@
 import io
+import cv2
 import logging
 try:
     from Queue import Empty, Full, Queue, LifoQueue
 except ImportError:
     from queue import Empty, Full, Queue, LifoQueue
+
+
+LOGGER = logging.getLogger(__name__)
 
 
 class DeepoCLIException(Exception):
@@ -34,3 +38,11 @@ def clear_queue(queue):
             queue.queue = []
         else:
             queue.queue.clear()
+
+def write_frame_to_disk(frame, path):
+    if frame.output_image is not None:
+        LOGGER.info('Writing %s' % path)
+        cv2.imwrite(path, frame.output_image)
+    else:
+        LOGGER.warning('No frame to output.')
+    return
