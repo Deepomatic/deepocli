@@ -1,6 +1,6 @@
 import pytest
 from utils import (init_files_setup, run_cmd, IMAGE_OUTPUT, VIDEO_OUTPUT,
-                   STD_OUTPUT, JSON_OUTPUT, OUTPUTS, WINDOW_OUTPUT)
+                   STD_OUTPUT, JSON_OUTPUT, DIR_OUTPUT, OUTPUTS, WINDOW_OUTPUT)
 
 
 # ------- Files setup ------------------------------------------------------------------------------------------------ #
@@ -22,7 +22,8 @@ def run_blur(*args, **kwargs):
         ([VIDEO_OUTPUT], {'expect_nb_video': 1}),
         ([STD_OUTPUT], {}),
         ([JSON_OUTPUT], {'expect_nb_json': 1}),
-        (OUTPUTS, {'expect_nb_json': 1, 'expect_nb_image': 1, 'expect_nb_video': 1}),
+        ([DIR_OUTPUT], {'expect_subir': {DIR_OUTPUT: {'expect_nb_image': 1}}}),
+        (OUTPUTS, {'expect_nb_json': 1, 'expect_nb_image': 1, 'expect_nb_video': 1, 'expect_subir': {DIR_OUTPUT: {'expect_nb_image': 1}}})
     ]
 )
 def test_e2e_image_blur(outputs, expected):
@@ -39,7 +40,8 @@ def test_e2e_image_blur(outputs, expected):
         ([VIDEO_OUTPUT], {'expect_nb_video': 1}),
         ([STD_OUTPUT], {}),
         ([JSON_OUTPUT], {'expect_nb_json': 21}),
-        (OUTPUTS, {'expect_nb_json': 21, 'expect_nb_image': 21, 'expect_nb_video': 1}),
+        ([DIR_OUTPUT], {'expect_subir': {DIR_OUTPUT: {'expect_nb_image': 21}}}),
+        (OUTPUTS, {'expect_nb_json': 21, 'expect_nb_image': 21, 'expect_nb_video': 1, 'expect_subir': {DIR_OUTPUT: {'expect_nb_image': 21}}})
     ]
 )
 def test_e2e_video_blur(outputs, expected):
@@ -55,7 +57,8 @@ def test_e2e_video_blur(outputs, expected):
         ([VIDEO_OUTPUT], {'expect_nb_video': 1}),
         ([STD_OUTPUT], {}),
         ([JSON_OUTPUT], {'expect_nb_json': 2}),
-        (OUTPUTS, {'expect_nb_json': 2, 'expect_nb_image': 2, 'expect_nb_video': 1}),
+        ([DIR_OUTPUT], {'expect_subir': {DIR_OUTPUT: {'expect_nb_image': 2, 'expect_nb_subdir' :1}}}),
+        (OUTPUTS, {'expect_nb_json': 2, 'expect_nb_image': 2, 'expect_nb_video': 1, 'expect_subir': {DIR_OUTPUT: {'expect_nb_image': 2, 'expect_nb_subdir' :1}}})
     ]
 )
 def test_e2e_directory_blur(outputs, expected):
@@ -72,7 +75,8 @@ def test_e2e_directory_blur(outputs, expected):
         ([VIDEO_OUTPUT], {'expect_nb_video': 1}),
         ([STD_OUTPUT], {}),
         ([JSON_OUTPUT], {'expect_nb_json': 1}),
-        (OUTPUTS, {'expect_nb_json': 1, 'expect_nb_image': 1, 'expect_nb_video': 1}),
+        ([DIR_OUTPUT], {'expect_subir': {DIR_OUTPUT: {'expect_nb_image': 1}}}),
+        (OUTPUTS, {'expect_nb_json': 1, 'expect_nb_image': 1, 'expect_nb_video': 1, 'expect_subir': {DIR_OUTPUT: {'expect_nb_image': 1}}})
     ]
 )
 def test_e2e_json_blur(outputs, expected):

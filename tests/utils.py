@@ -14,6 +14,8 @@ WINDOW_OUTPUT = 'window'
 IMAGE_OUTPUT = 'image_output%04d.jpg'
 VIDEO_OUTPUT = 'video_output.mp4'
 JSON_OUTPUT = 'test_output%04d.json'
+DIR_OUTPUT = 'output_dir'
+# OUTPUTS = [STD_OUTPUT, IMAGE_OUTPUT, VIDEO_OUTPUT, JSON_OUTPUT, DIR_OUTPUT]
 OUTPUTS = [STD_OUTPUT, IMAGE_OUTPUT, VIDEO_OUTPUT, JSON_OUTPUT]
 
 
@@ -43,27 +45,48 @@ def check_directory(directory,
                     expect_nb_json=0,
                     expect_nb_image=0,
                     expect_nb_video=0,
-                    studio_format=False):
+                    expect_nb_subdir=0,
+                    studio_format=False,
+                    expect_subir=None):
+    # Start by checking main directory
     nb_json = 0
     nb_image = 0
     nb_video = 0
-    for filename in os.listdir(directory):
-        if filename.endswith('.json'):
+    nb_subdir = 0
+    for path in os.listdir(directory):
+        if path.endswith('.json'):
             nb_json += 1
-            with open(os.path.join(directory, filename)) as f:
+            with open(os.path.join(directory, path)) as f:
                 data = json.loads(f.read())
                 if studio_format:
                     assert 'tags' in data
                     assert 'images' in data
                 else:
                     assert 'outputs' in data
-        elif filename.endswith(('.jpg', '.jpeg')):
+        elif path.endswith(('.jpg', '.jpeg')):
             nb_image += 1
-        elif filename.endswith('.mp4'):
+        elif path.endswith('.mp4'):
             nb_video += 1
+        elif os.path.isdir(path):
+            nb_dir += 1
     assert expect_nb_json == nb_json
     assert expect_nb_image == nb_image
     assert expect_nb_video == nb_video
+    assert expect_nb_subdir == nb_subdir
+
+    # Then check subdirectories
+    if expect_subir:
+        for path in os.listdir(directory):
+            if os.path.isdir(path):
+                if os.path.basename(os.path.normpath(path)) in expect_subir:
+                    check_directory(
+                        path,
+                        expect_nb_json=expect_subir[path].get('json', 0),
+                        expect_nb_image=expect_subir[path].get('image', 0),
+                        expect_nb_video=expect_subir[path].get('video', 0),
+                        expect_nb_subdir=expect_subir[path].get('subdir', 0)
+                    )
+
 
 
 def init_files_setup():
@@ -107,6 +130,11 @@ def run_cmd(cmds, inp, outputs, *args, **kwargs):
         for output in outputs:
             if output in {STD_OUTPUT, WINDOW_OUTPUT}:
                 absolute_outputs.append(output)
+            elif output == DIR_OUTPUT:
+                check_subdir = True
+                output_dir = os.path.join(tmpdir, DIR_OUTPUT)
+                os.makedirs(output_dir)
+                absolute_outputs.append(output_dir)
             else:
                 absolute_outputs.append(os.path.join(tmpdir, output))
         run(cmds + ['-i', inp, '-o'] + absolute_outputs + ['-r', 'fashion-v4'] + extra_opts)
