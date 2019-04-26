@@ -1,4 +1,5 @@
 import io
+import os
 import cv2
 import logging
 try:
@@ -8,6 +9,11 @@ except ImportError:
 
 
 LOGGER = logging.getLogger(__name__)
+SUPPORTED_IMAGE_INPUT_FORMAT = ['.bmp', '.jpeg', '.jpg', '.jpe', '.png', '.tif', '.tiff']
+SUPPORTED_VIDEO_INPUT_FORMAT = ['.avi', '.mp4', '.webm', '.mjpg']
+SUPPORTED_PROTOCOLS_INPUT = ['rtsp', 'http', 'https']
+SUPPORTED_IMAGE_OUTPUT_FORMAT = SUPPORTED_IMAGE_INPUT_FORMAT
+SUPPORTED_VIDEO_OUTPUT_FORMAT = ['.avi', '.mp4']
 
 
 class DeepoCLIException(Exception):
@@ -39,10 +45,14 @@ def clear_queue(queue):
         else:
             queue.queue.clear()
 
+
 def write_frame_to_disk(frame, path):
     if frame.output_image is not None:
-        LOGGER.info('Writing %s' % path)
-        cv2.imwrite(path, frame.output_image)
+        if os.path.isfile(path):
+            LOGGER.warning('File {} already exists, skipping.'.format(path))
+        else:
+            LOGGER.info('Writing file {} to disk'.format(path))
+            cv2.imwrite(path, frame.output_image)
     else:
         LOGGER.warning('No frame to output.')
     return

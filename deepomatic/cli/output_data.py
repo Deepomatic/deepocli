@@ -5,7 +5,7 @@ import json
 import cv2
 import imutils
 from .thread_base import Thread
-from .common import Empty, write_frame_to_disk
+from .common import Empty, write_frame_to_disk, SUPPORTED_IMAGE_OUTPUT_FORMAT, SUPPORTED_VIDEO_OUTPUT_FORMAT
 from .cmds.studio_helpers.vulcan2studio import transform_json_from_vulcan_to_studio
 
 
@@ -133,12 +133,10 @@ class OutputData(object):
 
 
 class ImageOutputData(OutputData):
-    supported_formats = ['.bmp', '.jpeg', '.jpg', '.jpe', '.png']
-
     @classmethod
     def is_valid(cls, descriptor):
         _, ext = os.path.splitext(descriptor)
-        return ext in cls.supported_formats
+        return ext in SUPPORTED_IMAGE_OUTPUT_FORMAT
 
     def __init__(self, descriptor, **kwargs):
         super(ImageOutputData, self).__init__(descriptor, **kwargs)
@@ -156,12 +154,10 @@ class ImageOutputData(OutputData):
 
 
 class VideoOutputData(OutputData):
-    supported_formats = ['.avi', '.mp4']
-
     @classmethod
     def is_valid(cls, descriptor):
         _, ext = os.path.splitext(descriptor)
-        return ext in cls.supported_formats
+        return ext in SUPPORTED_VIDEO_OUTPUT_FORMAT
 
     def __init__(self, descriptor, **kwargs):
         super(VideoOutputData, self).__init__(descriptor, **kwargs)
@@ -242,12 +238,10 @@ class DisplayOutputData(OutputData):
 
 
 class JsonOutputData(OutputData):
-    supported_formats = ['.json']
-
     @classmethod
     def is_valid(cls, descriptor):
         _, ext = os.path.splitext(descriptor)
-        return ext in cls.supported_formats
+        return ext == '.json'
 
     def __init__(self, descriptor, **kwargs):
         super(JsonOutputData, self).__init__(descriptor, **kwargs)
@@ -330,6 +324,14 @@ class DirectoryOutputData(OutputData):
         if not os.path.isdir(root_dir):
             os.makedirs(root_dir)
 
+        # If the input is an image, then use the same extension if supported
+        _, ext = os.path.splitext(frame.filename)
+        if ext in SUPPORTED_IMAGE_OUTPUT_FORMAT:
+            pass
+        # Otherwise defaults to jpg
+        else:
+            ext = '.jpg'
+
         # Finally write the image to file with its name
-        path = os.path.join(root_dir, "{}.jpg".format(frame.name))
+        path = os.path.join(root_dir, "{}{}".format(frame.name, ext))
         write_frame_to_disk(frame, path)

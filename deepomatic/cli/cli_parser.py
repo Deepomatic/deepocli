@@ -1,9 +1,11 @@
 import sys
 import argparse
 from .cmds.feedback import main as feedback
-from .input_data import ImageInputData, VideoInputData, StreamInputData, input_loop
+from .input_data import input_loop
 from .cmds.infer import BlurImagePostprocessing, DrawImagePostprocessing
 from .version import __version__, __title__
+from .common import SUPPORTED_IMAGE_OUTPUT_FORMAT, SUPPORTED_VIDEO_OUTPUT_FORMAT, SUPPORTED_IMAGE_INPUT_FORMAT, SUPPORTED_VIDEO_INPUT_FORMAT, SUPPORTED_PROTOCOLS_INPUT
+
 
 
 class ParserWithHelpOnError(argparse.ArgumentParser):
@@ -44,8 +46,8 @@ def argparser_init():
         parser.add_argument('-R', '--recursive', dest='recursive', action='store_true', help='If a directory input is used, goes through all files in subdirectories.')
 
     for parser in [infer_parser, draw_parser, blur_parser]:
-        parser.add_argument('-i', '--input', required=True, help="Path on which inference should be run. It can be an image (supported formats: *{}), a video (supported formats: *{}) or a directory. If the given path is a directory, it will recursively run inference on all the supported files in this directory.".format(', *'.join(ImageInputData.supported_formats), ', *'.join(VideoInputData.supported_formats)))
-        parser.add_argument('-o', '--outputs', required=True, nargs='+', help="Path in which output should be written. It can be an image (supported formats: *{}), a video (supported formats: *{}) or a directory.".format(', *'.join(ImageInputData.supported_formats), ', *'.join(VideoInputData.supported_formats)))
+        parser.add_argument('-i', '--input', required=True, help="Path on which inference should be run. It can be an image (supported formats: *{}), a video (supported formats: *{}), a directory or a stream: *{}. If the given path is a directory, it will recursively run inference on all the supported files in this directory if the -R option is used.".format(', *'.join(SUPPORTED_IMAGE_INPUT_FORMAT), ', *'.join(SUPPORTED_VIDEO_INPUT_FORMAT), ', *'.join(SUPPORTED_PROTOCOLS_INPUT)))
+        parser.add_argument('-o', '--outputs', required=True, nargs='+', help="Path in which output should be written. It can be an image (supported formats: *{}), a video (supported formats: *{}) or a directory.".format(', *'.join(SUPPORTED_IMAGE_OUTPUT_FORMAT), ', *'.join(SUPPORTED_VIDEO_OUTPUT_FORMAT)))
         parser.add_argument('-r', '--recognition_id', required=True, help="Neural network recognition version ID.")
         parser.add_argument('-u', '--amqp_url', help="AMQP url for on-premises deployments.")
         parser.add_argument('-k', '--routing_key', help="Recognition routing key for on-premises deployments.")

@@ -7,7 +7,7 @@ import threading
 from .thread_base import Pool, Thread, MainLoop, CurrentMessages, blocking_lock, QUEUE_MAX_SIZE
 from .cmds.infer import SendInferenceGreenlet, ResultInferenceGreenlet, PrepareInferenceThread
 from tqdm import tqdm
-from .common import TqdmToLogger, Queue, LifoQueue, clear_queue
+from .common import TqdmToLogger, Queue, LifoQueue, clear_queue, SUPPORTED_IMAGE_INPUT_FORMAT, SUPPORTED_VIDEO_INPUT_FORMAT, SUPPORTED_PROTOCOLS_INPUT
 from threading import Lock
 from .workflow import get_workflow
 from .output_data import OutputThread
@@ -164,12 +164,10 @@ class InputData(object):
 
 
 class ImageInputData(InputData):
-    supported_formats = ['.bmp', '.jpeg', '.jpg', '.jpe', '.png', '.tif', '.tiff']
-
     @classmethod
     def is_valid(cls, descriptor):
         _, ext = os.path.splitext(descriptor)
-        return os.path.exists(descriptor) and ext in cls.supported_formats
+        return os.path.exists(descriptor) and ext in SUPPORTED_IMAGE_INPUT_FORMAT
 
     def __init__(self, descriptor, **kwargs):
         super(ImageInputData, self).__init__(descriptor, **kwargs)
@@ -193,12 +191,10 @@ class ImageInputData(InputData):
 
 
 class VideoInputData(InputData):
-    supported_formats = ['.avi', '.mp4', '.webm', '.mjpg']
-
     @classmethod
     def is_valid(cls, descriptor):
         _, ext = os.path.splitext(descriptor)
-        return os.path.exists(descriptor) and ext in cls.supported_formats
+        return os.path.exists(descriptor) and ext in SUPPORTED_VIDEO_INPUT_FORMAT
 
     def __init__(self, descriptor, **kwargs):
         super(VideoInputData, self).__init__(descriptor, **kwargs)
@@ -371,11 +367,9 @@ class DirectoryInputData(InputData):
 
 
 class StreamInputData(VideoInputData):
-    supported_protocols = ['rtsp', 'http', 'https']
-
     @classmethod
     def is_valid(cls, descriptor):
-        return '://' in descriptor and descriptor.split('://')[0] in cls.supported_protocols
+        return '://' in descriptor and descriptor.split('://')[0] in SUPPORTED_PROTOCOLS_INPUT
 
     def __init__(self, descriptor, **kwargs):
         super(StreamInputData, self).__init__(descriptor, **kwargs)
