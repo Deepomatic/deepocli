@@ -10,6 +10,7 @@ from .studio_helpers.file import DatasetFiles, UploadImageGreenlet
 from .studio_helpers.task import Task
 from ..common import TqdmToLogger, Queue
 from ..thread_base import Pool, MainLoop
+from ..version import __title__, __version__
 
 
 ###############################################################################
@@ -68,7 +69,7 @@ def get_all_files(paths, find_json=False, recursive=True):
 def main(args):
     # TODO: detect vulcain json format and convert
     # Initialize deepomatic client
-    clt = Client(user_agent_suffix='deepomatic-cli')
+    clt = Client()
 
     # Retrieve arguments
     dataset_name = args.get('dataset')

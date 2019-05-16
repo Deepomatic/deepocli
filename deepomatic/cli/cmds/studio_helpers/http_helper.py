@@ -6,6 +6,7 @@ import platform
 import json
 from six import string_types
 from requests.structures import CaseInsensitiveDict
+from ...version import __title__, __version__
 
 
 class HTTPHelper(object):
@@ -23,12 +24,14 @@ class HTTPHelper(object):
         python_version = "{0}.{1}.{2}".format(sys.version_info.major, sys.version_info.minor, sys.version_info.micro)
 
         user_agent_params = {
+            'package_title': __title__,
+            'package_version': __version__,
             'requests_version': requests.__version__,
             'python_version': python_version,
             'platform': platform.platform()
         }
 
-        self.user_agent = 'deepomatic-client-python/(vesta) requests/{requests_version} python/{python_version} platform/{platform}\
+        self.user_agent = '{package_title}/{package_version} requests/{requests_version} python/{python_version} platform/{platform}\
             '.format(**user_agent_params)
         if user_agent_suffix:
             self.user_agent = '{} {}'.format(self.user_agent, user_agent_suffix)
