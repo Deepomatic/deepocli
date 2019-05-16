@@ -10,7 +10,6 @@ from .studio_helpers.file import DatasetFiles, UploadImageGreenlet
 from .studio_helpers.task import Task
 from ..common import TqdmToLogger, Queue
 from ..thread_base import Pool, MainLoop
-from ..version import __title__, __version__
 
 
 ###############################################################################
