@@ -70,7 +70,7 @@ class CurrentMessages(object):
                 self.messages.remove(msg)
                 heapq.heapify(self.messages)
         except ValueError as e:
-            LOGGER.error(e)
+            LOGGER.debug(str(e))
 
 
 class ThreadBase(object):
@@ -168,16 +168,18 @@ class ThreadBase(object):
         try:
             self.init()
             self._run()
-        except Exception:
-            LOGGER.error(traceback.format_exc())
+        except Exception as e:
+            LOGGER.error("Encountered an unexpected exception during main routine: {}".format(str(e)))
+            LOGGER.debug(traceback.format_exc())
             self.exit_event.set()
         finally:
             try:
                 self.close()
-            except Exception:
-                LOGGER.error(traceback.format_exc())
+            except Exception as e:
+                LOGGER.error("Encountered an unexpected exception during routine closing: {}".format(str(e)))
+                LOGGER.debug(traceback.format_exc())
                 self.exit_event.set()
-        LOGGER.info('Quitting {}'.format(self.name))
+        LOGGER.debug('Quitting {}'.format(self.name))
         self.alive = False
 
 
@@ -245,13 +247,13 @@ class MainLoop(object):
 
     def clear_queues(self):
         # Makes sure all queues are empty
-        LOGGER.info("Purging queues")
+        LOGGER.debug("Purging queues")
         while True:
             for queue in self.queues:
                 clear_queue(queue)
             if all([queue.empty() for queue in self.queues]):
                 break
-        LOGGER.info("Purging queues done")
+        LOGGER.debug("Purging queues done")
 
     @contextmanager
     def disable_exit_signals(self):

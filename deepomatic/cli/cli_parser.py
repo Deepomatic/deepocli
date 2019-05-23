@@ -1,4 +1,5 @@
 import sys
+import logging
 import argparse
 from .cmds.feedback import main as feedback
 from .input_data import input_loop
@@ -44,6 +45,7 @@ def argparser_init():
 
     for parser in [infer_parser, draw_parser, blur_parser, add_images_parser]:
         parser.add_argument('-R', '--recursive', dest='recursive', action='store_true', help='If a directory input is used, goes through all files in subdirectories.')
+        parser.add_argument('--verbose', dest='verbose', action='store_true', help='Increase output verbosity.')
 
     for parser in [infer_parser, draw_parser, blur_parser]:
         parser.add_argument('-i', '--input', required=True, help="Path on which inference should be run. It can be an image (supported formats: *{}), a video (supported formats: *{}), a directory or a stream: *{}. If the given path is a directory, it will recursively run inference on all the supported files in this directory if the -R option is used.".format(', *'.join(SUPPORTED_IMAGE_INPUT_FORMAT), ', *'.join(SUPPORTED_VIDEO_INPUT_FORMAT), ', *'.join(SUPPORTED_PROTOCOLS_INPUT)))
@@ -78,4 +80,11 @@ def run(args):
     # Initialize the argparser
     argparser = argparser_init()
     args = argparser.parse_args(args)
+
+    # Update the log level accordingly
+    if args.verbose:
+        logging.getLogger().setLevel(logging.DEBUG)
+        for handler in logging.getLogger().handlers:
+            handler.setFormatter(logging.Formatter('[%(levelname)s %(name)s %(asctime)s %(process)d %(thread)d %(filename)s:%(lineno)s] %(message)s'))
+
     return args.func(vars(args))

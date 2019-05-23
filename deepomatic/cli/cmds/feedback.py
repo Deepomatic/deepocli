@@ -90,7 +90,7 @@ def main(args):
 
     exit_event = threading.Event()
 
-    # # Initialize progress bar
+    # Initialize progress bar
     tqdmout = TqdmToLogger(LOGGER, level=logging.INFO)
     pbar = tqdm(total=total_files, file=tqdmout, desc='Uploading images', smoothing=0)
 

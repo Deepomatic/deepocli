@@ -79,10 +79,10 @@ def input_loop(kwargs, postprocessing=None):
         pass
     elif kwargs['input_fps']:
         kwargs['output_fps'] = kwargs['input_fps']
-        logging.info('Input fps of {} specified, but no output fps specified. Using same value for both.'.format(kwargs['input_fps']))
+        LOGGER.info('Input fps of {} specified, but no output fps specified. Using same value for both.'.format(kwargs['input_fps']))
     elif kwargs['output_fps']:
         kwargs['input_fps'] = kwargs['output_fps']
-        logging.info('Output fps of {} specified, but no input fps specified. Using same value for both.'.format(kwargs['output_fps']))
+        LOGGER.info('Output fps of {} specified, but no input fps specified. Using same value for both.'.format(kwargs['output_fps']))
 
     # Compute inputs now to access actual input fps if it's a video
     inputs = iter(get_input(kwargs.get('input', 0), kwargs))
@@ -91,11 +91,11 @@ def input_loop(kwargs, postprocessing=None):
     if not(kwargs['input_fps']) and not(kwargs['output_fps']) and isinstance(inputs, VideoInputData):
         kwargs['input_fps'] = inputs.get_fps()
         kwargs['output_fps'] = kwargs['input_fps']
-        logging.info('Input fps of {} automatically detected, but no output fps specified. Using same value for both.'.format(kwargs['input_fps']))
+        LOGGER.info('Input fps of {} automatically detected, but no output fps specified. Using same value for both.'.format(kwargs['input_fps']))
 
     # Initialize progress bar
     max_value = int(inputs.get_frame_count()) if inputs.get_frame_count() >= 0 else None
-    tqdmout = TqdmToLogger(LOGGER, level=logging.INFO)
+    tqdmout = TqdmToLogger(LOGGER, level=LOGGER.getEffectiveLevel())
     pbar = tqdm(total=max_value, file=tqdmout, desc='Input processing', smoothing=0)
 
     # For realtime, queue should be LIFO
@@ -293,13 +293,13 @@ class VideoInputData(InputData):
         # Compute fps for frame extraction so that we don't analyze useless frame that will be discarded later
         if not self._kwargs_fps:
             self._extract_fps = self._video_fps
-            logging.info('No --input_fps specified, using raw video fps of {}'.format(self._video_fps))
+            LOGGER.info('No --input_fps specified, using raw video fps of {}'.format(self._video_fps))
         elif self._kwargs_fps < self._video_fps:
             self._extract_fps = self._kwargs_fps
-            logging.info('Using user-specified --input_fps of {} instead of raw video fps of {}'.format(self._kwargs_fps, self._video_fps))
+            LOGGER.info('Using user-specified --input_fps of {} instead of raw video fps of {}'.format(self._kwargs_fps, self._video_fps))
         else:
             self._extract_fps = self._video_fps
-            logging.info('User-specified --input_fps of {} specified but using maximum raw video fps of {}'.format(self._kwargs_fps, self._video_fps))
+            LOGGER.info('User-specified --input_fps of {} specified but using maximum raw video fps of {}'.format(self._kwargs_fps, self._video_fps))
 
         return self._extract_fps
 
@@ -311,7 +311,7 @@ class VideoInputData(InputData):
         try:
             return int(self._cap.get(cv2.CAP_PROP_FRAME_COUNT) * fps_ratio * skip_ratio)
         except:
-            logging.warning('Cannot compute the total frame count')
+            LOGGER.warning('Cannot compute the total frame count')
             return 0
 
     def is_infinite(self):

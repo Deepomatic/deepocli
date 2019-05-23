@@ -5,5 +5,5 @@ import logging
 import os
 
 
-logging.basicConfig(level=os.getenv('LOG_LEVEL', 'INFO'),
-                    format='[%(levelname)s %(name)s %(asctime)s %(process)d %(thread)d %(filename)s:%(lineno)s] %(message)s')
+logging.basicConfig(level=os.getenv('DEEPOMATIC_LOG_LEVEL', 'INFO'),
+                    format='[%(levelname)s] %(message)s')
