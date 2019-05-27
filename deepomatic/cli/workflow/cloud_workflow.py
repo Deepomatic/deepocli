@@ -36,7 +36,7 @@ class CloudRecognition(AbstractWorkflow):
         if app_id is None or api_key is None:
             error = 'Please define the environment variables DEEPOMATIC_APP_ID and DEEPOMATIC_API_KEY to use cloud-based recognition models.'
             raise common.DeepoCLIException(error)
-        self._client = deepomatic.api.client.Client(app_id, api_key, user_agent_suffix='{}/{}'.format(__title__, __version__))
+        self._client = deepomatic.api.client.Client(app_id, api_key, user_agent_prefix='{}/{}'.format(__title__, __version__))
         self._model = None
         try:
             recognition_version_id = int(recognition_version_id)
