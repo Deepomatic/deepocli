@@ -28,7 +28,7 @@ def save_json_to_file(json_data, json_path):
             LOGGER.debug('Writing %s.json done' % json_path)
     except Exception as e:
         LOGGER.error("Could not save file {} in json format.".format(json_path))
-        LOGGER.debug(str(e))
+        LOGGER.error(str(e))
         raise
 
     return

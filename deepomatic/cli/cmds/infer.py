@@ -191,7 +191,7 @@ class ResultInferenceGreenlet(thread_base.Greenlet):
         except InferenceError as e:
             self.current_messages.forget_frame(frame)
             LOGGER.error('Error getting predictions for frame {}'.format(frame))
-            LOGGER.debug(str(e))
+            LOGGER.error(str(e))
         except InferenceTimeout as e:
             self.current_messages.forget_frame(frame)
             LOGGER.error("Couldn't get predictions for the whole batch in enough time ({} seconds). Ignoring frames {}.".format(e.timeout, self.batch))

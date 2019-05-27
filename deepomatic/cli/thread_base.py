@@ -70,7 +70,7 @@ class CurrentMessages(object):
                 self.messages.remove(msg)
                 heapq.heapify(self.messages)
         except ValueError as e:
-            LOGGER.debug(str(e))
+            LOGGER.error(str(e))
 
 
 class ThreadBase(object):
@@ -170,14 +170,14 @@ class ThreadBase(object):
             self._run()
         except Exception as e:
             LOGGER.error("Encountered an unexpected exception during main routine: {}".format(str(e)))
-            LOGGER.debug(traceback.format_exc())
+            LOGGER.error(traceback.format_exc())
             self.exit_event.set()
         finally:
             try:
                 self.close()
             except Exception as e:
                 LOGGER.error("Encountered an unexpected exception during routine closing: {}".format(str(e)))
-                LOGGER.debug(traceback.format_exc())
+                LOGGER.error(traceback.format_exc())
                 self.exit_event.set()
         LOGGER.debug('Quitting {}'.format(self.name))
         self.alive = False

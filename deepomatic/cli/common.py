@@ -16,10 +16,6 @@ SUPPORTED_IMAGE_OUTPUT_FORMAT = SUPPORTED_IMAGE_INPUT_FORMAT
 SUPPORTED_VIDEO_OUTPUT_FORMAT = ['.avi', '.mp4']
 
 
-class DeepoCLIException(Exception):
-    pass
-
-
 class TqdmToLogger(io.StringIO):
     """Tqdm output stream to play nice with logger."""
     logger = None
