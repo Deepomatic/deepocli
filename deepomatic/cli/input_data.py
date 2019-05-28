@@ -4,6 +4,7 @@ import sys
 import json
 import logging
 import threading
+from .exceptions import *
 from .thread_base import Pool, Thread, MainLoop, CurrentMessages, blocking_lock, QUEUE_MAX_SIZE
 from .cmds.infer import SendInferenceGreenlet, ResultInferenceGreenlet, PrepareInferenceThread
 from tqdm import tqdm
@@ -105,7 +106,11 @@ def input_loop(kwargs, postprocessing=None):
     queues = [queue_cls(maxsize=QUEUE_MAX_SIZE) for i in range(4)]
 
     # Initialize workflow for mutual use between send inference pool and result inference pool
-    workflow = get_workflow(kwargs)
+    try:
+        workflow = get_workflow(kwargs)
+    except DeepoCLICredentialsError as e:
+        LOGGER.error(str(e))
+        sys.exit(1)
     exit_event = threading.Event()
 
     current_frames = CurrentFrames()

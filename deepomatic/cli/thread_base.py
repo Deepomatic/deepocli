@@ -169,15 +169,13 @@ class ThreadBase(object):
             self.init()
             self._run()
         except Exception as e:
-            LOGGER.error("Encountered an unexpected exception during main routine: {}".format(str(e)))
-            LOGGER.error(traceback.format_exc())
+            LOGGER.error("Encountered an unexpected exception during main routine: {}".format(traceback.format_exc()))
             self.exit_event.set()
         finally:
             try:
                 self.close()
             except Exception as e:
-                LOGGER.error("Encountered an unexpected exception during routine closing: {}".format(str(e)))
-                LOGGER.error(traceback.format_exc())
+                LOGGER.error("Encountered an unexpected exception during routine closing: {}".format(traceback.format_exc()))
                 self.exit_event.set()
         LOGGER.debug('Quitting {}'.format(self.name))
         self.alive = False

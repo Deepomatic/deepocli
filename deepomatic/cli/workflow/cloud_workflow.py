@@ -2,7 +2,7 @@ import os
 import sys
 import logging
 from .workflow_abstraction import AbstractWorkflow, InferenceError, InferenceTimeout
-from .. import common
+from .. import common, exceptions
 import deepomatic.api.client
 import deepomatic.api.inputs
 from ..version import __title__, __version__
@@ -35,9 +35,8 @@ class CloudRecognition(AbstractWorkflow):
         app_id = os.getenv('DEEPOMATIC_APP_ID', None)
         api_key = os.getenv('DEEPOMATIC_API_KEY', None)
         if app_id is None or api_key is None:
-            sys.tracebacklimit=0  # Do not display trace for this error
             error = 'Credentials not found. Please define the DEEPOMATIC_APP_ID and DEEPOMATIC_API_KEY environment variables to use cloud-based recognition models.'
-            raise NameError(error)
+            raise exceptions.DeepoCLICredentialsError(error)
         self._client = deepomatic.api.client.Client(app_id, api_key, user_agent_suffix='{}/{}'.format(__title__, __version__))
         self._model = None
         try:
