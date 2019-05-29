@@ -5,6 +5,7 @@ from utils import (init_files_setup, run_cmd, IMAGE_OUTPUT, VIDEO_OUTPUT,
 
 # ------- Files setup ------------------------------------------------------------------------------------------------ #
 
+
 # Input to test: Image, Video, Directory, Json
 IMAGE_INPUT, VIDEO_INPUT, DIRECTORY_INPUT, JSON_INPUT = init_files_setup()
 
@@ -14,6 +15,7 @@ def run_blur(*args, **kwargs):
 
 
 # ------- Image Input Tests ------------------------------------------------------------------------------------------ #
+
 
 @pytest.mark.parametrize(
     'outputs,expected',
@@ -50,6 +52,7 @@ def test_e2e_video_blur(outputs, expected):
 
 # ------- Directory Input Tests -------------------------------------------------------------------------------------- #
 
+
 @pytest.mark.parametrize(
     'outputs,expected',
     [
@@ -84,6 +87,10 @@ def test_e2e_json_blur(outputs, expected):
 
 
 # # ------- Special Options Tests -------------------------------------------------------------------------------------- #
+
+
+def test_e2e_image_blur_image_verbose():
+    run_blur(IMAGE_INPUT, [IMAGE_OUTPUT], expect_nb_image=1, extra_opts=['--verbose'])
 
 
 def test_e2e_image_blur_image_threshold():

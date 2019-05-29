@@ -5,6 +5,7 @@ from utils import (init_files_setup, run_cmd, IMAGE_OUTPUT, VIDEO_OUTPUT,
 
 # ------- Files setup ------------------------------------------------------------------------------------------------ #
 
+
 # Input to test: Image, Video, Directory, Json
 IMAGE_INPUT, VIDEO_INPUT, DIRECTORY_INPUT, JSON_INPUT = init_files_setup()
 
@@ -14,6 +15,7 @@ def run_infer(*args, **kwargs):
 
 
 # ------- Image Input Tests ------------------------------------------------------------------------------------------ #
+
 
 @pytest.mark.parametrize(
     'outputs,expected',
@@ -29,7 +31,9 @@ def run_infer(*args, **kwargs):
 def test_e2e_image_infer(outputs, expected):
     run_infer(IMAGE_INPUT, outputs, **expected)
 
+
 # ------- Video Input Tests ------------------------------------------------------------------------------------------ #
+
 
 @pytest.mark.parametrize(
     'outputs,expected',
@@ -66,6 +70,7 @@ def test_e2e_directory_infer(outputs, expected):
 
 # # ------- Json Input Tests ------------------------------------------------------------------------------------------- #
 
+
 @pytest.mark.parametrize(
     'outputs,expected',
     [
@@ -82,6 +87,10 @@ def test_e2e_json_infer(outputs, expected):
 
 
 # # ------- Special Options Tests -------------------------------------------------------------------------------------- #
+
+
+def test_e2e_image_infer_json_verbose():
+    run_infer(IMAGE_INPUT, [JSON_OUTPUT], expect_nb_json=1, extra_opts=['--verbose'])
 
 
 def test_e2e_image_infer_json_threshold():
