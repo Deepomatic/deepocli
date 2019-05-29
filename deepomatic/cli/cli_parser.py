@@ -83,8 +83,11 @@ def run(args):
 
     # Update the log level accordingly
     if args.verbose:
-        logging.getLogger().setLevel(logging.DEBUG)
-        for handler in logging.getLogger().handlers:
-            handler.setFormatter(logging.Formatter('[%(levelname)s %(name)s %(asctime)s %(process)d %(thread)d %(filename)s:%(lineno)s] %(message)s'))
+        log_level = os.getenv('DEEPOMATIC_LOG_LEVEL', logging.INFO)
+        log_format = '[%(levelname)s %(name)s %(asctime)s %(process)d %(thread)d %(filename)s:%(lineno)s] %(message)s'
+    else:
+        log_level = logging.DEBUG
+        log_format = '[%(levelname)s] %(message)s'
+    logging.basicConfig(level=log_level, format=log_format)
 
     return args.func(vars(args))

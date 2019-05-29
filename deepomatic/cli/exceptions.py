@@ -1,10 +1,14 @@
-class DeepoRPCUnavailableError(Exception):
+class DeepoException(Exception):
     pass
 
 
-class DeepoRPCRecognitionError(Exception):
+class DeepoRPCUnavailableError(DeepoException):
     pass
 
 
-class DeepoCLICredentialsError(Exception):
+class DeepoRPCRecognitionError(DeepoException):
+    pass
+
+
+class DeepoCLICredentialsError(DeepoException):
     pass

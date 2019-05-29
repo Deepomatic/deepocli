@@ -27,12 +27,12 @@ class UploadImageGreenlet(Greenlet):
                 if 'meta' in file:
                     meta.update({file['key']: file['meta']})
             except RuntimeError as e:
-                LOGGER.error('Something when wrong with {}. Skipping it. {}'.format(file['path'], str(e)))
+                LOGGER.error('Something when wrong with {}: {}\nSkipping it.'.format(file['path'], e))
         try:
             rq = self._helper.post(url, data={"objects": json.dumps(meta)}, content_type='multipart/form', files=files)
             self._task.retrieve(rq['task_id'])
         except RuntimeError as e:
-            LOGGER.error("Failed to upload batch of images {}: {}.".format(files, str(e)))
+            LOGGER.error("Failed to upload batch of images {}: {}.".format(files, e))
 
         for fd in files.values():
             try:
@@ -83,7 +83,7 @@ class DatasetFiles(object):
                     with open(file, 'r') as fd:
                         json_objects = json.load(fd)
                 except ValueError as e:
-                    LOGGER.error("Can't read file {}. Skipping it. {}".format(file, str(e)))
+                    LOGGER.error("Can't read file {}: {}\nSkipping it.".format(file, e))
                     continue
 
                 # Check which type of JSON it is:
