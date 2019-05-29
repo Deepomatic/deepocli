@@ -88,7 +88,7 @@ def run(args):
         log_format = '[%(levelname)s %(name)s %(asctime)s %(process)d %(thread)d %(filename)s:%(lineno)s] %(message)s'
     else:
         log_level = os.getenv('DEEPOMATIC_LOG_LEVEL', logging.INFO)
-        log_format = '[%(levelname)s] %(message)s'
+        log_format = '[%(levelname)s %(asctime)s] %(message)s'
     logging.basicConfig(level=log_level, format=log_format)
 
     return args.func(vars(args))
