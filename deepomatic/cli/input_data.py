@@ -425,6 +425,28 @@ class JsonInputData(InputData):
 
         # Check that the json follows the minimum Studio format
         studio_format_error = 'File {} is not a valid Studio json'.format(descriptor)
+        
+        files_types = []
+        if 'images' in json_data:
+            files_types.append('images')
+        if 'videos' in json_data:
+            files_types.append('videos')
+        if len(files_types) == 0:
+            raise NameError(studio_format_error)
+        for ftype in files_types:
+            if not isinstance(json_data[ftype], list):
+                raise NameError(studio_format_error)
+            else:
+                for item in json_data[ftype]:
+                    if not isinstance(item, dict):
+                        raise NameError(studio_format_error)
+                    elif 'location' not in item:
+                        raise NameError(studio_format_error)
+                    if ftype == 'images' and not ImageInputData.is_valid(item['location']):
+                        raise NameError('File {} is not valid'.format(item['location']))
+                    if ftype == 'videos' and not VideoInputData.is_valid(item['location']):
+                        raise NameError('File {} is not valid'.format(item['location']))
+        """
         if 'images' not in json_data:
             raise NameError(studio_format_error)
         elif not isinstance(json_data['images'], list):
@@ -437,6 +459,7 @@ class JsonInputData(InputData):
                     raise NameError(studio_format_error)
                 elif not ImageInputData.is_valid(img['location']):
                     raise NameError('File {} is not valid'.format(img['location']))
+        """
         return True
 
     def __init__(self, descriptor, **kwargs):

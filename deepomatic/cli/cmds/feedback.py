@@ -8,7 +8,7 @@ from tqdm import tqdm
 from .studio_helpers.http_helper import HTTPHelper
 from .studio_helpers.file import DatasetFiles, UploadImageGreenlet
 from .studio_helpers.task import Task
-from ..common import TqdmToLogger, Queue
+from ..common import TqdmToLogger, Queue, SUPPORTED_IMAGE_INPUT_FORMAT, SUPPORTED_VIDEO_INPUT_FORMAT
 from ..thread_base import Pool, MainLoop
 
 
@@ -16,8 +16,7 @@ from ..thread_base import Pool, MainLoop
 
 GREENLET_NUMBER = 10
 LOGGER = logging.getLogger(__name__)
-API_HOST = os.getenv('STUDIO_URL', 'https://studio.deepomatic.com/api/')
-SUPPORTED_IMG_FORMAT = ['bmp', 'jpeg', 'jpg', 'jpe', 'png']
+API_HOST = 'http://172.16.10.96:32799/api/'
 
 ###############################################################################
 
@@ -43,7 +42,7 @@ def get_all_files_with_ext(path, supported_ext, recursive=True):
             if recursive:
                 all_files.extend(get_all_files_with_ext(file_path, supported_ext))
             else:
-                if os.path.isfile(file_path) and os.path.splitext(file_path)[1][1:].lower() in supported_ext:
+                if os.path.isfile(file_path) and os.path.splitext(file_path)[1].lower() in supported_ext:
                     all_files.append(file_path)
     else:
         raise RuntimeError("The path {} is neither a supported file {} nor a directory".format(path, supported_ext))
@@ -57,7 +56,7 @@ def get_all_files(paths, find_json=False, recursive=True):
     paths = [paths] if not isinstance(paths, list) else paths
 
     # Go through all paths and find corresponding files
-    file_ext = ['json'] if find_json else SUPPORTED_IMG_FORMAT
+    file_ext = ['json'] if find_json else SUPPORTED_IMAGE_INPUT_FORMAT
     files = []
     for path in paths:
         files += get_all_files_with_ext(path, file_ext, recursive)
@@ -69,7 +68,7 @@ def main(args):
     # TODO: detect vulcain json format and convert
     # Initialize deepomatic client
     clt = Client()
-
+    print(clt)
     # Retrieve arguments
     dataset_name = args.get('dataset')
 
@@ -79,6 +78,7 @@ def main(args):
 
     # Scan to find all files
     files = get_all_files(paths=paths, find_json=json_file, recursive=recursive)
+    print(f"FILES : {files}")
 
     # TODO: add a maxsize to avoid taking too much memories
     # This implies reading twice to get the total_files
@@ -87,6 +87,7 @@ def main(args):
     dataset_files = DatasetFiles(clt.http_helper, queue)
 
     total_files = dataset_files.post_files(dataset_name, files)
+    print(total_files)
 
     exit_event = threading.Event()
 
