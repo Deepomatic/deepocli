@@ -32,7 +32,6 @@ class UploadImageGreenlet(Greenlet):
             except RuntimeError as e:
                 LOGGER.error('Something when wrong with {}: {}. Skipping it.'.format(file['path'], e))
         try:
-            print(f"FILES BEFORE REQUEST: {files}")
             rq = self._helper.post(url, data={"objects": json.dumps(meta)}, content_type='multipart/form', files=files)
             self._task.retrieve(rq['task_id'])
         except RuntimeError as e:
@@ -79,8 +78,7 @@ class DatasetFiles(object):
             print(f"FILE : {file}")
             # If it's an file, add it to the queue
             extension = os.path.splitext(file)[1].lower()
-            print(extension)
-            if extension != 'json':
+            if extension != '.json':
                 if extension in SUPPORTED_IMAGE_INPUT_FORMAT:
                     meta = {'file_type': 'image'}
                     batch = self.fill_flush_batch(url, batch, file, meta=meta)
@@ -89,7 +87,6 @@ class DatasetFiles(object):
                     meta = {'file_type': 'video'}
                     batch = self.fill_flush_batch(url, batch, file, meta=meta)
                     total_images += 1
-                    print(f"META : {meta}")
             # If it's a json, deal with it accordingly
             else:
                 # Verify json validity
@@ -110,7 +107,7 @@ class DatasetFiles(object):
                 if not isinstance(json_objects, dict):
                     LOGGER.error("JSON {} is not a dictionnary.".format(os.path.basename(file)))
                     continue
-                #print(json_objects)
+
                 # If it's a type-1 JSON, transform it into a type-2 JSON
                 if 'location' in json_objects:
                     if json_objects['location'].split('.')[-1] in SUPPORTED_IMAGE_INPUT_FORMAT:
@@ -122,13 +119,11 @@ class DatasetFiles(object):
                     file_types.append('images')
                 if 'videos' in json_objects:
                     file_types.append('videos')
-                #print(json_objects)
+
                 for ftype in file_types:
                     for i, img_json in enumerate(json_objects[ftype]):
-                    #for i, img_json in enumerate(json_objects['images']):
                         img_loc = img_json['location']
                         img_json['file_type'] = ftype[:-1]
-                        print(img_json)
                         file_path = os.path.join(os.path.dirname(file), img_loc)
                         if not os.path.isfile(file_path):
                             LOGGER.error("Can't find file named {}".format(img_loc))

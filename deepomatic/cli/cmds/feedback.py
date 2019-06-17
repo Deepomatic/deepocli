@@ -16,7 +16,7 @@ from ..thread_base import Pool, MainLoop
 
 GREENLET_NUMBER = 10
 LOGGER = logging.getLogger(__name__)
-API_HOST = 'http://172.16.10.96:32801/api/'
+API_HOST = os.getenv('STUDIO_URL', 'https://studio.deepomatic.com/api/')
 
 ###############################################################################
 
@@ -34,7 +34,7 @@ def get_all_files_with_ext(path, supported_ext, recursive=True):
     """Scans path to find all supported extensions."""
     all_files = []
     if os.path.isfile(path):
-        if os.path.splitext(path)[1][1:].lower() in supported_ext:
+        if os.path.splitext(path)[1].lower() in supported_ext:
             all_files.append(path)
     elif os.path.isdir(path):
         for file in os.listdir(path):
@@ -56,9 +56,11 @@ def get_all_files(paths, find_json=False, recursive=True):
     paths = [paths] if not isinstance(paths, list) else paths
 
     # Go through all paths and find corresponding files
-    IMAGE_AND_VIDEO_INPUT_FORMAT = SUPPORTED_IMAGE_INPUT_FORMAT + SUPPORTED_VIDEO_INPUT_FORMAT
-    file_ext = ['json'] if find_json else IMAGE_AND_VIDEO_INPUT_FORMAT
+    IMAGE_AND_VIDEO_INPUT_FORMAT = SUPPORTED_IMAGE_INPUT_FORMAT + \
+        SUPPORTED_VIDEO_INPUT_FORMAT
+    file_ext = ['.json'] if find_json else IMAGE_AND_VIDEO_INPUT_FORMAT
     files = []
+
     for path in paths:
         files += get_all_files_with_ext(path, file_ext, recursive)
 
@@ -79,14 +81,12 @@ def main(args):
 
     # Scan to find all files
     files = get_all_files(paths=paths, find_json=json_file, recursive=recursive)
-    print(f"FILES : {files}")
 
     # TODO: add a maxsize to avoid taking too much memories
     # This implies reading twice to get the total_files
     queue = Queue()
 
     dataset_files = DatasetFiles(clt.http_helper, queue)
-
     total_files = dataset_files.post_files(dataset_name, files)
     print(total_files)
 
