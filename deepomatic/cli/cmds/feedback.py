@@ -71,7 +71,7 @@ def main(args):
     # TODO: detect vulcain json format and convert
     # Initialize deepomatic client
     clt = Client()
-    print(clt)
+
     # Retrieve arguments
     dataset_name = args.get('dataset')
 
@@ -88,7 +88,6 @@ def main(args):
 
     dataset_files = DatasetFiles(clt.http_helper, queue)
     total_files = dataset_files.post_files(dataset_name, files)
-    print(total_files)
 
     exit_event = threading.Event()
 

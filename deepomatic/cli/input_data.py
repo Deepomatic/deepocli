@@ -446,20 +446,6 @@ class JsonInputData(InputData):
                         raise NameError('File {} is not valid'.format(item['location']))
                     if ftype == 'videos' and not VideoInputData.is_valid(item['location']):
                         raise NameError('File {} is not valid'.format(item['location']))
-        """
-        if 'images' not in json_data:
-            raise NameError(studio_format_error)
-        elif not isinstance(json_data['images'], list):
-            raise NameError(studio_format_error)
-        else:
-            for img in json_data['images']:
-                if not isinstance(img, dict):
-                    raise NameError(studio_format_error)
-                elif 'location' not in img:
-                    raise NameError(studio_format_error)
-                elif not ImageInputData.is_valid(img['location']):
-                    raise NameError('File {} is not valid'.format(img['location']))
-        """
         return True
 
     def __init__(self, descriptor, **kwargs):

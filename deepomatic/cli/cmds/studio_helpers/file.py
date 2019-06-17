@@ -20,8 +20,6 @@ class UploadImageGreenlet(Greenlet):
 
     def process_msg(self, msg):
         url, batch = msg
-        print(f"URL : {url}")
-        print(f"BATCH : {batch}")
         files = {}
         meta = {}
         for file in batch:
@@ -75,7 +73,6 @@ class DatasetFiles(object):
         batch = []
 
         for file in files:
-            print(f"FILE : {file}")
             # If it's an file, add it to the queue
             extension = os.path.splitext(file)[1].lower()
             if extension != '.json':
