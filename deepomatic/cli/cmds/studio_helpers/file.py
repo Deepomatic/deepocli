@@ -76,11 +76,20 @@ class DatasetFiles(object):
         batch = []
 
         for file in files:
-            print(f"file : {file}")
+            print(f"FILE : {file}")
             # If it's an file, add it to the queue
-            if file.split('.')[-1].lower() != 'json':
-                batch = self.fill_flush_batch(url, batch, file)
-                total_images += 1
+            extension = os.path.splitext(file)[1].lower()
+            print(extension)
+            if extension != 'json':
+                if extension in SUPPORTED_IMAGE_INPUT_FORMAT:
+                    meta = {'file_type': 'image'}
+                    batch = self.fill_flush_batch(url, batch, file, meta=meta)
+                    total_images += 1
+                elif extension in SUPPORTED_VIDEO_INPUT_FORMAT:
+                    meta = {'file_type': 'video'}
+                    batch = self.fill_flush_batch(url, batch, file, meta=meta)
+                    total_images += 1
+                    print(f"META : {meta}")
             # If it's a json, deal with it accordingly
             else:
                 # Verify json validity
@@ -108,19 +117,24 @@ class DatasetFiles(object):
                         json_objects = {'images': [json_objects]}
                     elif json_objects['location'].split('.')[-1] in SUPPORTED_VIDEO_INPUT_FORMAT:
                         json_objects = {'videos': [json_objects]}
-                file_type = 'videos' if 'videos' in json_objects else 'images'
+                file_types = []
+                if 'images' in json_objects:
+                    file_types.append('images')
+                if 'videos' in json_objects:
+                    file_types.append('videos')
                 #print(json_objects)
-                for i, img_json in enumerate(json_objects[file_type]):
-                #for i, img_json in enumerate(json_objects['images']):
-                    img_loc = img_json['location']
-                    img_json['file_type'] = file_type[:-1]
-                    print(img_json)
-                    file_path = os.path.join(os.path.dirname(file), img_loc)
-                    if not os.path.isfile(file_path):
-                        LOGGER.error("Can't find file named {}".format(img_loc))
-                        continue
-                    batch = self.fill_flush_batch(url, batch, file_path, meta=img_json)
-                    total_images += 1
+                for ftype in file_types:
+                    for i, img_json in enumerate(json_objects[ftype]):
+                    #for i, img_json in enumerate(json_objects['images']):
+                        img_loc = img_json['location']
+                        img_json['file_type'] = ftype[:-1]
+                        print(img_json)
+                        file_path = os.path.join(os.path.dirname(file), img_loc)
+                        if not os.path.isfile(file_path):
+                            LOGGER.error("Can't find file named {}".format(img_loc))
+                            continue
+                        batch = self.fill_flush_batch(url, batch, file_path, meta=img_json)
+                        total_images += 1
         self.flush_batch(url, batch)
         return total_images
 

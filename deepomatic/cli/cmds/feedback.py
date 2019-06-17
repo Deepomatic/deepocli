@@ -16,7 +16,7 @@ from ..thread_base import Pool, MainLoop
 
 GREENLET_NUMBER = 10
 LOGGER = logging.getLogger(__name__)
-API_HOST = 'http://172.16.10.96:32799/api/'
+API_HOST = 'http://172.16.10.96:32801/api/'
 
 ###############################################################################
 
@@ -56,7 +56,8 @@ def get_all_files(paths, find_json=False, recursive=True):
     paths = [paths] if not isinstance(paths, list) else paths
 
     # Go through all paths and find corresponding files
-    file_ext = ['json'] if find_json else SUPPORTED_IMAGE_INPUT_FORMAT
+    IMAGE_AND_VIDEO_INPUT_FORMAT = SUPPORTED_IMAGE_INPUT_FORMAT + SUPPORTED_VIDEO_INPUT_FORMAT
+    file_ext = ['json'] if find_json else IMAGE_AND_VIDEO_INPUT_FORMAT
     files = []
     for path in paths:
         files += get_all_files_with_ext(path, file_ext, recursive)
