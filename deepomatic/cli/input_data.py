@@ -422,23 +422,30 @@ class JsonInputData(InputData):
         try:
             with open(descriptor) as json_file:
                 json_data = json.load(json_file)
-        except Exception:
-            raise NameError('File {} is not a valid json'.format(descriptor))
+        except:
+            LOGGER.debug('File {} is not a valid json'.format(descriptor))
+            return False
 
         # Check that the json follows the minimum Studio format
         studio_format_error = 'File {} is not a valid Studio json'.format(descriptor)
         if 'images' not in json_data:
-            raise NameError(studio_format_error)
+            LOGGER.debug(studio_format_error)
+            return False
         elif not isinstance(json_data['images'], list):
-            raise NameError(studio_format_error)
+            LOGGER.debug(studio_format_error)
+            return False
         else:
             for img in json_data['images']:
                 if not isinstance(img, dict):
-                    raise NameError(studio_format_error)
+                    LOGGER.debug(studio_format_error)
+                    return False
                 elif 'location' not in img:
-                    raise NameError(studio_format_error)
+                    LOGGER.debug(studio_format_error)
+                    return False
                 elif not ImageInputData.is_valid(img['location']):
-                    raise NameError('File {} is not valid'.format(img['location']))
+                    LOGGER.debug('File {} is not valid'.format(img['location']))
+                    return False
+
         return True
 
     def __init__(self, descriptor, **kwargs):
