@@ -6,7 +6,7 @@ import logging
 from ...thread_base import Greenlet
 from ...common import SUPPORTED_IMAGE_INPUT_FORMAT, SUPPORTED_VIDEO_INPUT_FORMAT
 
-BATCH_SIZE = 15
+BATCH_SIZE = int(os.getenv('DEEPOCLI_TO_STUDIO_ADD_IMAGES_BATCH_SIZE', '10')
 LOGGER = logging.getLogger(__name__)
 
 
