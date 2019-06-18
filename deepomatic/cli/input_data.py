@@ -209,6 +209,7 @@ class VideoInputData(InputData):
         self._open_video()
         self._kwargs_fps = kwargs['input_fps']
         self._skip_frame = kwargs['skip_frame']
+        self._extract_fps = None
         self._fps = self.get_fps()
 
     def _open_video(self, raise_exc=True):
@@ -296,15 +297,16 @@ class VideoInputData(InputData):
             raise ValueError('Null fps detected for video {}, please specify it with --input_fps option.'.format(self._descriptor))
 
         # Compute fps for frame extraction so that we don't analyze useless frame that will be discarded later
-        if not self._kwargs_fps:
-            self._extract_fps = self._video_fps
-            LOGGER.info('No --input_fps specified, using raw video fps of {}'.format(self._video_fps))
-        elif self._kwargs_fps < self._video_fps:
-            self._extract_fps = self._kwargs_fps
-            LOGGER.info('Using user-specified --input_fps of {} instead of raw video fps of {}'.format(self._kwargs_fps, self._video_fps))
-        else:
-            self._extract_fps = self._video_fps
-            LOGGER.info('User-specified --input_fps of {} specified but using maximum raw video fps of {}'.format(self._kwargs_fps, self._video_fps))
+        if self._extract_fps == None:  # ensures we compute it only once
+            if not self._kwargs_fps:
+                self._extract_fps = self._video_fps
+                LOGGER.debug('No --input_fps specified, using raw video fps of {}'.format(self._video_fps))
+            elif self._kwargs_fps < self._video_fps:
+                self._extract_fps = self._kwargs_fps
+                LOGGER.debug('Using user-specified --input_fps of {} instead of raw video fps of {}'.format(self._kwargs_fps, self._video_fps))
+            else:
+                self._extract_fps = self._video_fps
+                LOGGER.debug('User-specified --input_fps of {} specified but using maximum raw video fps of {}'.format(self._kwargs_fps, self._video_fps))
 
         return self._extract_fps
 
