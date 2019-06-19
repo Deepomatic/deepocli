@@ -4,6 +4,7 @@ import sys
 import json
 import logging
 import threading
+from .json_schema import validate_studio_json, validate_vulcan_json
 from .exceptions import DeepoCLICredentialsError
 from .thread_base import Pool, Thread, MainLoop, CurrentMessages, blocking_lock, QUEUE_MAX_SIZE
 from .cmds.infer import SendInferenceGreenlet, ResultInferenceGreenlet, PrepareInferenceThread
@@ -116,7 +117,8 @@ def input_loop(kwargs, postprocessing=None):
         LOGGER.info('Input fps of {} automatically detected, but no output fps specified. Using same value for both.'.format(kwargs['input_fps']))
 
     # Initialize progress bar
-    max_value = int(inputs.get_frame_count()) if inputs.get_frame_count() >= 0 else None
+    frame_count = inputs.get_frame_count()
+    max_value = int(frame_count) if frame_count >= 0 else None
     tqdmout = TqdmToLogger(LOGGER, level=LOGGER.getEffectiveLevel())
     pbar = tqdm(total=max_value, file=tqdmout, desc='Input processing', smoothing=0)
 
@@ -439,105 +441,12 @@ class DeviceInputData(VideoInputData):
         return True
 
 
-class ImagesPredictionJsonInputData(InputData):
-    @classmethod
-    def is_valid(cls, descriptor):
-        # Check that the file exists
-        if not os.path.exists(descriptor):
-            return False
-
-        # Check that file is a json
-        if not os.path.splitext(descriptor)[1].lower() == '.json':
-            return False
-
-        # Check if json is a dictionnary
-        try:
-            with open(descriptor) as json_file:
-                json_data = json.load(json_file)
-        except:
-            LOGGER.debug('File {} is not a valid json'.format(descriptor))
-            return False
-
-        # If a Vulcan json, transform it to Studio
-        if 'outputs' in json_data[0]:
-            logging.debug('Vulcan json detected for {}'.format(descriptor))
-            try:
-                json_data = transform_json_from_vulcan_to_studio(json_data)
-            except:
-                LOGGER.error('Could not transform Vulcan json type to Studio type for {}'.format(descriptor))
-                sys.exit(1)
-        elif 'images' in json_data:
-            logging.debug('Studio json detected for {}'.format(descriptor))
-        else:
-            LOGGER.error('Could not detect json type for {}'.format(descriptor))
-            sys.exit(1)
-
-        exit()
-
-        # Check that the json follows the minimum Studio format
-        studio_format_error = 'File {} is not a valid Studio json'.format(descriptor)
-        if 'images' not in json_data:
-            LOGGER.debug(studio_format_error)
-            return False
-        elif not isinstance(json_data['images'], list):
-            LOGGER.debug(studio_format_error)
-            return False
-        else:
-            for img in json_data['images']:
-                if not isinstance(img, dict):
-                    LOGGER.debug(studio_format_error)
-                    return False
-                elif 'location' not in img:
-                    LOGGER.debug(studio_format_error)
-                    return False
-                elif not ImageInputData.is_valid(img['location']):
-                    LOGGER.debug('File {} is not valid'.format(img['location']))
-                    return False
-
-        return True
-
-
 class ImagesLocationStudioJsonInputData(InputData):
 
     @classmethod
     def is_valid(cls, descriptor):
-        # Check that the file exists
-        if not os.path.exists(descriptor):
-            return False
-
-        # Check that file is a json
-        if not os.path.splitext(descriptor)[1].lower() == '.json':
-            return False
-
-        # Check if json is a dictionnary
-        try:
-            with open(descriptor) as json_file:
-                json_data = json.load(json_file)
-        except:
-            LOGGER.debug('File {} is not a valid json'.format(descriptor))
-            return False
-
-        # Check that the json follows the minimum Studio format
-        studio_format_error = 'File {} is not a valid Studio json'.format(descriptor)
-        if 'images' not in json_data:
-            LOGGER.debug(studio_format_error)
-            return False
-        elif not isinstance(json_data['images'], list):
-            LOGGER.debug(studio_format_error)
-            return False
-        else:
-            for img in json_data['images']:
-                if not isinstance(img, dict):
-                    LOGGER.debug(studio_format_error)
-                    return False
-                elif 'location' not in img:
-                    LOGGER.debug(studio_format_error)
-                    return False
-                elif not ImageInputData.is_valid(img['location']):
-                    LOGGER.debug('File {} is not valid'.format(img['location']))
-                    return False
-
-        return True
+        # Check that its a proper studio json
+        return validate_studio_json(descriptor)
 
     def __init__(self, descriptor, **kwargs):
         super(ImagesLocationStudioJsonInputData, self).__init__(descriptor, **kwargs)
@@ -578,3 +487,11 @@ class ImagesLocationStudioJsonInputData(InputData):
 
     def is_infinite(self):
         return False
+
+
+class ImagesPredictionJsonInputData(InputData):
+
+    @classmethod
+    def is_valid(cls, descriptor):
+        # Check that its either a vulcan or studio json format
+        return validate_studio_json(descriptor) or validate_vulcan_json(descriptor)
