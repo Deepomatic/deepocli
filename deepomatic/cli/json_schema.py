@@ -1,6 +1,11 @@
+import os
 import sys
 import json
+import logging
 from jsonschema import validate
+
+
+LOGGER = logging.getLogger(__name__)
 
 
 # Define the vulcan json schema
@@ -100,30 +105,40 @@ STUDIO_JSON_SCHEMA = {
 }
 
 
-def test_json_format(json_path):
-    """Find the proper json format."""
-    # Try to load the file as a json
+def validate_json(json_path, json_schema):
+    """Validate a JSON using a schema"""
+    # Check if the file exists
+    if not os.path.isfile(json_path):
+        LOGGER.error('File {} does not exists')
+        return False
+
+    # Load the file as a json
     try:
         with open(json_path) as json_file:
             json_data = json.load(json_file)
     except Exception as e:
-        print('File {} could not be loaded as JSON: {}'.format(json_path, e))
+        LOGGER.error('File {} could not be loaded as JSON: {}'.format(json_path, e))
         sys.exit(1)
 
-    # Test vulcan json
+    # Test json schema
     try:
-        validate(instance=json_data, schema=VULCAN_JSON_SCHEMA)
-        print('JSON {} is a valid vulcan JSON'.format(json_path))
+        validate(instance=json_data, schema=json_schema)
+        return True
     except:
-        print('JSON {} is not a valid vulcan JSON'.format(json_path))
+        return False
 
-    # Test studio json
-    try:
-        validate(instance=json_data, schema=STUDIO_JSON_SCHEMA)
-        print('JSON {} is a valid studio JSON'.format(json_path))
-    except:
-        print('JSON {} is not a valid studio JSON'.format(json_path))
+
+def validate_studio_json(json_path):
+    """Validate a JSON using the studio schema"""
+    return validate_json(json_path, STUDIO_JSON_SCHEMA)
+
+
+def validate_vulcan_json(json_path):
+    """Validate a JSON using the vulcan schema"""
+    return validate_json(json_path, VULCAN_JSON_SCHEMA)
 
 
 if __name__ == '__main__':
-    test_json_format(sys.argv[1])
+    json_path = sys.argv[1]
+    LOGGER.info("Studio json validity: {}".format(validate_studio_json(json_path)))
+    LOGGER.info("Vulcan json validity: {}".format(validate_vulcan_json(json_path)))
