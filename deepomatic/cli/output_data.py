@@ -29,7 +29,7 @@ def save_json_to_file(json_data, json_path):
             LOGGER.debug('Writing %s.json done' % json_path)
     except Exception:
         LOGGER.error("Could not save file {} in json format: {}".format(json_path, traceback.format_exc()))
-        raise
+        sys.exit(1)
 
     return
 
@@ -49,7 +49,8 @@ def get_output(descriptor, kwargs):
         elif descriptor == 'window':
             return DisplayOutputData(**kwargs)
         else:
-            raise NameError("Unknown output '{}'".format(descriptor))
+            LOGGER.error("Unknown output '{}'".format(descriptor))
+            sys.exit(1)
     else:
         return DisplayOutputData(**kwargs)
 

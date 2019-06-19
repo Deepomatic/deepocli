@@ -24,4 +24,5 @@ def get_workflow(args):
     elif recognition_id:
         LOGGER.debug('Using Cloud workflow with recognition_id {}'.format(recognition_id))
         return CloudRecognition(recognition_id)
-    raise Exception("Couldn't get workflow based on args {}".format(args))
+    LOGGER.error("Couldn't get workflow based on args {}".format(args))
+    sys.exit(1)

@@ -13,6 +13,7 @@ from threading import Lock
 from .workflow import get_workflow
 from .output_data import OutputThread
 from .frame import Frame, CurrentFrames
+from .cmds.studio_helpers.vulcan2studio import transform_json_from_vulcan_to_studio
 
 
 LOGGER = logging.getLogger(__name__)
@@ -20,27 +21,47 @@ LOGGER = logging.getLogger(__name__)
 
 def get_input(descriptor, kwargs):
     if descriptor is None:
-        raise NameError('No input specified. use -i flag')
+        LOGGER.error('No input specified. use -i flag')
+        sys.exit(1)
     elif os.path.exists(descriptor):
         if os.path.isfile(descriptor):
+            # Single image file
             if ImageInputData.is_valid(descriptor):
+                LOGGER.debug('Image input data detected for {}'.format(descriptor))
                 return ImageInputData(descriptor, **kwargs)
+            # Single video file
             elif VideoInputData.is_valid(descriptor):
+                LOGGER.debug('Video input data detected for {}'.format(descriptor))
                 return VideoInputData(descriptor, **kwargs)
-            elif JsonInputData.is_valid(descriptor):
-                return JsonInputData(descriptor, **kwargs)
+            # Studio json containing images location
+            elif not kwargs['predict_from_json'] and ImagesLocationStudioJsonInputData.is_valid(descriptor):
+                LOGGER.debug('Image location studio json input data detected for {}'.format(descriptor))
+                return ImagesLocationStudioJsonInputData(descriptor, **kwargs)
+            # Studio or vulcan json containing images location and predictions
+            elif kwargs['predict_from_json'] and ImagesPredictionJsonInputData.is_valid(descriptor):
+                LOGGER.debug('Image prediction json input data detected for {}'.format(descriptor))
+                return ImagesPredictionJsonInputData(descriptor, **kwargs)
             else:
-                raise NameError('Unsupported input file type')
+                LOGGER.error('Unsupported input file type')
+                sys.exit(1)
+        # Input directory containing images, videos, or json
         elif os.path.isdir(descriptor):
+            LOGGER.debug('Directory input data detected for {}'.format(descriptor))
             return DirectoryInputData(descriptor, **kwargs)
         else:
-            raise NameError('Unknown input path')
+            LOGGER.error('Unknown input path')
+            sys.exit(1)
+    # Device indicated by digit number such as a webcam
     elif descriptor.isdigit():
+        LOGGER.debug('Device input data detected for {}'.format(descriptor))
         return DeviceInputData(descriptor, **kwargs)
+    # Video stream such as RTSP
     elif StreamInputData.is_valid(descriptor):
+        LOGGER.debug('Stream input data detected for {}'.format(descriptor))
         return StreamInputData(descriptor, **kwargs)
     else:
-        raise NameError('Unknown input')
+        LOGGER.error('Unknown input')
+        sys.exit(1)
 
 
 class InputThread(Thread):
@@ -220,7 +241,8 @@ class VideoInputData(InputData):
         if not self._cap.isOpened():
             self._cap = None
             if raise_exc:
-                raise Exception("Could not open video {}".format(self._descriptor))
+                LOGGER.error("Could not open video {}".format(self._descriptor))
+                sys.exit(1)
             return False
         return True
 
@@ -292,9 +314,11 @@ class VideoInputData(InputData):
         try:
             self._video_fps = self._cap.get(cv2.CAP_PROP_FPS)
         except Exception:
-            raise ValueError('Could not read fps for video {}, please specify it with --input_fps option.'.format(self._descriptor))
+            LOGGER.error('Could not read fps for video {}, please specify it with --input_fps option.'.format(self._descriptor))
+            sys.exit(1)
         if self._video_fps == 0:
-            raise ValueError('Null fps detected for video {}, please specify it with --input_fps option.'.format(self._descriptor))
+            LOGGER.error('Null fps detected for video {}, please specify it with --input_fps option.'.format(self._descriptor))
+            sys.exit(1)
 
         # Compute fps for frame extraction so that we don't analyze useless frame that will be discarded later
         if self._extract_fps == None:  # ensures we compute it only once
@@ -343,10 +367,19 @@ class DirectoryInputData(InputData):
             self._inputs = []
             for path in sorted(_paths):
                 if ImageInputData.is_valid(path):
+                    LOGGER.debug('Image input data detected for {}'.format(path))
                     self._inputs.append(ImageInputData(path, **kwargs))
                 elif VideoInputData.is_valid(path):
+                    LOGGER.debug('Video input data detected for {}'.format(path))
                     self._inputs.append(VideoInputData(path, **kwargs))
+                elif not kwargs['predict_from_json'] and ImagesLocationStudioJsonInputData.is_valid(path):
+                    LOGGER.debug('Image location studio json input data detected for {}'.format(path))
+                    self._inputs.append(ImagesLocationStudioJsonInputData(path, **kwargs))
+                elif kwargs['predict_from_json'] and ImagesPredictionJsonInputData.is_valid(path):
+                    LOGGER.debug('Image prediction json input data detected for {}'.format(path))
+                    self._inputs.append(ImagesPredictionJsonInputData(path, **kwargs))
                 elif self._recursive and self.is_valid(path):
+                    LOGGER.debug('Directory input data detected for {}'.format(path))
                     self._inputs.append(DirectoryInputData(path, **kwargs))
 
     def _gen(self):
@@ -406,7 +439,65 @@ class DeviceInputData(VideoInputData):
         return True
 
 
-class JsonInputData(InputData):
+class ImagesPredictionJsonInputData(InputData):
+    @classmethod
+    def is_valid(cls, descriptor):
+        # Check that the file exists
+        if not os.path.exists(descriptor):
+            return False
+
+        # Check that file is a json
+        if not os.path.splitext(descriptor)[1].lower() == '.json':
+            return False
+
+        # Check if json is a dictionnary
+        try:
+            with open(descriptor) as json_file:
+                json_data = json.load(json_file)
+        except:
+            LOGGER.debug('File {} is not a valid json'.format(descriptor))
+            return False
+
+        # If a Vulcan json, transform it to Studio
+        if 'outputs' in json_data[0]:
+            logging.debug('Vulcan json detected for {}'.format(descriptor))
+            try:
+                json_data = transform_json_from_vulcan_to_studio(json_data)
+            except:
+                LOGGER.error('Could not transform Vulcan json type to Studio type for {}'.format(descriptor))
+                sys.exit(1)
+        elif 'images' in json_data:
+            logging.debug('Studio json detected for {}'.format(descriptor))
+        else:
+            LOGGER.error('Could not detect json type for {}'.format(descriptor))
+            sys.exit(1)
+
+        exit()
+
+        # Check that the json follows the minimum Studio format
+        studio_format_error = 'File {} is not a valid Studio json'.format(descriptor)
+        if 'images' not in json_data:
+            LOGGER.debug(studio_format_error)
+            return False
+        elif not isinstance(json_data['images'], list):
+            LOGGER.debug(studio_format_error)
+            return False
+        else:
+            for img in json_data['images']:
+                if not isinstance(img, dict):
+                    LOGGER.debug(studio_format_error)
+                    return False
+                elif 'location' not in img:
+                    LOGGER.debug(studio_format_error)
+                    return False
+                elif not ImageInputData.is_valid(img['location']):
+                    LOGGER.debug('File {} is not valid'.format(img['location']))
+                    return False
+
+        return True
+
+
+class ImagesLocationStudioJsonInputData(InputData):
 
     @classmethod
     def is_valid(cls, descriptor):
@@ -449,7 +540,7 @@ class JsonInputData(InputData):
         return True
 
     def __init__(self, descriptor, **kwargs):
-        super(JsonInputData, self).__init__(descriptor, **kwargs)
+        super(ImagesLocationStudioJsonInputData, self).__init__(descriptor, **kwargs)
         self._current = None
         self._files = []
         self._inputs = []
