@@ -62,7 +62,7 @@ def argparser_init():
 
     for parser in [draw_parser, blur_parser]:
         parser.add_argument('-F', '--fullscreen', help="Fullscreen if window output.", action="store_true")
-        parser.add_argument('-J', '--predict_from_json', help="Uses prediction from a Vulcan or Studio JSON.", action="store_true")
+        parser.add_argument('--from_file', dest='pred_from_file', help="Uses prediction from a Vulcan or Studio JSON.", action="store_true")
 
     draw_parser.add_argument('-S', '--draw_scores', help="Overlays the prediction scores.", action="store_true")
     draw_parser.add_argument('-L', '--draw_labels', help="Overlays the prediction labels.", action="store_true")

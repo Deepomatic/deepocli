@@ -12,10 +12,10 @@ def get_workflow(args):
     recognition_id = args.get('recognition_id')
     amqp_url = args.get('amqp_url')
     routing_key = args.get('routing_key')
-    predict_from_json = args.get('predict_from_json')
+    pred_from_file = args.get('pred_from_file')
 
     # Check whether we should use predictions from a json, rpc deployment or the cloud API
-    if predict_from_json:
+    if pred_from_file:
         LOGGER.debug('Using JSON workflow with recognition_id {}'.format(recognition_id))
         return JsonRecognition(recognition_id)
     elif all([recognition_id, amqp_url, routing_key]):

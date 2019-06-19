@@ -35,11 +35,11 @@ def get_input(descriptor, kwargs):
                 LOGGER.debug('Video input data detected for {}'.format(descriptor))
                 return VideoInputData(descriptor, **kwargs)
             # Studio json containing images location
-            elif not kwargs['predict_from_json'] and ImagesLocationStudioJsonInputData.is_valid(descriptor):
+            elif not kwargs['pred_from_file'] and ImagesLocationStudioJsonInputData.is_valid(descriptor):
                 LOGGER.debug('Image location studio json input data detected for {}'.format(descriptor))
                 return ImagesLocationStudioJsonInputData(descriptor, **kwargs)
             # Studio or vulcan json containing images location and predictions
-            elif kwargs['predict_from_json'] and ImagesPredictionJsonInputData.is_valid(descriptor):
+            elif kwargs['pred_from_file'] and ImagesPredictionJsonInputData.is_valid(descriptor):
                 LOGGER.debug('Image prediction json input data detected for {}'.format(descriptor))
                 return ImagesPredictionJsonInputData(descriptor, **kwargs)
             else:
@@ -374,10 +374,10 @@ class DirectoryInputData(InputData):
                 elif VideoInputData.is_valid(path):
                     LOGGER.debug('Video input data detected for {}'.format(path))
                     self._inputs.append(VideoInputData(path, **kwargs))
-                elif not kwargs['predict_from_json'] and ImagesLocationStudioJsonInputData.is_valid(path):
+                elif not kwargs['pred_from_file'] and ImagesLocationStudioJsonInputData.is_valid(path):
                     LOGGER.debug('Image location studio json input data detected for {}'.format(path))
                     self._inputs.append(ImagesLocationStudioJsonInputData(path, **kwargs))
-                elif kwargs['predict_from_json'] and ImagesPredictionJsonInputData.is_valid(path):
+                elif kwargs['pred_from_file'] and ImagesPredictionJsonInputData.is_valid(path):
                     LOGGER.debug('Image prediction json input data detected for {}'.format(path))
                     self._inputs.append(ImagesPredictionJsonInputData(path, **kwargs))
                 elif self._recursive and self.is_valid(path):
