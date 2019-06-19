@@ -268,9 +268,9 @@ class JsonOutputData(OutputData):
         self._i += 1
         predictions = frame.predictions
         if self._to_studio_format:
-            predictions = transform_json_from_vulcan_to_studio(predictions,
-                                                               frame.name,
-                                                               frame.filename)
+            predictions = transform_json_from_vulcan_to_studio(predictions)
+            predictions['images'][0]['location'] = frame.name
+            predictions['images'][0]['data'] = {'filename': frame.filename}
         else:
             predictions['location'] = frame.filename
 
