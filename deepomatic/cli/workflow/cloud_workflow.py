@@ -6,7 +6,7 @@ from .. import common, exceptions
 import deepomatic.api.client
 import deepomatic.api.inputs
 from ..version import __title__, __version__
-from deepomatic.api.exceptions import TaskError, TaskTimeout
+from deepomatic.api.exceptions import TaskError, TaskTimeout, BadStatus
 
 LOGGER = logging.getLogger(__name__)
 
@@ -49,9 +49,16 @@ class CloudRecognition(AbstractWorkflow):
 
     def infer(self, encoded_image_bytes, _useless_push_client):
         # push_client is only used for rpc workflow
-        return self.InferResult(self._model.inference(
-            inputs=[deepomatic.api.inputs.ImageInput(encoded_image_bytes, encoding="binary")],
-            show_discarded=True,
-            return_task=True,
-            wait_task=False)
-        )
+        try:
+            return self.InferResult(self._model.inference(
+                inputs=[deepomatic.api.inputs.ImageInput(encoded_image_bytes, encoding="binary")],
+                show_discarded=True,
+                return_task=True,
+                wait_task=False)
+            )
+        except BadStatus as e:
+            LOGGER.error('Bad status, you might not have the proper credentials: {}'.format(e))
+            sys.exit(1)
+        except Exception as e:
+            LOGGER.error(e)
+            sys.exit(1)
