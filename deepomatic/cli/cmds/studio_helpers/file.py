@@ -124,6 +124,8 @@ class DatasetFiles(object):
                                 continue
                             batch = self.fill_flush_batch(url, batch, file_path, meta=img_json)
                             total_files += 1
+            else:
+                LOGGER.info("File {} not supported. Skipping it.".format(file))
         self.flush_batch(url, batch)
         return total_files
 

@@ -426,7 +426,8 @@ class StudioJsonInputData(InputData):
         # Check that the json follows the minimum Studio format
         studio_format_error = 'File {} is not a valid Studio json'.format(descriptor)
 
-        if len(list(json_data.keys())) == 0:
+        json_keys = list(json_data.keys())
+        if 'images' not in json_keys and 'videos' not in json_keys:
             raise NameError(studio_format_error)
         for ftype in ['images', 'videos']:
             file_list = json_data.get(ftype, None)
