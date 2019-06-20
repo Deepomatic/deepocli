@@ -452,7 +452,7 @@ class JsonInputData(InputData):
         # Go through all locations and check input validity
         self._inputs = []
         for studio_img in studio_json['images']:
-            img_location = img['location']
+            img_location = studio_img['location']
             # If the file does not exist, ignore it
             if not os.path.isfile(img_location):
                 LOGGER.warning("Could not find file {} referenced in JSON {}, skipping it".format(img_location, descriptor))
