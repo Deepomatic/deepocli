@@ -12,7 +12,9 @@ def transform_json_from_vulcan_to_studio(vulcan_json):
     # Loop through all vulcan images
     for vulcan_image in vulcan_json:
         # Initialize studio images
-        studio_image = {'annotated_regions': []}
+        studio_image = {'annotated_regions': [], 'location': vulcan_image.get('location', '')}
+        if 'data' in vulcan_image:
+            studio_image['data'] = vulcan_image['data']
 
         # Loop through all vulcan predictions
         for prediction in vulcan_image['outputs'][0]['labels']['predicted']:
