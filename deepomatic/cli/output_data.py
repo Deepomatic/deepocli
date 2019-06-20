@@ -267,12 +267,10 @@ class JsonOutputData(OutputData):
     def output_frame(self, frame):
         self._i += 1
         predictions = frame.predictions
+        predictions['location'] = frame.name
+        predictions['data'] = {'filename': frame.filename}
         if self._to_studio_format:
             predictions = transform_json_from_vulcan_to_studio(predictions)
-            predictions['images'][0]['location'] = frame.name
-            predictions['images'][0]['data'] = {'filename': frame.filename}
-        else:
-            predictions['location'] = frame.filename
 
         if self._all_predictions is not None:
             # If the json is not a wildcard we store prediction to write then to file a the end in close()

@@ -35,13 +35,9 @@ def get_input(descriptor, kwargs):
                 LOGGER.debug('Video input data detected for {}'.format(descriptor))
                 return VideoInputData(descriptor, **kwargs)
             # Studio json containing images location
-            elif not kwargs['pred_from_file'] and ImagesLocationStudioJsonInputData.is_valid(descriptor):
-                LOGGER.debug('Image location studio json input data detected for {}'.format(descriptor))
-                return ImagesLocationStudioJsonInputData(descriptor, **kwargs)
-            # Studio or vulcan json containing images location and predictions
-            elif kwargs['pred_from_file'] and ImagesPredictionJsonInputData.is_valid(descriptor):
-                LOGGER.debug('Image prediction json input data detected for {}'.format(descriptor))
-                return ImagesPredictionJsonInputData(descriptor, **kwargs)
+            elif JsonInputData.is_valid(descriptor):
+                LOGGER.debug('JSON input data detected for {}'.format(descriptor))
+                return JsonInputData(descriptor, **kwargs)
             else:
                 LOGGER.error('Unsupported input file type')
                 sys.exit(1)
@@ -374,12 +370,9 @@ class DirectoryInputData(InputData):
                 elif VideoInputData.is_valid(path):
                     LOGGER.debug('Video input data detected for {}'.format(path))
                     self._inputs.append(VideoInputData(path, **kwargs))
-                elif not kwargs['pred_from_file'] and ImagesLocationStudioJsonInputData.is_valid(path):
-                    LOGGER.debug('Image location studio json input data detected for {}'.format(path))
-                    self._inputs.append(ImagesLocationStudioJsonInputData(path, **kwargs))
-                elif kwargs['pred_from_file'] and ImagesPredictionJsonInputData.is_valid(path):
-                    LOGGER.debug('Image prediction json input data detected for {}'.format(path))
-                    self._inputs.append(ImagesPredictionJsonInputData(path, **kwargs))
+                elif JsonInputData.is_valid(path):
+                    LOGGER.debug('JSON input data detected for {}'.format(path))
+                    self._inputs.append(JsonInputData(path, **kwargs))
                 elif self._recursive and self.is_valid(path):
                     LOGGER.debug('Directory input data detected for {}'.format(path))
                     self._inputs.append(DirectoryInputData(path, **kwargs))
@@ -441,7 +434,7 @@ class DeviceInputData(VideoInputData):
         return True
 
 
-class ImagesLocationStudioJsonInputData(InputData):
+class JsonInputData(InputData):
 
     @classmethod
     def is_valid(cls, descriptor):
@@ -449,31 +442,39 @@ class ImagesLocationStudioJsonInputData(InputData):
         return validate_studio_json(descriptor)
 
     def __init__(self, descriptor, **kwargs):
-        super(ImagesLocationStudioJsonInputData, self).__init__(descriptor, **kwargs)
-        self._current = None
-        self._files = []
-        self._inputs = []
-        self._i = 0
+        super(JsonInputData, self).__init__(descriptor, **kwargs)
 
+        # Check json validity then load it
         if self.is_valid(descriptor):
             with open(descriptor) as json_file:
-                json_data = json.load(json_file)
-                _paths = [img['location'] for img in json_data['images']]
-                _files = [
-                    ImageInputData(path, **kwargs) if ImageInputData.is_valid(path) else
-                    VideoInputData(path, **kwargs) if VideoInputData.is_valid(path) else
-                    None for path in _paths if os.path.isfile(path)]
-                self._inputs = [_input for _input in _files if _input is not None]
+                studio_json = json.load(json_file)
+
+        # Go through all locations and check input validity
+        self._inputs = []
+        for studio_img in studio_json['images']:
+            img_location = img['location']
+            # If the file does not exist, ignore it
+            if not os.path.isfile(img_location):
+                LOGGER.warning("Could not find file {} referenced in JSON {}, skipping it".format(img_location, descriptor))
+            # If the file is an image, add it
+            elif ImageInputData.is_valid(img_location):
+                LOGGER.debug("Found image file {} referenced in JSON {}".format(img_location, descriptor))
+                self._inputs.append(ImageInputData(img_location, **kwargs))
+            # If the file is a video, add it
+            elif VideoInputData.is_valid(img_location):
+                LOGGER.debug("Found video file {} referenced in JSON {}".format(img_location, descriptor))
+                self._inputs.append(VideoInputData(img_location, **kwargs))
+            # If the video is neither image or video, ignore it
+            else:
+                LOGGER.warning("File {} referenced in JSON {} is neither a proper image or video, skipping it".format(img_location, descriptor))
 
     def _gen(self):
         for source in self._inputs:
             for frame in source:
-                self._i += 1
                 yield frame
 
     def __iter__(self):
         self.gen = self._gen()
-        self._i = 0
         return self
 
     def __next__(self):
@@ -487,11 +488,3 @@ class ImagesLocationStudioJsonInputData(InputData):
 
     def is_infinite(self):
         return False
-
-
-class ImagesPredictionJsonInputData(InputData):
-
-    @classmethod
-    def is_valid(cls, descriptor):
-        # Check that its either a vulcan or studio json format
-        return validate_studio_json(descriptor) or validate_vulcan_json(descriptor)
