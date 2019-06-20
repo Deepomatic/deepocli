@@ -17,7 +17,7 @@ def get_workflow(args):
     # Check whether we should use predictions from a json, rpc deployment or the cloud API
     if pred_from_file:
         LOGGER.debug('Using JSON workflow with recognition_id {}'.format(recognition_id))
-        return JsonRecognition(recognition_id)
+        return JsonRecognition(recognition_id, pred_from_file)
     elif all([recognition_id, amqp_url, routing_key]):
         LOGGER.debug('Using RPC workflow with recognition_id {}, amqp_url {} and routing_key {}'.format(recognition_id, amqp_url, routing_key))
         return RpcRecognition(recognition_id, amqp_url, routing_key)

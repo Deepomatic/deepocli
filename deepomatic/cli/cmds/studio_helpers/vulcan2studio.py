@@ -1,6 +1,6 @@
 
 def transform_json_from_vulcan_to_studio(vulcan_json):
-    """Transforms a json from the vulcan format to the Studio format."""
+    """Transforms a json from the vulcan format to the studio format."""
     # Initialize variables
     studio_json = {'tags': [], 'images': []}
     unique_tags = set()
@@ -17,7 +17,8 @@ def transform_json_from_vulcan_to_studio(vulcan_json):
             studio_image['data'] = vulcan_image['data']
 
         # Loop through all vulcan predictions
-        for prediction in vulcan_image['outputs'][0]['labels']['predicted']:
+        all_predictions = vulcan_image['outputs'][0]['labels']['predicted'] + vulcan_image['outputs'][0]['labels']['discarded']
+        for prediction in all_predictions:
             # Build studio annotation in case of classification or tagging
             annotation = {
                 "tags": [prediction['label_name']],
@@ -47,3 +48,48 @@ def transform_json_from_vulcan_to_studio(vulcan_json):
     studio_json['tags'] = list(unique_tags)
 
     return studio_json
+
+
+def transform_json_from_studio_to_vulcan(studio_json):
+    """Transforms a json from the studio format to the vulcan format."""
+    # Initialize variables
+    vulcan_json = []
+
+    # Loop through all studio images
+    for studio_image in studio_json['images']:
+        # Initialize vulcan prediction
+        vulcan_pred = {'outputs': [{'labels': {'discarded': [], 'predicted': []}}]}
+        for metadata in ['location', 'data']:
+            if metadata in studio_image:
+                vulcan_pred[metadata] = studio_image[metadata]
+
+        # Loop through all studio predictions
+        for studio_pred in studio_image['annotated_regions']:
+            # Build vulcan annotation
+            annotation = {
+                'label_name': studio_pred['tags'][0],
+                'score': studio_pred['score'],
+                'threshold': studio_pred['threshold']
+            }
+
+            # Add bounding box if needed
+            if studio_pred['region_type'] == 'Box':
+                annotation['roi'] = {
+                    'bbox': {
+                        'xmin': studio_pred['region']['xmin'],
+                        'xmax': studio_pred['region']['xmax'],
+                        'ymin': studio_pred['region']['ymin'],
+                        'ymax': studio_pred['region']['ymax']
+                    }
+                }
+
+            # Update json
+            if annotation['score'] >= annotation['threshold']:
+                vulcan_pred['outputs'][0]['labels']['predicted'].append(annotation)
+            else:
+                vulcan_pred['outputs'][0]['labels']['discarded'].append(annotation)
+
+        # Update vulcan json
+        vulcan_json.append(vulcan_pred)
+
+    return vulcan_json

@@ -85,7 +85,8 @@ class RpcRecognition(AbstractWorkflow):
             self._consume_client.remove_consuming_queue(self._response_queue, self._consumer)
         self.close_client(self._consume_client)
 
-    def infer(self, encoded_image_bytes, push_client):
+    def infer(self, encoded_image_bytes, push_client, _useless_frame_name):
+        # _useless_frame_name is used for the json workflow
         image_input = v07_ImageInput(source=BINARY_IMAGE_PREFIX + encoded_image_bytes)
         # forward_to parameter can be removed for images of worker nn with tag >= 0.7.8
         reply_to = self._response_queue.name

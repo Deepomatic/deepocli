@@ -155,7 +155,7 @@ class SendInferenceGreenlet(thread_base.Greenlet):
         self.workflow.close_client(self.push_client)
 
     def process_msg(self, frame):
-        frame.inference_async_result = self.workflow.infer(frame.buf_bytes, self.push_client)
+        frame.inference_async_result = self.workflow.infer(frame.buf_bytes, self.push_client, frame.name)
         return frame
 
 
