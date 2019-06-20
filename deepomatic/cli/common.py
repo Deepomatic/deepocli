@@ -11,6 +11,7 @@ except ImportError:
 LOGGER = logging.getLogger(__name__)
 SUPPORTED_IMAGE_INPUT_FORMAT = ['.bmp', '.jpeg', '.jpg', '.jpe', '.png', '.tif', '.tiff']
 SUPPORTED_VIDEO_INPUT_FORMAT = ['.avi', '.mp4', '.webm', '.mjpg']
+SUPPORTED_FILE_INPUT_FORMAT = SUPPORTED_IMAGE_INPUT_FORMAT + SUPPORTED_VIDEO_INPUT_FORMAT 
 SUPPORTED_PROTOCOLS_INPUT = ['rtsp', 'http', 'https']
 SUPPORTED_IMAGE_OUTPUT_FORMAT = SUPPORTED_IMAGE_INPUT_FORMAT
 SUPPORTED_VIDEO_OUTPUT_FORMAT = ['.avi', '.mp4']

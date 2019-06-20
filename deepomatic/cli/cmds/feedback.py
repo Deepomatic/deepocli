@@ -8,7 +8,7 @@ from tqdm import tqdm
 from .studio_helpers.http_helper import HTTPHelper
 from .studio_helpers.file import DatasetFiles, UploadImageGreenlet
 from .studio_helpers.task import Task
-from ..common import TqdmToLogger, Queue, SUPPORTED_IMAGE_INPUT_FORMAT, SUPPORTED_VIDEO_INPUT_FORMAT
+from ..common import TqdmToLogger, Queue, SUPPORTED_IMAGE_INPUT_FORMAT, SUPPORTED_VIDEO_INPUT_FORMAT, SUPPORTED_FILE_INPUT_FORMAT
 from ..thread_base import Pool, MainLoop
 
 
@@ -56,9 +56,7 @@ def get_all_files(paths, find_json=False, recursive=True):
     paths = [paths] if not isinstance(paths, list) else paths
 
     # Go through all paths and find corresponding files
-    IMAGE_AND_VIDEO_INPUT_FORMAT = SUPPORTED_IMAGE_INPUT_FORMAT + \
-        SUPPORTED_VIDEO_INPUT_FORMAT
-    file_ext = ['.json'] if find_json else IMAGE_AND_VIDEO_INPUT_FORMAT
+    file_ext = ['.json'] if find_json else SUPPORTED_FILE_INPUT_FORMAT
     files = []
 
     for path in paths:

@@ -27,8 +27,8 @@ def get_input(descriptor, kwargs):
                 return ImageInputData(descriptor, **kwargs)
             elif VideoInputData.is_valid(descriptor):
                 return VideoInputData(descriptor, **kwargs)
-            elif JsonInputData.is_valid(descriptor):
-                return JsonInputData(descriptor, **kwargs)
+            elif StudioJsonInputData.is_valid(descriptor):
+                return StudioJsonInputData(descriptor, **kwargs)
             else:
                 raise NameError('Unsupported input file type')
         elif os.path.isdir(descriptor):
@@ -404,7 +404,7 @@ class DeviceInputData(VideoInputData):
         return True
 
 
-class JsonInputData(InputData):
+class StudioJsonInputData(InputData):
 
     @classmethod
     def is_valid(cls, descriptor):
@@ -431,13 +431,15 @@ class JsonInputData(InputData):
             files_types.append('images')
         if 'videos' in json_data:
             files_types.append('videos')
-        if len(files_types) == 0:
+
+        if len(list(json_data.keys())) == 0:
             raise NameError(studio_format_error)
-        for ftype in files_types:
-            if not isinstance(json_data[ftype], list):
-                raise NameError(studio_format_error)
-            else:
-                for item in json_data[ftype]:
+        for ftype in ['images', 'videos']:
+            file_list = json_data.get(ftype, None)
+            if file_list is not None:
+                if not isinstance(file_list, list):
+                    raise NameError(studio_format_error)
+                for item in file_list:
                     if not isinstance(item, dict):
                         raise NameError(studio_format_error)
                     elif 'location' not in item:
@@ -449,7 +451,7 @@ class JsonInputData(InputData):
         return True
 
     def __init__(self, descriptor, **kwargs):
-        super(JsonInputData, self).__init__(descriptor, **kwargs)
+        super(StudioJsonInputData, self).__init__(descriptor, **kwargs)
         self._current = None
         self._files = []
         self._inputs = []
