@@ -47,9 +47,7 @@ class JsonRecognition(AbstractWorkflow):
         # _useless_encoded_image_bytes and _useless_push_client are used only for rpc and cloud workflows
         try:
             frame_pred = self._all_predictions[frame_name]
-        except KeyError:
-            raise InferenceError("Could not find predictions for frame {}".format(frame_name))
         except:
-            raise
+            raise InferenceError("Could not find predictions for frame {}".format(frame_name))
 
         return self.InferResult(frame_name, frame_pred)
