@@ -321,16 +321,15 @@ class VideoInputData(InputData):
             raise DeepoFPSError('Null fps detected for video {}, please specify it with --input_fps option.'.format(self._descriptor))
 
         # Compute fps for frame extraction so that we don't analyze useless frame that will be discarded later
-        if self._extract_fps == None:  # ensures we compute it only once
-            if not self._kwargs_fps:
-                self._extract_fps = self._video_fps
-                LOGGER.debug('No --input_fps specified, using raw video fps of {}'.format(self._video_fps))
-            elif self._kwargs_fps < self._video_fps:
-                self._extract_fps = self._kwargs_fps
-                LOGGER.debug('Using user-specified --input_fps of {} instead of raw video fps of {}'.format(self._kwargs_fps, self._video_fps))
-            else:
-                self._extract_fps = self._video_fps
-                LOGGER.debug('User-specified --input_fps of {} specified but using maximum raw video fps of {}'.format(self._kwargs_fps, self._video_fps))
+        if not self._kwargs_fps:
+            self._extract_fps = self._video_fps
+            LOGGER.debug('No --input_fps specified, using raw video fps of {}'.format(self._video_fps))
+        elif self._kwargs_fps < self._video_fps:
+            self._extract_fps = self._kwargs_fps
+            LOGGER.debug('Using user-specified --input_fps of {} instead of raw video fps of {}'.format(self._kwargs_fps, self._video_fps))
+        else:
+            self._extract_fps = self._video_fps
+            LOGGER.debug('User-specified --input_fps of {} specified but using maximum raw video fps of {}'.format(self._kwargs_fps, self._video_fps))
 
         return self._extract_fps
 
