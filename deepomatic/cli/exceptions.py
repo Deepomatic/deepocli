@@ -36,3 +36,7 @@ class DeepoVideoOpenError(DeepoException):
 
 class DeepoInputError(DeepoException):
     pass
+
+
+class DeepoPredictionJsonError(DeepoException):
+    pass
