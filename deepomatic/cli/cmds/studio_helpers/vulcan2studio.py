@@ -59,6 +59,8 @@ def transform_json_from_studio_to_vulcan(studio_json):
     for studio_image in studio_json['images']:
         # Initialize vulcan prediction
         vulcan_pred = {'outputs': [{'labels': {'discarded': [], 'predicted': []}}]}
+        predicted = []
+        discarded = []
         for metadata in ['location', 'data']:
             if metadata in studio_image:
                 vulcan_pred[metadata] = studio_image[metadata]
@@ -85,9 +87,15 @@ def transform_json_from_studio_to_vulcan(studio_json):
 
             # Update json
             if annotation['score'] >= annotation['threshold']:
-                vulcan_pred['outputs'][0]['labels']['predicted'].append(annotation)
+                predicted.append(annotation)
             else:
-                vulcan_pred['outputs'][0]['labels']['discarded'].append(annotation)
+                discarded.append(annotation)
+
+        # Sort by prediction score of descending order
+        predicted = sorted(predicted, key=lambda k: k['score'], reverse=True)
+        discarded = sorted(discarded, key=lambda k: k['score'], reverse=True)
+        vulcan_pred['outputs'][0]['labels']['predicted'] = predicted
+        vulcan_pred['outputs'][0]['labels']['discarded'] = discarded
 
         # Update vulcan json
         vulcan_json.append(vulcan_pred)
