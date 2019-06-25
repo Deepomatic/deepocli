@@ -227,7 +227,6 @@ class VideoInputData(InputData):
 
     def __init__(self, descriptor, **kwargs):
         super(VideoInputData, self).__init__(descriptor, **kwargs)
-        self._i = 0
         self._name = '%s_%s_%s' % (self._name, '%05d', self._reco)
         self._cap = None
         self._open_video()
@@ -250,7 +249,6 @@ class VideoInputData(InputData):
 
     def __iter__(self):
         self._open_video()
-        self._i = 0
         self._frames_to_skip = 0
         self._should_skip_fps = self._video_fps
         return self
@@ -358,7 +356,6 @@ class DirectoryInputData(InputData):
         self._current = None
         self._files = []
         self._inputs = []
-        self._i = 0
         self._recursive = self._args['recursive']
 
         if self.is_valid(descriptor):
@@ -381,12 +378,10 @@ class DirectoryInputData(InputData):
     def _gen(self):
         for source in self._inputs:
             for frame in source:
-                self._i += 1
                 yield frame
 
     def __iter__(self):
         self.gen = self._gen()
-        self._i = 0
         return self
 
     def __next__(self):
