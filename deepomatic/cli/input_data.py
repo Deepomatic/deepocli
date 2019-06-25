@@ -15,6 +15,8 @@ from .workflow import get_workflow
 from .output_data import OutputThread
 from .frame import Frame, CurrentFrames
 from .cmds.studio_helpers.vulcan2studio import transform_json_from_vulcan_to_studio
+from deepomatic.api.exceptions import BadStatus
+from .exceptions import DeepoWorkflowError, DeepoFPSError, DeepoVideoOpenError, DeepoInputError
 
 
 LOGGER = logging.getLogger(__name__)
@@ -22,8 +24,7 @@ LOGGER = logging.getLogger(__name__)
 
 def get_input(descriptor, kwargs):
     if descriptor is None:
-        LOGGER.error('No input specified. use -i flag')
-        sys.exit(1)
+        raise DeepoInputError('No input specified. use -i flag')
     elif os.path.exists(descriptor):
         if os.path.isfile(descriptor):
             # Single image file
@@ -39,15 +40,13 @@ def get_input(descriptor, kwargs):
                 LOGGER.debug('JSON input data detected for {}'.format(descriptor))
                 return JsonInputData(descriptor, **kwargs)
             else:
-                LOGGER.error('Unsupported input file type')
-                sys.exit(1)
+                raise DeepoInputError('Unsupported input file type')
         # Input directory containing images, videos, or json
         elif os.path.isdir(descriptor):
             LOGGER.debug('Directory input data detected for {}'.format(descriptor))
             return DirectoryInputData(descriptor, **kwargs)
         else:
-            LOGGER.error('Unknown input path')
-            sys.exit(1)
+            raise DeepoInputError('Unknown input path')
     # Device indicated by digit number such as a webcam
     elif descriptor.isdigit():
         LOGGER.debug('Device input data detected for {}'.format(descriptor))
@@ -57,8 +56,7 @@ def get_input(descriptor, kwargs):
         LOGGER.debug('Stream input data detected for {}'.format(descriptor))
         return StreamInputData(descriptor, **kwargs)
     else:
-        LOGGER.error('Unknown input')
-        sys.exit(1)
+        raise DeepoInputError('Unknown input')
 
 
 class InputThread(Thread):
@@ -147,7 +145,14 @@ def input_loop(kwargs, postprocessing=None):
     ]
 
     loop = MainLoop(pools, queues, pbar, lambda: workflow.close())
-    stop_asked = loop.run_forever()
+    try:
+        stop_asked = loop.run_forever()
+    except BadStatus as e:
+        LOGGER.error('Bad status, you might not have the proper credentials: {}'.format(e))
+        sys.exit(1)
+    except Exception as e:
+        LOGGER.error(str(e))
+        sys.exit(1)
 
     # If the process encountered an error, the exit code is 1.
     # If the process is interrupted using SIGINT (ctrl + C) or SIGTERM, the queues are emptied and processed by the
@@ -239,8 +244,7 @@ class VideoInputData(InputData):
         if not self._cap.isOpened():
             self._cap = None
             if raise_exc:
-                LOGGER.error("Could not open video {}".format(self._descriptor))
-                sys.exit(1)
+                raise DeepoVideoOpenError("Could not open video {}".format(self._descriptor))
             return False
         return True
 
@@ -312,11 +316,9 @@ class VideoInputData(InputData):
         try:
             self._video_fps = self._cap.get(cv2.CAP_PROP_FPS)
         except Exception:
-            LOGGER.error('Could not read fps for video {}, please specify it with --input_fps option.'.format(self._descriptor))
-            sys.exit(1)
+            raise DeepoFPSError('Could not read fps for video {}, please specify it with --input_fps option.'.format(self._descriptor))
         if self._video_fps == 0:
-            LOGGER.error('Null fps detected for video {}, please specify it with --input_fps option.'.format(self._descriptor))
-            sys.exit(1)
+            raise DeepoFPSError('Null fps detected for video {}, please specify it with --input_fps option.'.format(self._descriptor))
 
         # Compute fps for frame extraction so that we don't analyze useless frame that will be discarded later
         if self._extract_fps == None:  # ensures we compute it only once

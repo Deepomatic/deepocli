@@ -2,6 +2,7 @@ import logging
 from .cloud_workflow import CloudRecognition
 from .rpc_workflow import RpcRecognition
 from .json_workflow import JsonRecognition
+from ..exceptions import DeepoWorkflowError
 
 
 LOGGER = logging.getLogger(__name__)
@@ -24,5 +25,5 @@ def get_workflow(args):
     elif recognition_id:
         LOGGER.debug('Using Cloud workflow with recognition_id {}'.format(recognition_id))
         return CloudRecognition(recognition_id)
-    LOGGER.error("Couldn't get workflow based on args {}".format(args))
-    sys.exit(1)
+    else:
+        DeepoWorkflowError("Couldn't get workflow based on args {}".format(args))

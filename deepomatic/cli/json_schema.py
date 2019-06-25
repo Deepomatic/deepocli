@@ -118,7 +118,7 @@ def validate_json(json_path, json_schema):
             json_data = json.load(json_file)
     except Exception as e:
         LOGGER.error('File {} could not be loaded as JSON: {}'.format(json_path, e))
-        sys.exit(1)
+        return False
 
     # Test json schema
     try:

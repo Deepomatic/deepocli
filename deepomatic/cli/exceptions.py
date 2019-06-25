@@ -12,3 +12,23 @@ class DeepoRPCRecognitionError(DeepoException):
 
 class DeepoCLICredentialsError(DeepoException):
     pass
+
+
+class DeepoWorkflowError(DeepoException):
+    pass
+
+
+class DeepoUnknownOutputError(DeepoException):
+    pass
+
+
+class DeepoSaveJsonToFileError(DeepoException):
+    pass
+
+
+class DeepoFPSError(DeepoException):
+    pass
+
+
+class DeepoVideoError(DeepoException):
+    pass
