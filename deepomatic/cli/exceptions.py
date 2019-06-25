@@ -30,5 +30,9 @@ class DeepoFPSError(DeepoException):
     pass
 
 
-class DeepoVideoError(DeepoException):
+class DeepoVideoOpenError(DeepoException):
+    pass
+
+
+class DeepoInputError(DeepoException):
     pass
