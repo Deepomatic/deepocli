@@ -7,7 +7,7 @@ from utils import (init_files_setup, run_cmd, IMAGE_OUTPUT, VIDEO_OUTPUT,
 
 
 # Input to test: Image, Video, Directory, Json
-IMAGE_INPUT, VIDEO_INPUT, DIRECTORY_INPUT, JSON_INPUT = init_files_setup()
+IMAGE_INPUT, VIDEO_INPUT, DIRECTORY_INPUT, JSON_INPUT, _ = init_files_setup()
 
 
 def run_infer(*args, **kwargs):

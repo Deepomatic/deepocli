@@ -6,7 +6,7 @@ from utils import init_files_setup
 
 
 # Input to test: Image, Directory, Json
-IMAGE_INPUT, VIDEO_INPUT, DIRECTORY_INPUT, JSON_INPUT = init_files_setup()
+IMAGE_INPUT, VIDEO_INPUT, DIRECTORY_INPUT, JSON_INPUT, _ = init_files_setup()
 TEST_DATASET = 'deepocli-feedback-test-detection'
 TEST_ORG = 'travis-deepocli'
 

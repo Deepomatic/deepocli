@@ -110,6 +110,7 @@ def init_files_setup():
     img2_pth = download(tmpdir, 'https://s3-eu-west-1.amazonaws.com/deepo-tests/vulcain/images/test.jpg', 'img_dir/img2.jpg')
     img3_pth = download(tmpdir, 'https://s3-eu-west-1.amazonaws.com/deepo-tests/vulcain/images/test.jpg', 'img_dir/subdir/img3.jpg')
     json_pth = download(tmpdir, 'https://s3-eu-west-1.amazonaws.com/deepo-tests/vulcain/json/studio.json', 'studio.json')
+    offline_pred_pth = download(tmpdir, 'https://s3-eu-west-1.amazonaws.com/deepo-tests/vulcain/json/offline_pred.json', 'offline_pred.json')
     img_dir_pth = os.path.dirname(img1_pth)
 
     # Update json for path to match
@@ -119,7 +120,7 @@ def init_files_setup():
     with open(json_pth, 'w') as json_file:
         json.dump(json_data, json_file)
 
-    return single_img_pth, video_pth, img_dir_pth, json_pth
+    return single_img_pth, video_pth, img_dir_pth, json_pth, offline_pred_pth
 
 
 def run_cmd(cmds, inp, outputs, *args, **kwargs):

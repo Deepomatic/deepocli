@@ -7,7 +7,7 @@ from utils import (init_files_setup, run_cmd, IMAGE_OUTPUT, VIDEO_OUTPUT,
 
 
 # Input to test: Image, Video, Directory, Json
-IMAGE_INPUT, VIDEO_INPUT, DIRECTORY_INPUT, JSON_INPUT = init_files_setup()
+IMAGE_INPUT, VIDEO_INPUT, DIRECTORY_INPUT, JSON_INPUT, OFFLINE_PRED = init_files_setup()
 
 
 def run_draw(*args, **kwargs):
@@ -121,3 +121,6 @@ def test_e2e_image_draw_image_scores_and_labels():
 
 def test_e2e_image_draw_json_studio():
     run_draw(IMAGE_INPUT, [JSON_OUTPUT], expect_nb_json=1, studio_format=True, extra_opts=['--studio_format'])
+
+def test_e2e_image_draw_from_file():
+    run_draw(VIDEO_INPUT, [VIDEO_OUTPUT], expect_nb_video=1, extra_opts=['--from_file', OFFLINE_PRED])

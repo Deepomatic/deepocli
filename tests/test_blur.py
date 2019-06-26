@@ -7,7 +7,7 @@ from utils import (init_files_setup, run_cmd, IMAGE_OUTPUT, VIDEO_OUTPUT,
 
 
 # Input to test: Image, Video, Directory, Json
-IMAGE_INPUT, VIDEO_INPUT, DIRECTORY_INPUT, JSON_INPUT = init_files_setup()
+IMAGE_INPUT, VIDEO_INPUT, DIRECTORY_INPUT, JSON_INPUT, OFFLINE_PRED = init_files_setup()
 
 
 def run_blur(*args, **kwargs):
@@ -121,3 +121,7 @@ def test_e2e_image_blur_image_method_and_strenght():
 
 def test_e2e_image_blur_json_studio():
     run_blur(IMAGE_INPUT, [JSON_OUTPUT], expect_nb_json=1, studio_format=True, extra_opts=['--studio_format'])
+
+
+def test_e2e_image_blur_from_file():
+    run_blur(VIDEO_INPUT, [VIDEO_OUTPUT], expect_nb_video=1, extra_opts=['--from_file', OFFLINE_PRED])

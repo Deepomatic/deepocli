@@ -10,7 +10,6 @@ LOGGER = logging.getLogger(__name__)
 
 # Define the vulcan json schema
 VULCAN_ANNOTATION_SCHEMA = {
-    "$schema": "http://json-schema.org/schema#",
     "type": "array",
     "items": {
         "type": "object",
@@ -24,7 +23,6 @@ VULCAN_ANNOTATION_SCHEMA = {
     }
 }
 VULCAN_JSON_SCHEMA = {
-    "$schema": "http://json-schema.org/schema#",
     "type": "array",
     "items": {
         "type": "object",
@@ -53,7 +51,6 @@ VULCAN_JSON_SCHEMA = {
 
 # Define the studio json format
 STUDIO_JSON_SCHEMA = {
-    "$schema": "http://json-schema.org/schema#",
     "type": "object",
     "required": ["tags", "images"],
     "properties": {
