@@ -8,7 +8,7 @@ from tqdm import tqdm
 from .studio_helpers.http_helper import HTTPHelper
 from .studio_helpers.file import DatasetFiles, UploadImageGreenlet
 from .studio_helpers.task import Task
-from ..common import TqdmToLogger, Queue
+from ..common import TqdmToLogger, Queue, SUPPORTED_IMAGE_INPUT_FORMAT, SUPPORTED_VIDEO_INPUT_FORMAT, SUPPORTED_FILE_INPUT_FORMAT
 from ..thread_base import Pool, MainLoop
 
 
@@ -17,7 +17,6 @@ from ..thread_base import Pool, MainLoop
 GREENLET_NUMBER = 10
 LOGGER = logging.getLogger(__name__)
 API_HOST = os.getenv('STUDIO_URL', 'https://studio.deepomatic.com/api/')
-SUPPORTED_IMG_FORMAT = ['bmp', 'jpeg', 'jpg', 'jpe', 'png']
 
 ###############################################################################
 
@@ -35,7 +34,7 @@ def get_all_files_with_ext(path, supported_ext, recursive=True):
     """Scans path to find all supported extensions."""
     all_files = []
     if os.path.isfile(path):
-        if os.path.splitext(path)[1][1:].lower() in supported_ext:
+        if os.path.splitext(path)[1].lower() in supported_ext:
             all_files.append(path)
     elif os.path.isdir(path):
         for file in os.listdir(path):
@@ -43,7 +42,7 @@ def get_all_files_with_ext(path, supported_ext, recursive=True):
             if recursive:
                 all_files.extend(get_all_files_with_ext(file_path, supported_ext))
             else:
-                if os.path.isfile(file_path) and os.path.splitext(file_path)[1][1:].lower() in supported_ext:
+                if os.path.isfile(file_path) and os.path.splitext(file_path)[1].lower() in supported_ext:
                     all_files.append(file_path)
     else:
         raise RuntimeError("The path {} is neither a supported file {} nor a directory".format(path, supported_ext))
@@ -57,8 +56,9 @@ def get_all_files(paths, find_json=False, recursive=True):
     paths = [paths] if not isinstance(paths, list) else paths
 
     # Go through all paths and find corresponding files
-    file_ext = ['json'] if find_json else SUPPORTED_IMG_FORMAT
+    file_ext = ['.json'] if find_json else SUPPORTED_FILE_INPUT_FORMAT
     files = []
+
     for path in paths:
         files += get_all_files_with_ext(path, file_ext, recursive)
 
@@ -85,7 +85,6 @@ def main(args):
     queue = Queue()
 
     dataset_files = DatasetFiles(clt.http_helper, queue)
-
     total_files = dataset_files.post_files(dataset_name, files)
 
     exit_event = threading.Event()

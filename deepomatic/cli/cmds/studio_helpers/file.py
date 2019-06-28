@@ -4,8 +4,9 @@ import json
 import uuid
 import logging
 from ...thread_base import Greenlet
+from ...common import SUPPORTED_IMAGE_INPUT_FORMAT, SUPPORTED_VIDEO_INPUT_FORMAT
 
-BATCH_SIZE = 15
+BATCH_SIZE = int(os.getenv('DEEPOMATIC_CLI_ADD_IMAGES_BATCH_SIZE', '10'))
 LOGGER = logging.getLogger(__name__)
 
 
@@ -67,17 +68,23 @@ class DatasetFiles(object):
         return batch
 
     def fill_queue(self, files, dataset_name, commit_pk):
-        total_images = 0
+        total_files = 0
         url = 'v1-beta/datasets/{}/commits/{}/images/batch/'.format(dataset_name, commit_pk)
         batch = []
 
         for file in files:
             # If it's an file, add it to the queue
-            if file.split('.')[-1].lower() != 'json':
-                batch = self.fill_flush_batch(url, batch, file)
-                total_images += 1
+            extension = os.path.splitext(file)[1].lower()
+            if extension in SUPPORTED_IMAGE_INPUT_FORMAT:
+                meta = {'file_type': 'image'}
+                batch = self.fill_flush_batch(url, batch, file, meta=meta)
+                total_files += 1
+            elif extension in SUPPORTED_VIDEO_INPUT_FORMAT:
+                meta = {'file_type': 'video'}
+                batch = self.fill_flush_batch(url, batch, file, meta=meta)
+                total_files += 1
             # If it's a json, deal with it accordingly
-            else:
+            elif extension == '.json':
                 # Verify json validity
                 try:
                     with open(file, 'r') as fd:
@@ -99,18 +106,28 @@ class DatasetFiles(object):
 
                 # If it's a type-1 JSON, transform it into a type-2 JSON
                 if 'location' in json_objects:
-                    json_objects = {'images': [json_objects]}
+                    obj_extension = json_objects['location'].split('.')[-1]
+                    if obj_extension in SUPPORTED_IMAGE_INPUT_FORMAT:
+                        json_objects = {'images': [json_objects]}
+                    elif obj_extension in SUPPORTED_VIDEO_INPUT_FORMAT:
+                        json_objects = {'videos': [json_objects]}
 
-                for i, img_json in enumerate(json_objects['images']):
-                    img_loc = img_json['location']
-                    file_path = os.path.join(os.path.dirname(file), img_loc)
-                    if not os.path.isfile(file_path):
-                        LOGGER.error("Can't find file named {}".format(img_loc))
-                        continue
-                    batch = self.fill_flush_batch(url, batch, file_path, meta=img_json)
-                    total_images += 1
+                for ftype in ['images', 'videos']:
+                    file_list = json_objects.get(ftype, None)
+                    if file_list is not None:
+                        for img_json in file_list:
+                            img_loc = img_json['location']
+                            img_json['file_type'] = ftype[:-1]
+                            file_path = os.path.join(os.path.dirname(file), img_loc)
+                            if not os.path.isfile(file_path):
+                                LOGGER.error("Can't find file named {}".format(img_loc))
+                                continue
+                            batch = self.fill_flush_batch(url, batch, file_path, meta=img_json)
+                            total_files += 1
+            else:
+                LOGGER.info("File {} not supported. Skipping it.".format(file))
         self.flush_batch(url, batch)
-        return total_images
+        return total_files
 
     def post_files(self, dataset_name, files):
         # Retrieve endpoint

@@ -36,9 +36,9 @@ def get_input(descriptor, kwargs):
                 LOGGER.debug('Video input data detected for {}'.format(descriptor))
                 return VideoInputData(descriptor, **kwargs)
             # Studio json containing images location
-            elif JsonInputData.is_valid(descriptor):
-                LOGGER.debug('JSON input data detected for {}'.format(descriptor))
-                return JsonInputData(descriptor, **kwargs)
+            elif StudioJsonInputData.is_valid(descriptor):
+                LOGGER.debug('Images/videos studio json input data detected for {}'.format(descriptor))
+                return StudioJsonInputData(descriptor, **kwargs)
             else:
                 raise DeepoInputError('Unsupported input file type')
         # Input directory containing images, videos, or json
@@ -370,9 +370,9 @@ class DirectoryInputData(InputData):
                 elif VideoInputData.is_valid(path):
                     LOGGER.debug('Video input data detected for {}'.format(path))
                     self._inputs.append(VideoInputData(path, **kwargs))
-                elif JsonInputData.is_valid(path):
+                elif StudioJsonInputData.is_valid(path):
                     LOGGER.debug('JSON input data detected for {}'.format(path))
-                    self._inputs.append(JsonInputData(path, **kwargs))
+                    self._inputs.append(StudioJsonInputData(path, **kwargs))
                 elif self._recursive and self.is_valid(path):
                     LOGGER.debug('Directory input data detected for {}'.format(path))
                     self._inputs.append(DirectoryInputData(path, **kwargs))
@@ -432,7 +432,7 @@ class DeviceInputData(VideoInputData):
         return True
 
 
-class JsonInputData(InputData):
+class StudioJsonInputData(InputData):
 
     @classmethod
     def is_valid(cls, descriptor):
@@ -440,7 +440,7 @@ class JsonInputData(InputData):
         return validate_studio_json(descriptor)
 
     def __init__(self, descriptor, **kwargs):
-        super(JsonInputData, self).__init__(descriptor, **kwargs)
+        super(StudioJsonInputData, self).__init__(descriptor, **kwargs)
 
         # Check json validity then load it
         if self.is_valid(descriptor):
