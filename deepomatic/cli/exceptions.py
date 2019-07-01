@@ -26,6 +26,10 @@ class DeepoSaveJsonToFileError(DeepoException):
     pass
 
 
+class DeepoOpenJsonError(DeepoException):
+    pass
+
+
 class DeepoFPSError(DeepoException):
     pass
 
