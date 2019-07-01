@@ -33,9 +33,9 @@ class JsonRecognition(AbstractWorkflow):
             raise DeepoOpenJsonError("Prediction JSON file {} is not a valid JSON file".format(pred_file))
 
         # Check json validity
-        if is_valid_vulcan_json(pred_file):
+        if is_valid_vulcan_json(vulcan_json_with_pred):
             LOGGER.debug("Vulcan prediction JSON {} validated".format(pred_file))
-        elif is_valid_studio_json(pred_file):
+        elif is_valid_studio_json(vulcan_json_with_pred):
             vulcan_json_with_pred = transform_json_from_studio_to_vulcan(vulcan_json_with_pred)
             LOGGER.debug("Studio prediction JSON {} validated and transformer to Vulcan format".format(pred_file))
         else:
