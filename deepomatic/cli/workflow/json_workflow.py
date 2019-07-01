@@ -2,7 +2,7 @@ import sys
 import json
 import logging
 from .workflow_abstraction import AbstractWorkflow, InferenceError
-from ..json_schema import validate_studio_json, validate_vulcan_json
+from ..json_schema import is_valid_studio_json, is_valid_vulcan_json
 from ..cmds.studio_helpers.vulcan2studio import transform_json_from_studio_to_vulcan
 from ..exceptions import DeepoPredictionJsonError, DeepoOpenJsonError
 
@@ -33,9 +33,9 @@ class JsonRecognition(AbstractWorkflow):
             raise DeepoOpenJsonError("Prediction JSON file {} is not a valid JSON file".format(pred_file))
 
         # Check json validity
-        if validate_vulcan_json(pred_file):
+        if is_valid_vulcan_json(pred_file):
             LOGGER.debug("Vulcan prediction JSON {} validated".format(pred_file))
-        elif validate_studio_json(pred_file):
+        elif is_valid_studio_json(pred_file):
             vulcan_json_with_pred = transform_json_from_studio_to_vulcan(vulcan_json_with_pred)
             LOGGER.debug("Studio prediction JSON {} validated and transformer to Vulcan format".format(pred_file))
         else:

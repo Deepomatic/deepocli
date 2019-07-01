@@ -4,7 +4,7 @@ import sys
 import json
 import logging
 import threading
-from .json_schema import validate_studio_json, validate_vulcan_json
+from .json_schema import is_valid_studio_json, is_valid_vulcan_json
 from .exceptions import DeepoCLICredentialsError
 from .thread_base import Pool, Thread, MainLoop, CurrentMessages, blocking_lock, QUEUE_MAX_SIZE
 from .cmds.infer import SendInferenceGreenlet, ResultInferenceGreenlet, PrepareInferenceThread
@@ -436,8 +436,12 @@ class StudioJsonInputData(InputData):
 
     @classmethod
     def is_valid(cls, descriptor):
-        # Check that its a proper studio json
-        return validate_studio_json(descriptor)
+        try:
+            with open(descriptor) as json_file:
+                studio_json = json.load(json_file)
+            return is_valid_studio_json(studio_json)
+        except:
+            return False
 
     def __init__(self, descriptor, **kwargs):
         super(StudioJsonInputData, self).__init__(descriptor, **kwargs)
