@@ -15,7 +15,6 @@ from .workflow import get_workflow
 from .output_data import OutputThread
 from .frame import Frame, CurrentFrames
 from .cmds.studio_helpers.vulcan2studio import transform_json_from_vulcan_to_studio
-from deepomatic.api.exceptions import BadStatus
 from .exceptions import DeepoWorkflowError, DeepoFPSError, DeepoVideoOpenError, DeepoInputError
 
 
@@ -144,15 +143,12 @@ def input_loop(kwargs, postprocessing=None):
         Pool(1, OutputThread, thread_args=(exit_event, queues[3], None, current_frames, pbar.update, postprocessing), thread_kwargs=kwargs)
     ]
 
-    loop = MainLoop(pools, queues, pbar, lambda: workflow.close())
+    loop = MainLoop(pools, queues, pbar, exit_event, lambda: workflow.close())
     try:
         stop_asked = loop.run_forever()
-    except BadStatus as e:
-        LOGGER.error('Bad status, you might not have the proper credentials: {}'.format(e))
-        sys.exit(1)
-    except Exception as e:
-        LOGGER.error(str(e))
-        sys.exit(1)
+    except Exception:
+        loop.cleanup()
+        raise
 
     # If the process encountered an error, the exit code is 1.
     # If the process is interrupted using SIGINT (ctrl + C) or SIGTERM, the queues are emptied and processed by the

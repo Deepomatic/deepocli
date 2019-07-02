@@ -1,46 +1,46 @@
-class DeepoException(Exception):
+class DeepoCLIException(Exception):
     pass
 
 
-class DeepoRPCUnavailableError(DeepoException):
+class DeepoRPCUnavailableError(DeepoCLIException):
     pass
 
 
-class DeepoRPCRecognitionError(DeepoException):
+class DeepoRPCRecognitionError(DeepoCLIException):
     pass
 
 
-class DeepoCLICredentialsError(DeepoException):
+class DeepoCLICredentialsError(DeepoCLIException):
     pass
 
 
-class DeepoWorkflowError(DeepoException):
+class DeepoWorkflowError(DeepoCLIException):
     pass
 
 
-class DeepoUnknownOutputError(DeepoException):
+class DeepoUnknownOutputError(DeepoCLIException):
     pass
 
 
-class DeepoSaveJsonToFileError(DeepoException):
+class DeepoSaveJsonToFileError(DeepoCLIException):
     pass
 
 
-class DeepoOpenJsonError(DeepoException):
+class DeepoOpenJsonError(DeepoCLIException):
     pass
 
 
-class DeepoFPSError(DeepoException):
+class DeepoFPSError(DeepoCLIException):
     pass
 
 
-class DeepoVideoOpenError(DeepoException):
+class DeepoVideoOpenError(DeepoCLIException):
     pass
 
 
-class DeepoInputError(DeepoException):
+class DeepoInputError(DeepoCLIException):
     pass
 
 
-class DeepoPredictionJsonError(DeepoException):
+class DeepoPredictionJsonError(DeepoCLIException):
     pass

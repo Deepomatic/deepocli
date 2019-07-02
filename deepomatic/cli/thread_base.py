@@ -7,6 +7,8 @@ from contextlib import contextmanager
 from gevent.threadpool import ThreadPool
 from threading import Lock
 from .common import clear_queue, Full, Empty
+from deepomatic.api.exceptions import BadStatus
+from .exceptions import DeepoCLIException
 
 
 LOGGER = logging.getLogger(__name__)
@@ -103,7 +105,7 @@ class ThreadBase(object):
     def stop_when_empty(self):
         long_sleep = 0.05
         sleep_time = long_sleep
-        while True:
+        while not self.exit_event.is_set():
             # don't touch until we have non performance regression tests
             gevent.sleep(sleep_time)
             # try to acquire only sometimes
@@ -168,8 +170,20 @@ class ThreadBase(object):
         try:
             self.init()
             self._run()
+        except DeepoCLIException as e:
+            LOGGER.error(e)
+            self.exit_event.set()
+        except BadStatus as e:
+            if e.status_code >= 400 and e.status_code < 500:
+                LOGGER.error("API raised a bad status code {}: {}".format(
+                    e.status_code, e.json()['error']
+                ))
+            else:
+                # TODO: we probably want to retry on some errors earlier in the greenlet
+                LOGGER.error("Encountered an unexpected exception during routine: {}".format(traceback.format_exc()))
+            self.exit_event.set()
         except Exception:
-            LOGGER.error("Encountered an unexpected exception during main routine: {}".format(traceback.format_exc()))
+            LOGGER.error("Encountered an unexpected exception during routine: {}".format(traceback.format_exc()))
             self.exit_event.set()
         finally:
             try:
@@ -236,12 +250,14 @@ class Pool(object):
 
 
 class MainLoop(object):
-    def __init__(self, pools, queues, pbar, cleanup_func=None):
+    def __init__(self, pools, queues, pbar, exit_event, cleanup_func=None):
         self.pools = pools
         self.queues = queues
         self.pbar = pbar
+        self.exit_event = exit_event
         self.cleanup_func = cleanup_func
         self.stop_asked = 0
+        self.cleaned = False
 
     def clear_queues(self):
         # Makes sure all queues are empty
@@ -279,6 +295,14 @@ class MainLoop(object):
                 # is not blocked in a queue.put() because of maxsize
                 self.clear_queues()
 
+    def cleanup(self):
+        if self.cleaned:
+            return
+        if self.cleanup_func is not None:
+            self.cleanup_func()
+        self.pbar.close()
+        self.cleaned = True
+
     def run_forever(self):
 
         # Start threads
@@ -291,14 +315,13 @@ class MainLoop(object):
         for pool in self.pools:
             pool.stop_when_empty()
 
-        gevent.signal(gevent.signal.SIGINT, lambda: signal.SIG_IGN)
-        gevent.signal(gevent.signal.SIGTERM, lambda: signal.SIG_IGN)
-        # Makes sure threads finish properly so that
-        # we can make sure the workflow is not used and can be closed
-        for pool in self.pools:
-            pool.join()
+        if not self.exit_event.is_set():
+            gevent.signal(gevent.signal.SIGINT, lambda: signal.SIG_IGN)
+            gevent.signal(gevent.signal.SIGTERM, lambda: signal.SIG_IGN)
+            # Makes sure threads finish properly so that
+            # we can make sure the workflow is not used and can be closed
+            for pool in self.pools:
+                pool.join()
 
-        self.pbar.close()
-        if self.cleanup_func is not None:
-            self.cleanup_func()
+        self.cleanup()
         return self.stop_asked
