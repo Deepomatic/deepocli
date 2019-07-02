@@ -225,7 +225,7 @@ class DisplayOutputData(OutputData):
             cv2.imshow(self._window_name, frame.output_image)
             try:
                 ms = 1000 // int(self._fps)
-            except:
+            except Exception:
                 ms = 1
             if cv2.waitKey(ms) & 0xFF == ord('q'):
                 cv2.destroyAllWindows()

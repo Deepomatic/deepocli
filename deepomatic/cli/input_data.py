@@ -336,7 +336,7 @@ class VideoInputData(InputData):
         skip_ratio = 1. / (1 + self._skip_frame)
         try:
             return int(self._cap.get(cv2.CAP_PROP_FRAME_COUNT) * fps_ratio * skip_ratio)
-        except:
+        except Exception:
             LOGGER.warning('Cannot compute the total frame count')
             return 0
 
@@ -436,7 +436,7 @@ class StudioJsonInputData(InputData):
             with open(descriptor) as json_file:
                 studio_json = json.load(json_file)
             return is_valid_studio_json(studio_json)
-        except:
+        except Exception:
             return False
 
     def __init__(self, descriptor, **kwargs):

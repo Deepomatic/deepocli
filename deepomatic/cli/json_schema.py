@@ -101,7 +101,7 @@ def is_valid_json_with_schema(json_data, json_schema):
     try:
         validate(instance=json_data, schema=json_schema)
         return True
-    except:
+    except Exception:
         return False
 
 
