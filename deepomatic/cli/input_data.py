@@ -161,7 +161,7 @@ def input_loop(kwargs, postprocessing=None):
 
 
 class InputData(object):
-    def __init__(self, descriptor,  **kwargs):
+    def __init__(self, descriptor, **kwargs):
         self._descriptor = descriptor
         self._args = kwargs
         self._name, _ = os.path.splitext(os.path.basename(str(descriptor)))
