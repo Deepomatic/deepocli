@@ -1,6 +1,6 @@
 __title__ = 'deepomatic-cli'
 __description__ = 'Deepomatic CLI'
-__version__ = '0.3.4'
+__version__ = '0.3.5'
 __author__ = 'deepomatic'
 __author_email__ = 'support@deepomatic.com'
 __url__ = 'https://github.com/Deepomatic/deepocli'
