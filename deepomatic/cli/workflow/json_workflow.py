@@ -42,7 +42,7 @@ class JsonRecognition(AbstractWorkflow):
             raise DeepoPredictionJsonError("Prediction JSON file {} is neither a proper Studio or Vulcan JSON file".format(pred_file))
 
         # Store predictions for easy access
-        self._all_predictions = {vulcan_pred['location']: vulcan_pred for vulcan_pred in vulcan_json_with_pred}
+        self._all_predictions = {vulcan_pred['data']['framename']: vulcan_pred for vulcan_pred in vulcan_json_with_pred}
 
     def close(self):
         pass
