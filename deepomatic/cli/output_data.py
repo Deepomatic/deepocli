@@ -137,7 +137,7 @@ class ImageOutputData(OutputData):
     @classmethod
     def is_valid(cls, descriptor):
         _, ext = os.path.splitext(descriptor)
-        return ext in SUPPORTED_IMAGE_OUTPUT_FORMAT
+        return ext.lower() in SUPPORTED_IMAGE_OUTPUT_FORMAT
 
     def __init__(self, descriptor, **kwargs):
         super(ImageOutputData, self).__init__(descriptor, **kwargs)
@@ -158,7 +158,7 @@ class VideoOutputData(OutputData):
     @classmethod
     def is_valid(cls, descriptor):
         _, ext = os.path.splitext(descriptor)
-        return ext in SUPPORTED_VIDEO_OUTPUT_FORMAT
+        return ext.lower() in SUPPORTED_VIDEO_OUTPUT_FORMAT
 
     def __init__(self, descriptor, **kwargs):
         super(VideoOutputData, self).__init__(descriptor, **kwargs)
@@ -242,7 +242,7 @@ class JsonOutputData(OutputData):
     @classmethod
     def is_valid(cls, descriptor):
         _, ext = os.path.splitext(descriptor)
-        return ext == '.json'
+        return ext.lower() == '.json'
 
     def __init__(self, descriptor, **kwargs):
         super(JsonOutputData, self).__init__(descriptor, **kwargs)
@@ -325,7 +325,7 @@ class DirectoryOutputData(OutputData):
 
         # If the input is an image, then use the same extension if supported
         _, ext = os.path.splitext(frame.filename)
-        if ext in SUPPORTED_IMAGE_OUTPUT_FORMAT:
+        if ext.lower() in SUPPORTED_IMAGE_OUTPUT_FORMAT:
             pass
         # Otherwise defaults to jpg
         else:
