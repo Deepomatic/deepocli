@@ -9,7 +9,6 @@ from .version import __version__, __title__
 from .common import SUPPORTED_IMAGE_OUTPUT_FORMAT, SUPPORTED_VIDEO_OUTPUT_FORMAT, SUPPORTED_IMAGE_INPUT_FORMAT, SUPPORTED_VIDEO_INPUT_FORMAT, SUPPORTED_PROTOCOLS_INPUT
 
 
-
 class ParserWithHelpOnError(argparse.ArgumentParser):
     """
     Modifies argparser to display the help whenever an error is triggered.
@@ -49,8 +48,8 @@ def argparser_init():
         parser.add_argument('--verbose', dest='verbose', action='store_true', help='Increase output verbosity.')
 
     for parser in [infer_parser, draw_parser, blur_parser]:
-        parser.add_argument('-i', '--input', required=True, help="Path on which inference should be run. It can be an image (supported formats: *{}), a video (supported formats: *{}), a directory or a stream: *{}. If the given path is a directory, it will recursively run inference on all the supported files in this directory if the -R option is used.".format(', *'.join(SUPPORTED_IMAGE_INPUT_FORMAT), ', *'.join(SUPPORTED_VIDEO_INPUT_FORMAT), ', *'.join(SUPPORTED_PROTOCOLS_INPUT)))
-        parser.add_argument('-o', '--outputs', required=True, nargs='+', help="Path in which output should be written. It can be an image (supported formats: *{}), a video (supported formats: *{}) or a directory.".format(', *'.join(SUPPORTED_IMAGE_OUTPUT_FORMAT), ', *'.join(SUPPORTED_VIDEO_OUTPUT_FORMAT)))
+        parser.add_argument('-i', '--input', required=True, help="Input path, either an image (*{}), a video (*{}), a directory, a stream (*{}), or a Studio json (*.json). If the given path is a directory, it will recursively run inference on all the supported files in this directory if the -R option is used.".format(', *'.join(SUPPORTED_IMAGE_INPUT_FORMAT), ', *'.join(SUPPORTED_VIDEO_INPUT_FORMAT), ', *'.join(SUPPORTED_PROTOCOLS_INPUT)))
+        parser.add_argument('-o', '--outputs', required=True, nargs='+', help="Output path, either an image (*{}), a video (*{}), a json (*.json) or a directory.".format(', *'.join(SUPPORTED_IMAGE_OUTPUT_FORMAT), ', *'.join(SUPPORTED_VIDEO_OUTPUT_FORMAT)))
         parser.add_argument('-r', '--recognition_id', required=True, help="Neural network recognition version ID.")
         parser.add_argument('-u', '--amqp_url', help="AMQP url for on-premises deployments.")
         parser.add_argument('-k', '--routing_key', help="Recognition routing key for on-premises deployments.")
