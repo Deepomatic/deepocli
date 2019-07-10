@@ -87,7 +87,6 @@ def check_directory(directory,
                     )
 
 
-
 def init_files_setup():
     """
     Download all files for the tests. The files structure is the following

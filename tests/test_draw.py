@@ -60,8 +60,8 @@ def test_e2e_video_draw(outputs, expected):
         ([VIDEO_OUTPUT], {'expect_nb_video': 1}),
         ([STD_OUTPUT], {}),
         ([JSON_OUTPUT], {'expect_nb_json': 2}),
-        ([DIR_OUTPUT], {'expect_subir': {DIR_OUTPUT: {'expect_nb_image': 2, 'expect_nb_subdir' :1}}}),
-        (OUTPUTS, {'expect_nb_json': 2, 'expect_nb_image': 2, 'expect_nb_video': 1, 'expect_subir': {DIR_OUTPUT: {'expect_nb_image': 2, 'expect_nb_subdir' :1}}})
+        ([DIR_OUTPUT], {'expect_subir': {DIR_OUTPUT: {'expect_nb_image': 2, 'expect_nb_subdir': 1}}}),
+        (OUTPUTS, {'expect_nb_json': 2, 'expect_nb_image': 2, 'expect_nb_video': 1, 'expect_subir': {DIR_OUTPUT: {'expect_nb_image': 2, 'expect_nb_subdir': 1}}})
     ]
 )
 def test_e2e_directory_draw(outputs, expected):
@@ -121,6 +121,7 @@ def test_e2e_image_draw_image_scores_and_labels():
 
 def test_e2e_image_draw_json_studio():
     run_draw(IMAGE_INPUT, [JSON_OUTPUT], expect_nb_json=1, studio_format=True, extra_opts=['--studio_format'])
+
 
 def test_e2e_image_draw_from_file():
     run_draw(VIDEO_INPUT, [VIDEO_OUTPUT], expect_nb_video=1, extra_opts=['--from_file', OFFLINE_PRED])

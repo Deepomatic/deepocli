@@ -54,7 +54,6 @@ class DrawImagePostprocessing(object):
             # Make sure labels are ascii because cv2.FONT_HERSHEY_SIMPLEX doesn't support non-ascii
             label = unidecode(label)
 
-
             # Get text draw parameters
             ret, baseline = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, FONT_SCALE, 1)
 

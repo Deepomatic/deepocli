@@ -39,7 +39,7 @@ class HTTPHelper(object):
         self.token = str(token)
         self.verify = verify
         self.host = host
-        self.resource_prefix = host  #version
+        self.resource_prefix = host  # version
 
         headers = {
             'User-Agent': self.user_agent,

@@ -60,8 +60,8 @@ def test_e2e_video_infer(outputs, expected):
         ([VIDEO_OUTPUT], {'expect_nb_video': 1}),
         ([STD_OUTPUT], {}),
         ([JSON_OUTPUT], {'expect_nb_json': 2}),
-        ([DIR_OUTPUT], {'expect_subir': {DIR_OUTPUT: {'expect_nb_image': 2, 'expect_nb_subdir' :1}}}),
-        (OUTPUTS, {'expect_nb_json': 2, 'expect_nb_image': 2, 'expect_nb_video': 1, 'expect_subir': {DIR_OUTPUT: {'expect_nb_image': 2, 'expect_nb_subdir' :1}}})
+        ([DIR_OUTPUT], {'expect_subir': {DIR_OUTPUT: {'expect_nb_image': 2, 'expect_nb_subdir': 1}}}),
+        (OUTPUTS, {'expect_nb_json': 2, 'expect_nb_image': 2, 'expect_nb_video': 1, 'expect_subir': {DIR_OUTPUT: {'expect_nb_image': 2, 'expect_nb_subdir': 1}}})
     ]
 )
 def test_e2e_directory_infer(outputs, expected):
