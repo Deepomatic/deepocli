@@ -1,13 +1,12 @@
 import pytest
-from utils import (init_files_setup, run_cmd, IMAGE_OUTPUT, VIDEO_OUTPUT,
-                   STD_OUTPUT, JSON_OUTPUT, DIR_OUTPUT, OUTPUTS, WINDOW_OUTPUT)
+from utils import init_files_setup, run_cmd, OUTPUTS
 
 
 # ------- Files setup ------------------------------------------------------------------------------------------------ #
 
 
-# Input to test: Image, Video, Directory, Json
-IMAGE_INPUT, VIDEO_INPUT, DIRECTORY_INPUT, JSON_INPUT, OFFLINE_PRED = init_files_setup()
+# Retrieve INPUTS
+INPUTS = init_files_setup()
 
 
 def run_draw(*args, **kwargs):
@@ -20,16 +19,16 @@ def run_draw(*args, **kwargs):
 @pytest.mark.parametrize(
     'outputs,expected',
     [
-        ([IMAGE_OUTPUT], {'expect_nb_image': 1}),
-        ([VIDEO_OUTPUT], {'expect_nb_video': 1}),
-        ([STD_OUTPUT], {}),
-        ([JSON_OUTPUT], {'expect_nb_json': 1}),
-        ([DIR_OUTPUT], {'expect_subir': {DIR_OUTPUT: {'expect_nb_image': 1}}}),
-        (OUTPUTS, {'expect_nb_json': 1, 'expect_nb_image': 1, 'expect_nb_video': 1, 'expect_subir': {DIR_OUTPUT: {'expect_nb_image': 1}}})
+        ([OUTPUTS['IMAGE']], {'expect_nb_image': 1}),
+        ([OUTPUTS['VIDEO']], {'expect_nb_video': 1}),
+        ([OUTPUTS['STD']], {}),
+        ([OUTPUTS['JSON']], {'expect_nb_json': 1}),
+        ([OUTPUTS['DIR']], {'expect_subir': {OUTPUTS['DIR']: {'expect_nb_image': 1}}}),
+        (OUTPUTS, {'expect_nb_json': 1, 'expect_nb_image': 1, 'expect_nb_video': 1, 'expect_subir': {OUTPUTS['DIR']: {'expect_nb_image': 1}}})
     ]
 )
 def test_e2e_image_draw(outputs, expected):
-    run_draw(IMAGE_INPUT, outputs, **expected)
+    run_draw(INPUTS['IMAGE'], outputs, **expected)
 
 
 # ------- Video Input Tests ------------------------------------------------------------------------------------------ #
@@ -38,16 +37,16 @@ def test_e2e_image_draw(outputs, expected):
 @pytest.mark.parametrize(
     'outputs,expected',
     [
-        ([IMAGE_OUTPUT], {'expect_nb_image': 21}),
-        ([VIDEO_OUTPUT], {'expect_nb_video': 1}),
-        ([STD_OUTPUT], {}),
-        ([JSON_OUTPUT], {'expect_nb_json': 21}),
-        ([DIR_OUTPUT], {'expect_subir': {DIR_OUTPUT: {'expect_nb_image': 21}}}),
-        (OUTPUTS, {'expect_nb_json': 21, 'expect_nb_image': 21, 'expect_nb_video': 1, 'expect_subir': {DIR_OUTPUT: {'expect_nb_image': 21}}})
+        ([OUTPUTS['IMAGE']], {'expect_nb_image': 21}),
+        ([OUTPUTS['VIDEO']], {'expect_nb_video': 1}),
+        ([OUTPUTS['STD']], {}),
+        ([OUTPUTS['JSON']], {'expect_nb_json': 21}),
+        ([OUTPUTS['DIR']], {'expect_subir': {OUTPUTS['DIR']: {'expect_nb_image': 21}}}),
+        (OUTPUTS, {'expect_nb_json': 21, 'expect_nb_image': 21, 'expect_nb_video': 1, 'expect_subir': {OUTPUTS['DIR']: {'expect_nb_image': 21}}})
     ]
 )
 def test_e2e_video_draw(outputs, expected):
-    run_draw(VIDEO_INPUT, outputs, **expected)
+    run_draw(INPUTS['VIDEO'], outputs, **expected)
 
 
 # ------- Directory Input Tests -------------------------------------------------------------------------------------- #
@@ -56,16 +55,16 @@ def test_e2e_video_draw(outputs, expected):
 @pytest.mark.parametrize(
     'outputs,expected',
     [
-        ([IMAGE_OUTPUT], {'expect_nb_image': 2}),
-        ([VIDEO_OUTPUT], {'expect_nb_video': 1}),
-        ([STD_OUTPUT], {}),
-        ([JSON_OUTPUT], {'expect_nb_json': 2}),
-        ([DIR_OUTPUT], {'expect_subir': {DIR_OUTPUT: {'expect_nb_image': 2, 'expect_nb_subdir': 1}}}),
-        (OUTPUTS, {'expect_nb_json': 2, 'expect_nb_image': 2, 'expect_nb_video': 1, 'expect_subir': {DIR_OUTPUT: {'expect_nb_image': 2, 'expect_nb_subdir': 1}}})
+        ([OUTPUTS['IMAGE']], {'expect_nb_image': 2}),
+        ([OUTPUTS['VIDEO']], {'expect_nb_video': 1}),
+        ([OUTPUTS['STD']], {}),
+        ([OUTPUTS['JSON']], {'expect_nb_json': 2}),
+        ([OUTPUTS['DIR']], {'expect_subir': {OUTPUTS['DIR']: {'expect_nb_image': 2, 'expect_nb_subdir': 1}}}),
+        (OUTPUTS, {'expect_nb_json': 2, 'expect_nb_image': 2, 'expect_nb_video': 1, 'expect_subir': {OUTPUTS['DIR']: {'expect_nb_image': 2, 'expect_nb_subdir': 1}}})
     ]
 )
 def test_e2e_directory_draw(outputs, expected):
-    run_draw(DIRECTORY_INPUT, outputs, **expected)
+    run_draw(INPUTS['DIRECTORY'], outputs, **expected)
 
 
 # ------- Json Input Tests ------------------------------------------------------------------------------------------- #
@@ -74,54 +73,54 @@ def test_e2e_directory_draw(outputs, expected):
 @pytest.mark.parametrize(
     'outputs,expected',
     [
-        ([IMAGE_OUTPUT], {'expect_nb_image': 1}),
-        ([VIDEO_OUTPUT], {'expect_nb_video': 1}),
-        ([STD_OUTPUT], {}),
-        ([JSON_OUTPUT], {'expect_nb_json': 1}),
-        ([DIR_OUTPUT], {'expect_subir': {DIR_OUTPUT: {'expect_nb_image': 1}}}),
-        (OUTPUTS, {'expect_nb_json': 1, 'expect_nb_image': 1, 'expect_nb_video': 1, 'expect_subir': {DIR_OUTPUT: {'expect_nb_image': 1}}})
+        ([OUTPUTS['IMAGE']], {'expect_nb_image': 1}),
+        ([OUTPUTS['VIDEO']], {'expect_nb_video': 1}),
+        ([OUTPUTS['STD']], {}),
+        ([OUTPUTS['JSON']], {'expect_nb_json': 1}),
+        ([OUTPUTS['DIR']], {'expect_subir': {OUTPUTS['DIR']: {'expect_nb_image': 1}}}),
+        (OUTPUTS, {'expect_nb_json': 1, 'expect_nb_image': 1, 'expect_nb_video': 1, 'expect_subir': {OUTPUTS['DIR']: {'expect_nb_image': 1}}})
     ]
 )
 def test_e2e_json_draw(outputs, expected):
-    run_draw(JSON_INPUT, outputs, **expected)
+    run_draw(INPUTS['STUDIO_JSON'], outputs, **expected)
 
 
 # ------- Special Options Tests -------------------------------------------------------------------------------------- #
 
 
 def test_e2e_image_draw_image_verbose():
-    run_draw(IMAGE_INPUT, [IMAGE_OUTPUT], expect_nb_image=1, extra_opts=['--verbose'])
+    run_draw(INPUTS['IMAGE'], [OUTPUTS['IMAGE']], expect_nb_image=1, extra_opts=['--verbose'])
 
 
 def test_e2e_image_draw_image_threshold():
-    run_draw(IMAGE_INPUT, [IMAGE_OUTPUT], expect_nb_image=1, extra_opts=['-t', '0.5'])
+    run_draw(INPUTS['IMAGE'], [OUTPUTS['IMAGE']], expect_nb_image=1, extra_opts=['-t', '0.5'])
 
 
 def test_e2e_video_draw_video_fps():
-    run_draw(VIDEO_INPUT, [VIDEO_OUTPUT], expect_nb_video=1, extra_opts=['--output_fps', '2'])
-    run_draw(VIDEO_INPUT, [VIDEO_OUTPUT], expect_nb_video=1, extra_opts=['--input_fps', '2'])
+    run_draw(INPUTS['VIDEO'], [OUTPUTS['VIDEO']], expect_nb_video=1, extra_opts=['--output_fps', '2'])
+    run_draw(INPUTS['VIDEO'], [OUTPUTS['VIDEO']], expect_nb_video=1, extra_opts=['--input_fps', '2'])
 
 
 def test_e2e_image_draw_image_window():
     return  # window not handled by test
-    run_draw(IMAGE_INPUT, [WINDOW_OUTPUT], expect_nb_image=1, extra_opts=['--fullscreen'])
+    run_draw(INPUTS['IMAGE'], [WINDOW_OUTPUT], expect_nb_image=1, extra_opts=['--fullscreen'])
 
 
 def test_e2e_image_draw_image_scores():
-    run_draw(IMAGE_INPUT, [IMAGE_OUTPUT], expect_nb_image=1, extra_opts=['--draw_scores'])
+    run_draw(INPUTS['IMAGE'], [OUTPUTS['IMAGE']], expect_nb_image=1, extra_opts=['--draw_scores'])
 
 
 def test_e2e_image_draw_image_labels():
-    run_draw(IMAGE_INPUT, [IMAGE_OUTPUT], expect_nb_image=1, extra_opts=['--draw_labels'])
+    run_draw(INPUTS['IMAGE'], [OUTPUTS['IMAGE']], expect_nb_image=1, extra_opts=['--draw_labels'])
 
 
 def test_e2e_image_draw_image_scores_and_labels():
-    run_draw(IMAGE_INPUT, [IMAGE_OUTPUT], expect_nb_image=1, extra_opts=['--draw_scores', '--draw_labels'])
+    run_draw(INPUTS['IMAGE'], [OUTPUTS['IMAGE']], expect_nb_image=1, extra_opts=['--draw_scores', '--draw_labels'])
 
 
 def test_e2e_image_draw_json_studio():
-    run_draw(IMAGE_INPUT, [JSON_OUTPUT], expect_nb_json=1, studio_format=True, extra_opts=['--studio_format'])
+    run_draw(INPUTS['IMAGE'], [OUTPUTS['JSON']], expect_nb_json=1, studio_format=True, extra_opts=['--studio_format'])
 
 
 def test_e2e_image_draw_from_file():
-    run_draw(VIDEO_INPUT, [VIDEO_OUTPUT], expect_nb_video=1, extra_opts=['--from_file', OFFLINE_PRED])
+    run_draw(INPUTS['VIDEO'], [OUTPUTS['VIDEO']], expect_nb_video=1, extra_opts=['--from_file', INPUTS['OFFLINE_PRED']])

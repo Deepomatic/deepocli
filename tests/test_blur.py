@@ -1,13 +1,12 @@
 import pytest
-from utils import (init_files_setup, run_cmd, IMAGE_OUTPUT, VIDEO_OUTPUT,
-                   STD_OUTPUT, JSON_OUTPUT, DIR_OUTPUT, OUTPUTS, WINDOW_OUTPUT)
+from utils import init_files_setup, run_cmd, OUTPUTS
 
 
 # ------- Files setup ------------------------------------------------------------------------------------------------ #
 
 
-# Input to test: Image, Video, Directory, Json
-IMAGE_INPUT, VIDEO_INPUT, DIRECTORY_INPUT, JSON_INPUT, OFFLINE_PRED = init_files_setup()
+# Retrieve inputs
+INPUTS = init_files_setup()
 
 
 def run_blur(*args, **kwargs):
@@ -20,16 +19,16 @@ def run_blur(*args, **kwargs):
 @pytest.mark.parametrize(
     'outputs,expected',
     [
-        ([IMAGE_OUTPUT], {'expect_nb_image': 1}),
-        ([VIDEO_OUTPUT], {'expect_nb_video': 1}),
-        ([STD_OUTPUT], {}),
-        ([JSON_OUTPUT], {'expect_nb_json': 1}),
-        ([DIR_OUTPUT], {'expect_subir': {DIR_OUTPUT: {'expect_nb_image': 1}}}),
-        (OUTPUTS, {'expect_nb_json': 1, 'expect_nb_image': 1, 'expect_nb_video': 1, 'expect_subir': {DIR_OUTPUT: {'expect_nb_image': 1}}})
+        ([OUTPUTS['IMAGE']], {'expect_nb_image': 1}),
+        ([OUTPUTS['VIDEO']], {'expect_nb_video': 1}),
+        ([OUTPUTS['STD']], {}),
+        ([OUTPUTS['JSON']], {'expect_nb_json': 1}),
+        ([OUTPUTS['DIR']], {'expect_subir': {OUTPUTS['DIR']: {'expect_nb_image': 1}}}),
+        (OUTPUTS, {'expect_nb_json': 1, 'expect_nb_image': 1, 'expect_nb_video': 1, 'expect_subir': {OUTPUTS['DIR']: {'expect_nb_image': 1}}})
     ]
 )
 def test_e2e_image_blur(outputs, expected):
-    run_blur(IMAGE_INPUT, outputs, **expected)
+    run_blur(INPUTS['IMAGE'], outputs, **expected)
 
 
 # ------- Video Input Tests ------------------------------------------------------------------------------------------ #
@@ -38,16 +37,16 @@ def test_e2e_image_blur(outputs, expected):
 @pytest.mark.parametrize(
     'outputs,expected',
     [
-        ([IMAGE_OUTPUT], {'expect_nb_image': 21}),
-        ([VIDEO_OUTPUT], {'expect_nb_video': 1}),
-        ([STD_OUTPUT], {}),
-        ([JSON_OUTPUT], {'expect_nb_json': 21}),
-        ([DIR_OUTPUT], {'expect_subir': {DIR_OUTPUT: {'expect_nb_image': 21}}}),
-        (OUTPUTS, {'expect_nb_json': 21, 'expect_nb_image': 21, 'expect_nb_video': 1, 'expect_subir': {DIR_OUTPUT: {'expect_nb_image': 21}}})
+        ([OUTPUTS['IMAGE']], {'expect_nb_image': 21}),
+        ([OUTPUTS['VIDEO']], {'expect_nb_video': 1}),
+        ([OUTPUTS['STD']], {}),
+        ([OUTPUTS['JSON']], {'expect_nb_json': 21}),
+        ([OUTPUTS['DIR']], {'expect_subir': {OUTPUTS['DIR']: {'expect_nb_image': 21}}}),
+        (OUTPUTS, {'expect_nb_json': 21, 'expect_nb_image': 21, 'expect_nb_video': 1, 'expect_subir': {OUTPUTS['DIR']: {'expect_nb_image': 21}}})
     ]
 )
 def test_e2e_video_blur(outputs, expected):
-    run_blur(VIDEO_INPUT, outputs, **expected)
+    run_blur(INPUTS['VIDEO'], outputs, **expected)
 
 
 # ------- Directory Input Tests -------------------------------------------------------------------------------------- #
@@ -56,16 +55,16 @@ def test_e2e_video_blur(outputs, expected):
 @pytest.mark.parametrize(
     'outputs,expected',
     [
-        ([IMAGE_OUTPUT], {'expect_nb_image': 2}),
-        ([VIDEO_OUTPUT], {'expect_nb_video': 1}),
-        ([STD_OUTPUT], {}),
-        ([JSON_OUTPUT], {'expect_nb_json': 2}),
-        ([DIR_OUTPUT], {'expect_subir': {DIR_OUTPUT: {'expect_nb_image': 2, 'expect_nb_subdir': 1}}}),
-        (OUTPUTS, {'expect_nb_json': 2, 'expect_nb_image': 2, 'expect_nb_video': 1, 'expect_subir': {DIR_OUTPUT: {'expect_nb_image': 2, 'expect_nb_subdir': 1}}})
+        ([OUTPUTS['IMAGE']], {'expect_nb_image': 2}),
+        ([OUTPUTS['VIDEO']], {'expect_nb_video': 1}),
+        ([OUTPUTS['STD']], {}),
+        ([OUTPUTS['JSON']], {'expect_nb_json': 2}),
+        ([OUTPUTS['DIR']], {'expect_subir': {OUTPUTS['DIR']: {'expect_nb_image': 2, 'expect_nb_subdir': 1}}}),
+        (OUTPUTS, {'expect_nb_json': 2, 'expect_nb_image': 2, 'expect_nb_video': 1, 'expect_subir': {OUTPUTS['DIR']: {'expect_nb_image': 2, 'expect_nb_subdir': 1}}})
     ]
 )
 def test_e2e_directory_blur(outputs, expected):
-    run_blur(DIRECTORY_INPUT, outputs, **expected)
+    run_blur(INPUTS['DIRECTORY'], outputs, **expected)
 
 
 # ------- Json Input Tests ------------------------------------------------------------------------------------------- #
@@ -74,54 +73,54 @@ def test_e2e_directory_blur(outputs, expected):
 @pytest.mark.parametrize(
     'outputs,expected',
     [
-        ([IMAGE_OUTPUT], {'expect_nb_image': 1}),
-        ([VIDEO_OUTPUT], {'expect_nb_video': 1}),
-        ([STD_OUTPUT], {}),
-        ([JSON_OUTPUT], {'expect_nb_json': 1}),
-        ([DIR_OUTPUT], {'expect_subir': {DIR_OUTPUT: {'expect_nb_image': 1}}}),
-        (OUTPUTS, {'expect_nb_json': 1, 'expect_nb_image': 1, 'expect_nb_video': 1, 'expect_subir': {DIR_OUTPUT: {'expect_nb_image': 1}}})
+        ([OUTPUTS['IMAGE']], {'expect_nb_image': 1}),
+        ([OUTPUTS['VIDEO']], {'expect_nb_video': 1}),
+        ([OUTPUTS['STD']], {}),
+        ([OUTPUTS['JSON']], {'expect_nb_json': 1}),
+        ([OUTPUTS['DIR']], {'expect_subir': {OUTPUTS['DIR']: {'expect_nb_image': 1}}}),
+        (OUTPUTS, {'expect_nb_json': 1, 'expect_nb_image': 1, 'expect_nb_video': 1, 'expect_subir': {OUTPUTS['DIR']: {'expect_nb_image': 1}}})
     ]
 )
 def test_e2e_json_blur(outputs, expected):
-    run_blur(JSON_INPUT, outputs, **expected)
+    run_blur(INPUTS['STUDIO_JSON'], outputs, **expected)
 
 
 # # ------- Special Options Tests -------------------------------------------------------------------------------------- #
 
 
 def test_e2e_image_blur_image_verbose():
-    run_blur(IMAGE_INPUT, [IMAGE_OUTPUT], expect_nb_image=1, extra_opts=['--verbose'])
+    run_blur(INPUTS['IMAGE'], [OUTPUTS['IMAGE']], expect_nb_image=1, extra_opts=['--verbose'])
 
 
 def test_e2e_image_blur_image_threshold():
-    run_blur(IMAGE_INPUT, [IMAGE_OUTPUT], expect_nb_image=1, extra_opts=['-t', '0.5'])
+    run_blur(INPUTS['IMAGE'], [OUTPUTS['IMAGE']], expect_nb_image=1, extra_opts=['-t', '0.5'])
 
 
 def test_e2e_video_blur_video_fps():
-    run_blur(VIDEO_INPUT, [VIDEO_OUTPUT], expect_nb_video=1, extra_opts=['--output_fps', '2'])
-    run_blur(VIDEO_INPUT, [VIDEO_OUTPUT], expect_nb_video=1, extra_opts=['--input_fps', '2'])
+    run_blur(INPUTS['VIDEO'], [OUTPUTS['VIDEO']], expect_nb_video=1, extra_opts=['--output_fps', '2'])
+    run_blur(INPUTS['VIDEO'], [OUTPUTS['VIDEO']], expect_nb_video=1, extra_opts=['--input_fps', '2'])
 
 
 def test_e2e_image_blur_image_window():
     return  # window not handled by test
-    run_blur(IMAGE_INPUT, [WINDOW_OUTPUT], expect_nb_image=1, extra_opts=['--fullscreen'])
+    run_blur(INPUTS['IMAGE'], [WINDOW_OUTPUT], expect_nb_image=1, extra_opts=['--fullscreen'])
 
 
 def test_e2e_image_blur_image_method():
-    run_blur(IMAGE_INPUT, [IMAGE_OUTPUT], expect_nb_image=1, extra_opts=['--blur_method', 'pixel'])
+    run_blur(INPUTS['IMAGE'], [OUTPUTS['IMAGE']], expect_nb_image=1, extra_opts=['--blur_method', 'pixel'])
 
 
 def test_e2e_image_blur_image_strengh():
-    run_blur(IMAGE_INPUT, [IMAGE_OUTPUT], expect_nb_image=1, extra_opts=['--blur_strength', '5'])
+    run_blur(INPUTS['IMAGE'], [OUTPUTS['IMAGE']], expect_nb_image=1, extra_opts=['--blur_strength', '5'])
 
 
 def test_e2e_image_blur_image_method_and_strenght():
-    run_blur(IMAGE_INPUT, [IMAGE_OUTPUT], expect_nb_image=1, extra_opts=['--blur_method', 'pixel', '--blur_strength', '5'])
+    run_blur(INPUTS['IMAGE'], [OUTPUTS['IMAGE']], expect_nb_image=1, extra_opts=['--blur_method', 'pixel', '--blur_strength', '5'])
 
 
 def test_e2e_image_blur_json_studio():
-    run_blur(IMAGE_INPUT, [JSON_OUTPUT], expect_nb_json=1, studio_format=True, extra_opts=['--studio_format'])
+    run_blur(INPUTS['IMAGE'], [OUTPUTS['JSON']], expect_nb_json=1, studio_format=True, extra_opts=['--studio_format'])
 
 
 def test_e2e_image_blur_from_file():
-    run_blur(VIDEO_INPUT, [VIDEO_OUTPUT], expect_nb_video=1, extra_opts=['--from_file', OFFLINE_PRED])
+    run_blur(INPUTS['VIDEO'], [OUTPUTS['VIDEO']], expect_nb_video=1, extra_opts=['--from_file', INPUTS['OFFLINE_PRED']])
