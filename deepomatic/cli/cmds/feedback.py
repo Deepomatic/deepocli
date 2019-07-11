@@ -66,7 +66,6 @@ def get_all_files(paths, find_json=False, recursive=True):
 
 
 def main(args):
-    # TODO: detect vulcain json format and convert
     # Initialize deepomatic client
     clt = Client()
 
