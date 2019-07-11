@@ -103,7 +103,7 @@ def test_e2e_video_blur_video_fps():
 
 def test_e2e_image_blur_image_window():
     return  # window not handled by test
-    run_blur(INPUTS['IMAGE'], [WINDOW_OUTPUT], expect_nb_image=1, extra_opts=['--fullscreen'])
+    # run_blur(INPUTS['IMAGE'], [OUTPUTS['WINDOW']], expect_nb_image=1, extra_opts=['--fullscreen'])
 
 
 def test_e2e_image_blur_image_method():

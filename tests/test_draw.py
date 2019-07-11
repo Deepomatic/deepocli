@@ -103,7 +103,7 @@ def test_e2e_video_draw_video_fps():
 
 def test_e2e_image_draw_image_window():
     return  # window not handled by test
-    run_draw(INPUTS['IMAGE'], [WINDOW_OUTPUT], expect_nb_image=1, extra_opts=['--fullscreen'])
+    # run_draw(INPUTS['IMAGE'], [OUTPUTS['WINDOW']], expect_nb_image=1, extra_opts=['--fullscreen'])
 
 
 def test_e2e_image_draw_image_scores():
