@@ -19,6 +19,7 @@ OUTPUTS = {
     'JSON': 'test_output%04d.json',
     'DIR': 'output_dir'
 }
+OUTPUTS['ALL'] = [output for output in list(OUTPUTS.values()) if output != 'window']
 
 
 def download(tmpdir, url, filepath):

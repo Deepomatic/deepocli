@@ -24,7 +24,7 @@ def run_infer(*args, **kwargs):
         ([OUTPUTS['STD']], {}),
         ([OUTPUTS['JSON']], {'expect_nb_json': 1}),
         ([OUTPUTS['DIR']], {'expect_subir': {OUTPUTS['DIR']: {'expect_nb_image': 1}}}),
-        (OUTPUTS, {'expect_nb_json': 1, 'expect_nb_image': 1, 'expect_nb_video': 1, 'expect_subir': {OUTPUTS['DIR']: {'expect_nb_image': 1}}})
+        (OUTPUTS['ALL'], {'expect_nb_json': 1, 'expect_nb_image': 1, 'expect_nb_video': 1, 'expect_subir': {OUTPUTS['DIR']: {'expect_nb_image': 1}}})
     ]
 )
 def test_e2e_image_infer(outputs, expected):
@@ -42,7 +42,7 @@ def test_e2e_image_infer(outputs, expected):
         ([OUTPUTS['STD']], {}),
         ([OUTPUTS['JSON']], {'expect_nb_json': 21}),
         ([OUTPUTS['DIR']], {'expect_subir': {OUTPUTS['DIR']: {'expect_nb_image': 21}}}),
-        (OUTPUTS, {'expect_nb_json': 21, 'expect_nb_image': 21, 'expect_nb_video': 1, 'expect_subir': {OUTPUTS['DIR']: {'expect_nb_image': 21}}})
+        (OUTPUTS['ALL'], {'expect_nb_json': 21, 'expect_nb_image': 21, 'expect_nb_video': 1, 'expect_subir': {OUTPUTS['DIR']: {'expect_nb_image': 21}}})
     ]
 )
 def test_e2e_video_infer(outputs, expected):
@@ -60,7 +60,7 @@ def test_e2e_video_infer(outputs, expected):
         ([OUTPUTS['STD']], {}),
         ([OUTPUTS['JSON']], {'expect_nb_json': 2}),
         ([OUTPUTS['DIR']], {'expect_subir': {OUTPUTS['DIR']: {'expect_nb_image': 2, 'expect_nb_subdir': 1}}}),
-        (OUTPUTS, {'expect_nb_json': 2, 'expect_nb_image': 2, 'expect_nb_video': 1, 'expect_subir': {OUTPUTS['DIR']: {'expect_nb_image': 2, 'expect_nb_subdir': 1}}})
+        (OUTPUTS['ALL'], {'expect_nb_json': 2, 'expect_nb_image': 2, 'expect_nb_video': 1, 'expect_subir': {OUTPUTS['DIR']: {'expect_nb_image': 2, 'expect_nb_subdir': 1}}})
     ]
 )
 def test_e2e_directory_infer(outputs, expected):
@@ -78,7 +78,7 @@ def test_e2e_directory_infer(outputs, expected):
         ([OUTPUTS['STD']], {}),
         ([OUTPUTS['JSON']], {'expect_nb_json': 1}),
         ([OUTPUTS['DIR']], {'expect_subir': {OUTPUTS['DIR']: {'expect_nb_image': 1}}}),
-        (OUTPUTS, {'expect_nb_json': 1, 'expect_nb_image': 1, 'expect_nb_video': 1, 'expect_subir': {OUTPUTS['DIR']: {'expect_nb_image': 1}}})
+        (OUTPUTS['ALL'], {'expect_nb_json': 1, 'expect_nb_image': 1, 'expect_nb_video': 1, 'expect_subir': {OUTPUTS['DIR']: {'expect_nb_image': 1}}})
     ]
 )
 def test_e2e_json_infer(outputs, expected):
