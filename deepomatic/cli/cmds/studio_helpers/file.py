@@ -3,8 +3,12 @@ import os
 import json
 import uuid
 import logging
+from .vulcan2studio import transform_json_from_vulcan_to_studio
 from ...thread_base import Greenlet
 from ...common import SUPPORTED_IMAGE_INPUT_FORMAT, SUPPORTED_VIDEO_INPUT_FORMAT
+from ...json_schema import is_valid_studio_json, is_valid_single_object_studio_json, is_valid_vulcan_json
+from ...exceptions import DeepoOpenJsonError, DeepoUploadJsonError
+
 
 BATCH_SIZE = int(os.getenv('DEEPOMATIC_CLI_ADD_IMAGES_BATCH_SIZE', '10'))
 LOGGER = logging.getLogger(__name__)
@@ -72,60 +76,65 @@ class DatasetFiles(object):
         url = 'v1-beta/datasets/{}/commits/{}/images/batch/'.format(dataset_name, commit_pk)
         batch = []
 
-        for file in files:
-            # If it's an file, add it to the queue
-            extension = os.path.splitext(file)[1].lower()
+        for upload_file in files:
+            extension = os.path.splitext(upload_file)[1].lower()
+            # If it's an image file add it to the queue
             if extension in SUPPORTED_IMAGE_INPUT_FORMAT:
                 meta = {'file_type': 'image'}
-                batch = self.fill_flush_batch(url, batch, file, meta=meta)
+                batch = self.fill_flush_batch(url, batch, upload_file, meta=meta)
                 total_files += 1
+
+            # If it's a video file add it to the queue
             elif extension in SUPPORTED_VIDEO_INPUT_FORMAT:
                 meta = {'file_type': 'video'}
-                batch = self.fill_flush_batch(url, batch, file, meta=meta)
+                batch = self.fill_flush_batch(url, batch, upload_file, meta=meta)
                 total_files += 1
+
             # If it's a json, deal with it accordingly
             elif extension == '.json':
                 # Verify json validity
                 try:
-                    with open(file, 'r') as fd:
-                        json_objects = json.load(fd)
+                    with open(upload_file, 'r') as fd:
+                        json_data = json.load(fd)
                 except ValueError as e:
-                    LOGGER.error("Can't read file {}: {}. Skipping it.".format(file, e))
-                    continue
+                    raise DeepoOpenJsonError("Upload JSON file {} is not a valid JSON file".format(upload_file))
 
-                # Check which type of JSON it is:
-                # 1) a JSON associated with one single file and following the format:
-                #       {"location": "img.jpg", stage": "train", "annotated_regions": [..]}
-                # 2) a JSON following Studio format:
-                #       {"tags": [..], "images": [{"location": "img.jpg", stage": "train", "annotated_regions": [..]}, {..}]}
+                # If it's a Studio json, use it directly
+                if is_valid_studio_json(json_data):
+                    LOGGER.warning("Studio JSON {} validated".format(upload_file))
+                    studio_json = json_data
+                # If it's a Vulcan json, transform it to Studio
+                elif is_valid_vulcan_json(json_data):
+                    LOGGER.warning("Vulcan JSON {} validated and transformed to Studio format".format(upload_file))
+                    studio_json = transform_json_from_vulcan_to_studio(json_data)
+                # If it's a Single studio object json, transform it to Studio
+                elif is_valid_single_object_studio_json(json_data):
+                    LOGGER.warning("Single object Studio JSON {} validated and transformed to Studio format".format(upload_file))
+                    _, ext = os.path.splitext(json_data['location'])
+                    if ext.lower() in SUPPORTED_IMAGE_INPUT_FORMAT:
+                        studio_json = {'images': [json_data]}
+                    elif ext.lower() in SUPPORTED_VIDEO_INPUT_FORMAT:
+                        studio_json = {'videos': [json_data]}
+                    else:
+                        raise DeepoUploadJsonError("Upload JSON file {} is not a supported input".format(upload_file))
+                else:
+                    raise DeepoUploadJsonError("Upload JSON file {} is neither a proper Studio, Single Object Studio or Vulcan JSON file".format(upload_file))
 
-                # Check that the JSON is a dict
-                if not isinstance(json_objects, dict):
-                    LOGGER.error("JSON {} is not a dictionnary.".format(os.path.basename(file)))
-                    continue
-
-                # If it's a type-1 JSON, transform it into a type-2 JSON
-                if 'location' in json_objects:
-                    obj_extension = json_objects['location'].split('.')[-1]
-                    if obj_extension in SUPPORTED_IMAGE_INPUT_FORMAT:
-                        json_objects = {'images': [json_objects]}
-                    elif obj_extension in SUPPORTED_VIDEO_INPUT_FORMAT:
-                        json_objects = {'videos': [json_objects]}
-
+                # Add files to the queue
                 for ftype in ['images', 'videos']:
-                    file_list = json_objects.get(ftype, None)
+                    file_list = studio_json.get(ftype, None)
                     if file_list is not None:
                         for img_json in file_list:
                             img_loc = img_json['location']
                             img_json['file_type'] = ftype[:-1]
-                            file_path = os.path.join(os.path.dirname(file), img_loc)
+                            file_path = os.path.join(os.path.dirname(upload_file), img_loc)
                             if not os.path.isfile(file_path):
                                 LOGGER.error("Can't find file named {}".format(img_loc))
                                 continue
                             batch = self.fill_flush_batch(url, batch, file_path, meta=img_json)
                             total_files += 1
             else:
-                LOGGER.info("File {} not supported. Skipping it.".format(file))
+                LOGGER.info("File {} not supported. Skipping it.".format(upload_file))
         self.flush_batch(url, batch)
         return total_files
 
