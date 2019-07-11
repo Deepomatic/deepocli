@@ -44,3 +44,7 @@ class DeepoInputError(DeepoCLIException):
 
 class DeepoPredictionJsonError(DeepoCLIException):
     pass
+
+
+class DeepoUploadJsonError(DeepoCLIException):
+    pass
