@@ -116,7 +116,6 @@ def input_loop(kwargs, postprocessing=None):
     pbar = tqdm(total=max_value, file=tqdmout, desc='Input processing', smoothing=0)
 
     # For realtime, queue should be LIFO
-    # TODO: might need to rethink the whole pipeling for infinite streams
     # IMPORTANT: maxsize is important, it allows to regulate the pipeline and avoid to pushes too many requests to rabbitmq when we are already waiting for many results
     queue_cls = LifoQueue if inputs.is_infinite() else Queue
     queues = [queue_cls(maxsize=QUEUE_MAX_SIZE) for i in range(4)]
