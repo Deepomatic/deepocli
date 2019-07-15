@@ -191,7 +191,7 @@ class ImageInputData(InputData):
     @classmethod
     def is_valid(cls, descriptor):
         _, ext = os.path.splitext(descriptor)
-        return os.path.exists(descriptor) and ext in SUPPORTED_IMAGE_INPUT_FORMAT
+        return os.path.exists(descriptor) and ext.lower() in SUPPORTED_IMAGE_INPUT_FORMAT
 
     def __init__(self, descriptor, **kwargs):
         super(ImageInputData, self).__init__(descriptor, **kwargs)
@@ -218,7 +218,7 @@ class VideoInputData(InputData):
     @classmethod
     def is_valid(cls, descriptor):
         _, ext = os.path.splitext(descriptor)
-        return os.path.exists(descriptor) and ext in SUPPORTED_VIDEO_INPUT_FORMAT
+        return os.path.exists(descriptor) and ext.lower() in SUPPORTED_VIDEO_INPUT_FORMAT
 
     def __init__(self, descriptor, **kwargs):
         super(VideoInputData, self).__init__(descriptor, **kwargs)
@@ -397,7 +397,7 @@ class DirectoryInputData(InputData):
 class StreamInputData(VideoInputData):
     @classmethod
     def is_valid(cls, descriptor):
-        return '://' in descriptor and descriptor.split('://')[0] in SUPPORTED_PROTOCOLS_INPUT
+        return '://' in descriptor and descriptor.split('://')[0].lower() in SUPPORTED_PROTOCOLS_INPUT
 
     def __init__(self, descriptor, **kwargs):
         super(StreamInputData, self).__init__(descriptor, **kwargs)

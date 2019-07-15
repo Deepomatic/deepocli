@@ -43,5 +43,5 @@ class AbstractWorkflow(object):
 
     def get_json_output_filename(self, file):
         dirname = os.path.dirname(file)
-        filename, ext = os.path.splitext(file)
+        filename, _ = os.path.splitext(file)
         return os.path.join(dirname, filename + '.{}.json'.format(self.display_id))
