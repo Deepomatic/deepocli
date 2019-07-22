@@ -1,6 +1,4 @@
 # coding: utf-8
-from gevent.monkey import patch_all
-patch_all(thread=False, time=False)
 import os
 import json
 import shutil
@@ -91,31 +89,35 @@ def check_directory(directory,
                     )
 
 
-def update_path_studio_json(json_pth, image_path):
-    """Update the image path"""
+def load_json_from_file(json_pth):
+    """Load data from a json"""
     with open(json_pth, 'r') as json_file:
         json_data = json.load(json_file)
+    return json_data
+
+
+def save_json_to_file(json_data, json_pth):
+    """Save data to a json"""
+    with open(json_pth, 'w') as json_file:
+        json.dump(json_data, json_file)
+
+
+def patch_json_for_tests(image_path, studio_json, single_object_studio_json, vulcan_json):
+    """Update the image path in test files"""
+    # Patch studio JSON
+    json_data = load_json_from_file(studio_json)
     json_data['images'][0]['location'] = image_path
-    with open(json_pth, 'w') as json_file:
-        json.dump(json_data, json_file)
+    save_json_to_file(json_data, studio_json)
 
-
-def update_path_single_object_studio_json(json_pth, image_path):
-    """Update the image path"""
-    with open(json_pth, 'r') as json_file:
-        json_data = json.load(json_file)
+    # Patch single object JSON
+    json_data = load_json_from_file(single_object_studio_json)
     json_data['location'] = image_path
-    with open(json_pth, 'w') as json_file:
-        json.dump(json_data, json_file)
+    save_json_to_file(json_data, single_object_studio_json)
 
-
-def update_path_vulcan_json(json_pth, image_path):
-    """Update the image path"""
-    with open(json_pth, 'r') as json_file:
-        json_data = json.load(json_file)
+    # Patch vulcan JSON
+    json_data = load_json_from_file(vulcan_json)
     json_data[0]['location'] = image_path
-    with open(json_pth, 'w') as json_file:
-        json.dump(json_data, json_file)
+    save_json_to_file(json_data, vulcan_json)
 
 
 def init_files_setup():
@@ -146,9 +148,7 @@ def init_files_setup():
     img_dir_pth = os.path.dirname(img1_pth)
 
     # Update json for path to match
-    update_path_vulcan_json(vulcan_json_pth, single_img_pth)
-    update_path_studio_json(studio_json_pth, single_img_pth)
-    update_path_single_object_studio_json(single_object_studio_json_pth, single_img_pth)
+    patch_json_for_tests(single_img_pth, studio_json_pth, single_object_studio_json_pth, vulcan_json_pth)
 
     # Build input dictionnary for easier handling
     INPUTS = {
@@ -179,7 +179,3 @@ def run_cmd(cmds, inp, outputs, *args, **kwargs):
                 absolute_outputs.append(os.path.join(tmpdir, output))
         run(cmds + ['-i', inp, '-o'] + absolute_outputs + ['-r', 'fashion-v4'] + extra_opts)
         check_directory(tmpdir, *args, **kwargs)
-
-
-if __name__ == '__main__':
-    init_files_setup()

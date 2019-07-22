@@ -43,58 +43,6 @@ VULCAN_JSON_SCHEMA = {
     }
 }
 
-# Define the studio json format
-STUDIO_JSON_SCHEMA = {
-    "type": "object",
-    "required": ["tags", "images"],
-    "properties": {
-        "tags": {
-            "type": "array",
-            "items": {"type": "string"}
-        },
-        "images": {
-            "type": "array",
-            "items": {
-                "type": "object",
-                "required": ["location", "annotated_regions"],
-                "properties": {
-                    "location": {"type": "string"},
-                    "data": {"type": "object"},
-                    "annotated_regions": {
-                        "type": "array",
-                        "items": {
-                            "type": "object",
-                            "required": ["tags", "region_type"],
-                            "properties": {
-                                "tags": {
-                                    "type": "array",
-                                    "items": {"type": "string"}
-                                },
-                                "region_type": {
-                                    "type": "string",
-                                    "enum": ["Box", "Whole"]
-                                },
-                                "score": {"type": "number"},
-                                "threshold": {"type": "number"},
-                                "region": {
-                                    "type": "object",
-                                    "required": ["xmin", "xmax", "ymin", "ymax"],
-                                    "properties": {
-                                        "xmin": {"type": "number"},
-                                        "xmax": {"type": "number"},
-                                        "ymin": {"type": "number"},
-                                        "ymax": {"type": "number"}
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
 # Define the single object studio json format
 SINGLE_OBJECT_STUDIO_JSON_SCHEMA = {
     "type": "object",
@@ -130,6 +78,22 @@ SINGLE_OBJECT_STUDIO_JSON_SCHEMA = {
                     }
                 }
             }
+        }
+    }
+}
+
+# Define the studio json format
+STUDIO_JSON_SCHEMA = {
+    "type": "object",
+    "required": ["tags", "images"],
+    "properties": {
+        "tags": {
+            "type": "array",
+            "items": {"type": "string"}
+        },
+        "images": {
+            "type": "array",
+            "items": SINGLE_OBJECT_STUDIO_JSON_SCHEMA
         }
     }
 }

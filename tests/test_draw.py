@@ -101,9 +101,9 @@ def test_e2e_video_draw_video_fps():
     run_draw(INPUTS['VIDEO'], [OUTPUTS['VIDEO']], expect_nb_video=1, extra_opts=['--input_fps', '2'])
 
 
+@pytest.mark.skip(reason="window not handled by test")
 def test_e2e_image_draw_image_window():
-    return  # window not handled by test
-    # run_draw(INPUTS['IMAGE'], [OUTPUTS['WINDOW']], expect_nb_image=1, extra_opts=['--fullscreen'])
+    run_draw(INPUTS['IMAGE'], [OUTPUTS['WINDOW']], expect_nb_image=1, extra_opts=['--fullscreen'])
 
 
 def test_e2e_image_draw_image_scores():

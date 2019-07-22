@@ -157,7 +157,8 @@ class SendInferenceGreenlet(thread_base.Greenlet):
             frame.inference_async_result = self.workflow.infer(frame.buf_bytes, self.push_client, frame.name)
             return frame
         except InferenceError as e:
-            LOGGER.error('Error getting predictions for frame {}'.format(frame))
+            LOGGER.error('Error getting predictions for frame {}: {}'.format(frame, e))
+            return None
 
 
 class ResultInferenceGreenlet(thread_base.Greenlet):
