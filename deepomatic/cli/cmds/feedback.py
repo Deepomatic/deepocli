@@ -73,7 +73,7 @@ def main(args):
     # Retrieve arguments
     dataset_name = args.get('dataset')
 
-    paths = args.get('path', [])
+    paths = args.get('input', [])
     json_file = args.get('json_file', False)
     recursive = args.get('recursive', False)
 

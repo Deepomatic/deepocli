@@ -6,7 +6,7 @@ from .cmds.feedback import main as feedback
 from .input_data import input_loop
 from .cmds.infer import BlurImagePostprocessing, DrawImagePostprocessing
 from .version import __version__, __title__
-from .common import SUPPORTED_IMAGE_OUTPUT_FORMAT, SUPPORTED_VIDEO_OUTPUT_FORMAT, SUPPORTED_IMAGE_INPUT_FORMAT, SUPPORTED_VIDEO_INPUT_FORMAT, SUPPORTED_PROTOCOLS_INPUT
+from .common import SUPPORTED_IMAGE_OUTPUT_FORMAT, SUPPORTED_VIDEO_OUTPUT_FORMAT, SUPPORTED_IMAGE_INPUT_FORMAT, SUPPORTED_VIDEO_INPUT_FORMAT, SUPPORTED_PROTOCOLS_INPUT, SUPPORTED_FILE_INPUT_FORMAT
 
 
 class ParserWithHelpOnError(argparse.ArgumentParser):
@@ -71,7 +71,7 @@ def argparser_init():
 
     add_images_parser.add_argument('-d', '--dataset', required=True, help="Deepomatic Studio dataset name.", type=str)
     add_images_parser.add_argument('-o', '--organization', required=True, help="Deepomatic Studio organization slug.", type=str)
-    add_images_parser.add_argument('path', type=str, nargs='+', help='Path to an image file, images directory or json file or directory.')
+    add_images_parser.add_argument('-i', '--input', type=str, nargs='+', required=True, help="One or several input path, either an image or video file (*{}), a directory, or a Studio or Vulcan json (*.json).".format(', *'.join(SUPPORTED_FILE_INPUT_FORMAT)))
     add_images_parser.add_argument('--json', dest='json_file', action='store_true', help='Look for JSON files instead of images.')
 
     return argparser
