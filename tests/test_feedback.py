@@ -35,10 +35,6 @@ def test_2e2_studio_json_upload():
     run_add_images(INPUTS['STUDIO_JSON'], extra_opts=['--json'])
 
 
-def test_2e2_single_object_studio_json_upload():
-    run_add_images(INPUTS['SINGLE_OBJECT_STUDIO_JSON'], extra_opts=['--json'])
-
-
 # ------- Special Options Tests -------------------------------------------------------------------------------------- #
 
 

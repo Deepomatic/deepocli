@@ -102,17 +102,12 @@ def save_json_to_file(json_data, json_pth):
         json.dump(json_data, json_file)
 
 
-def patch_json_for_tests(image_path, studio_json, single_object_studio_json, vulcan_json):
+def patch_json_for_tests(image_path, studio_json, vulcan_json):
     """Update the image path in test files"""
     # Patch studio JSON
     json_data = load_json_from_file(studio_json)
     json_data['images'][0]['location'] = image_path
     save_json_to_file(json_data, studio_json)
-
-    # Patch single object JSON
-    json_data = load_json_from_file(single_object_studio_json)
-    json_data['location'] = image_path
-    save_json_to_file(json_data, single_object_studio_json)
 
     # Patch vulcan JSON
     json_data = load_json_from_file(vulcan_json)
@@ -143,12 +138,11 @@ def init_files_setup():
     img3_pth = download(tmpdir, 'https://s3-eu-west-1.amazonaws.com/deepo-tests/vulcain/images/test.jpg', 'img_dir/subdir/img3.jpg')
     vulcan_json_pth = download(tmpdir, 'https://s3-eu-west-1.amazonaws.com/deepo-tests/vulcain/json/vulcan.json', 'vulcan.json')
     studio_json_pth = download(tmpdir, 'https://s3-eu-west-1.amazonaws.com/deepo-tests/vulcain/json/studio.json', 'studio.json')
-    single_object_studio_json_pth = download(tmpdir, 'https://s3-eu-west-1.amazonaws.com/deepo-tests/vulcain/json/single_object_studio.json', 'single_object_studio.json')
     offline_pred_pth = download(tmpdir, 'https://s3-eu-west-1.amazonaws.com/deepo-tests/vulcain/json/offline_pred.json', 'offline_pred.json')
     img_dir_pth = os.path.dirname(img1_pth)
 
     # Update json for path to match
-    patch_json_for_tests(single_img_pth, studio_json_pth, single_object_studio_json_pth, vulcan_json_pth)
+    patch_json_for_tests(single_img_pth, studio_json_pth, vulcan_json_pth)
 
     # Build input dictionnary for easier handling
     INPUTS = {
@@ -158,7 +152,6 @@ def init_files_setup():
         'STUDIO_JSON': studio_json_pth,
         'OFFLINE_PRED': offline_pred_pth,
         'VULCAN_JSON': vulcan_json_pth,
-        'SINGLE_OBJECT_STUDIO_JSON': single_object_studio_json_pth
     }
     return INPUTS
 

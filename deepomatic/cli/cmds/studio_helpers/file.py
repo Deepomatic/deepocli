@@ -6,7 +6,7 @@ import logging
 from .vulcan2studio import transform_json_from_vulcan_to_studio
 from ...thread_base import Greenlet
 from ...common import SUPPORTED_IMAGE_INPUT_FORMAT, SUPPORTED_VIDEO_INPUT_FORMAT
-from ...json_schema import is_valid_studio_json, is_valid_single_object_studio_json, is_valid_vulcan_json
+from ...json_schema import is_valid_studio_json, is_valid_vulcan_json
 from ...exceptions import DeepoOpenJsonError, DeepoUploadJsonError
 
 
@@ -109,18 +109,8 @@ class DatasetFiles(object):
                 elif is_valid_vulcan_json(json_data):
                     LOGGER.warning("Vulcan JSON {} validated and transformed to Studio format".format(upload_file))
                     studio_json = transform_json_from_vulcan_to_studio(json_data)
-                # If it's a Single studio object json, transform it to Studio
-                elif is_valid_single_object_studio_json(json_data):
-                    LOGGER.warning("Single object Studio JSON {} validated and transformed to Studio format".format(upload_file))
-                    _, ext = os.path.splitext(json_data['location'])
-                    if ext.lower() in SUPPORTED_IMAGE_INPUT_FORMAT:
-                        studio_json = {'images': [json_data]}
-                    elif ext.lower() in SUPPORTED_VIDEO_INPUT_FORMAT:
-                        studio_json = {'videos': [json_data]}
-                    else:
-                        raise DeepoUploadJsonError("Upload JSON file {} is not a supported input".format(upload_file))
                 else:
-                    raise DeepoUploadJsonError("Upload JSON file {} is neither a proper Studio, Single Object Studio or Vulcan JSON file".format(upload_file))
+                    raise DeepoUploadJsonError("Upload JSON file {} is neither a proper Studio or Vulcan JSON file".format(upload_file))
 
                 # Add files to the queue
                 for ftype in ['images', 'videos']:
