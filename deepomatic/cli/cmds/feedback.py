@@ -41,7 +41,7 @@ def get_all_files_with_ext(path, supported_ext, recursive=True):
             if recursive:
                 all_files.extend(get_all_files_with_ext(file_path, supported_ext))
             elif os.path.isfile(file_path) and os.path.splitext(file_path)[1].lower() in supported_ext:
-                    all_files.append(file_path)
+                all_files.append(file_path)
     else:
         raise RuntimeError("The path {} is neither a supported file {} nor a directory".format(path, supported_ext))
 
