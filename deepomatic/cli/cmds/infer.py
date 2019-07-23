@@ -43,16 +43,13 @@ class DrawImagePostprocessing(object):
         tag_drawn = 0  # Used to store the number of tags already drawn
         for pred in frame.predictions['outputs'][0]['labels']['predicted']:
             # Build legend
-            label_name = pred['label_name']
-            label_score = str(round(pred['score'], SCORE_DECIMAL_PRECISION))
+            label = u''
+            if self._draw_labels:
+                label = pred['label_name']
             if self._draw_labels and self._draw_scores:
-                label = u'{} {}'.format(label_name, label_score)
-            elif self._draw_labels:
-                label = u'{}'.format(label_name)
-            elif self._draw_scores:
-                label = u'{}'.format(label_score)
-            else:
-                label = u''
+                label += ' '
+            if self._draw_scores:
+                label += str(round(pred['score'], SCORE_DECIMAL_PRECISION))
             # Make sure labels are ascii because cv2.FONT_HERSHEY_SIMPLEX doesn't support non-ascii
             label = unidecode(label)
 
