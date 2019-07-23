@@ -69,7 +69,7 @@ def check_directory(directory,
         elif path.endswith('.mp4'):
             nb_video += 1
         elif os.path.isdir(path):
-            nb_dir += 1
+            nb_subdir += 1
     assert expect_nb_json == nb_json
     assert expect_nb_image == nb_image
     assert expect_nb_video == nb_video
@@ -78,15 +78,14 @@ def check_directory(directory,
     # Then check subdirectories
     if expect_subir:
         for path in os.listdir(directory):
-            if os.path.isdir(path):
-                if os.path.basename(os.path.normpath(path)) in expect_subir:
-                    check_directory(
-                        path,
-                        expect_nb_json=expect_subir[path].get('json', 0),
-                        expect_nb_image=expect_subir[path].get('image', 0),
-                        expect_nb_video=expect_subir[path].get('video', 0),
-                        expect_nb_subdir=expect_subir[path].get('subdir', 0)
-                    )
+            if os.path.isdir(path) and os.path.basename(os.path.normpath(path)) in expect_subir:
+                check_directory(
+                    path,
+                    expect_nb_json=expect_subir[path].get('json', 0),
+                    expect_nb_image=expect_subir[path].get('image', 0),
+                    expect_nb_video=expect_subir[path].get('video', 0),
+                    expect_nb_subdir=expect_subir[path].get('subdir', 0)
+                )
 
 
 def load_json_from_file(json_pth):
@@ -129,17 +128,21 @@ def init_files_setup():
     ├── studio.json
     └── video.mp4
     """
-    # Download all fies
+    # Make temporary directory for file storage
     tmpdir = tempfile.mkdtemp()
+
+    # Download image and video files
     single_img_pth = download(tmpdir, 'https://s3-eu-west-1.amazonaws.com/deepo-tests/vulcain/images/test.jpg', 'single_img.jpg')
     video_pth = download(tmpdir, 'https://s3-eu-west-1.amazonaws.com/deepo-tests/vulcain/videos/test.mp4', 'video.mp4')
-    img1_pth = download(tmpdir, 'https://s3-eu-west-1.amazonaws.com/deepo-tests/vulcain/images/test.jpg', 'img_dir/img1.jpg')
-    img2_pth = download(tmpdir, 'https://s3-eu-west-1.amazonaws.com/deepo-tests/vulcain/images/test.jpg', 'img_dir/img2.jpg')
-    img3_pth = download(tmpdir, 'https://s3-eu-west-1.amazonaws.com/deepo-tests/vulcain/images/test.jpg', 'img_dir/subdir/img3.jpg')
+    img_pth = download(tmpdir, 'https://s3-eu-west-1.amazonaws.com/deepo-tests/vulcain/images/test.jpg', 'img_dir/img1.jpg')
+    download(tmpdir, 'https://s3-eu-west-1.amazonaws.com/deepo-tests/vulcain/images/test.jpg', 'img_dir/img2.jpg')
+    download(tmpdir, 'https://s3-eu-west-1.amazonaws.com/deepo-tests/vulcain/images/test.jpg', 'img_dir/subdir/img3.jpg')
+
+    # Download JSON files
     vulcan_json_pth = download(tmpdir, 'https://s3-eu-west-1.amazonaws.com/deepo-tests/vulcain/json/vulcan.json', 'vulcan.json')
     studio_json_pth = download(tmpdir, 'https://s3-eu-west-1.amazonaws.com/deepo-tests/vulcain/json/studio.json', 'studio.json')
     offline_pred_pth = download(tmpdir, 'https://s3-eu-west-1.amazonaws.com/deepo-tests/vulcain/json/offline_pred.json', 'offline_pred.json')
-    img_dir_pth = os.path.dirname(img1_pth)
+    img_dir_pth = os.path.dirname(img_pth)
 
     # Update json for path to match
     patch_json_for_tests(single_img_pth, studio_json_pth, vulcan_json_pth)
@@ -164,7 +167,6 @@ def run_cmd(cmds, inp, outputs, *args, **kwargs):
             if output in {OUTPUTS['STD'], OUTPUTS['WINDOW']}:
                 absolute_outputs.append(output)
             elif output == OUTPUTS['DIR']:
-                check_subdir = True
                 output_dir = os.path.join(tmpdir, OUTPUTS['DIR'])
                 os.makedirs(output_dir)
                 absolute_outputs.append(output_dir)

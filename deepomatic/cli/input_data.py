@@ -91,12 +91,10 @@ def input_loop(kwargs, postprocessing=None):
     #   3) If none is set:
     #       * If the input is not a video, do nothing and use the default DEFAULT_FPS output value
     #       * If the input is a video, use the input fps as the output fps
-    if kwargs['input_fps'] and kwargs['output_fps']:
-        pass
-    elif kwargs['input_fps']:
+    if kwargs['input_fps'] and not kwargs['output_fps']:
         kwargs['output_fps'] = kwargs['input_fps']
         LOGGER.info('Input fps of {} specified, but no output fps specified. Using same value for both.'.format(kwargs['input_fps']))
-    elif kwargs['output_fps']:
+    elif kwargs['output_fps'] and not kwargs['input_fps']:
         kwargs['input_fps'] = kwargs['output_fps']
         LOGGER.info('Output fps of {} specified, but no input fps specified. Using same value for both.'.format(kwargs['output_fps']))
 
@@ -119,7 +117,7 @@ def input_loop(kwargs, postprocessing=None):
     # TODO: might need to rethink the whole pipeling for infinite streams
     # IMPORTANT: maxsize is important, it allows to regulate the pipeline and avoid to pushes too many requests to rabbitmq when we are already waiting for many results
     queue_cls = LifoQueue if inputs.is_infinite() else Queue
-    queues = [queue_cls(maxsize=QUEUE_MAX_SIZE) for i in range(4)]
+    queues = [queue_cls(maxsize=QUEUE_MAX_SIZE) for _ in range(4)]
 
     # Initialize workflow for mutual use between send inference pool and result inference pool
     try:

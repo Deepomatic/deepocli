@@ -109,18 +109,17 @@ class HTTPHelper(object):
         return new_data, files
 
     def make_request(self, func, resource, params=None, data=None, content_type='application/json', files=None, stream=False, *args, **kwargs):
-        if isinstance(data, dict) or isinstance(data, list):
-            if content_type is not None:
-                if content_type.strip() == 'application/json':
-                    data = json.dumps(data)
-                elif content_type.strip() == 'multipart/mixed':
-                    content_type = None  # will be automatically set to multipart
-                    data, files = self.dump_json_for_multipart(data, files)
-                elif content_type.strip() == 'multipart/form':
-                    headers = None
-                    content_type = None  # let requests detect the content_type
-                else:
-                    raise RuntimeError("Unsupported Content-Type")
+        if (isinstance(data, dict) or isinstance(data, list)) and content_type is not None:
+            if content_type.strip() == 'application/json':
+                data = json.dumps(data)
+            elif content_type.strip() == 'multipart/mixed':
+                content_type = None  # will be automatically set to multipart
+                data, files = self.dump_json_for_multipart(data, files)
+            elif content_type.strip() == 'multipart/form':
+                headers = None
+                content_type = None  # let requests detect the content_type
+            else:
+                raise RuntimeError("Unsupported Content-Type")
 
         headers = self.setup_headers(content_type=content_type)
         params = self.format_params(params)

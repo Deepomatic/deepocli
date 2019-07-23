@@ -94,9 +94,8 @@ class ThreadBase(object):
         return try_lock(self.processing_item_lock)
 
     def can_stop(self):
-        if self.input_queue is not None:
-            if not self.input_queue.empty():
-                return False
+        if self.input_queue is not None and not self.input_queue.empty():
+            return False
         return True
 
     def stop(self):
