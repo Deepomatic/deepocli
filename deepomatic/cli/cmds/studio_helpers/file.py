@@ -28,9 +28,16 @@ class UploadImageGreenlet(Greenlet):
         meta = {}
         for file in batch:
             try:
+                # Update file
                 files.update({file['key']: open(file['path'], 'rb')})
-                if 'meta' in file:
-                    meta.update({file['key']: file['meta']})
+
+                # Update corresponding metadata
+                file_meta = file.get('meta', {})
+                if 'data' in file_meta:
+                    file_meta['data']['Original File name'] = file['path']
+                else:
+                    file_meta['data'] = {'Original file name': file['path']}
+                meta.update({file['key']: file_meta})
             except RuntimeError as e:
                 LOGGER.error('Something when wrong with {}: {}. Skipping it.'.format(file['path'], e))
         try:
