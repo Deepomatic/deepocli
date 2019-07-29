@@ -34,7 +34,7 @@ class UploadImageGreenlet(Greenlet):
                 # Update corresponding metadata
                 file_meta = file.get('meta', {})
                 if 'data' in file_meta:
-                    file_meta['data']['Original File name'] = file['path']
+                    file_meta['data']['Original file name'] = file['path']
                 else:
                     file_meta['data'] = {'Original file name': file['path']}
                 meta.update({file['key']: file_meta})
