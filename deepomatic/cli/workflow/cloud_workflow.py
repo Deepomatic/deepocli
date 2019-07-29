@@ -6,9 +6,11 @@ from .. import common, exceptions
 import deepomatic.api.client
 import deepomatic.api.inputs
 from ..version import __title__, __version__
-from deepomatic.api.exceptions import TaskError, TaskTimeout
+from deepomatic.api.exceptions import TaskError, TaskTimeout, BadStatus
+
 
 LOGGER = logging.getLogger(__name__)
+API_MAX_RETRY = 3  # Number of times to retry and API call on BadStatus
 
 
 class CloudRecognition(AbstractWorkflow):
@@ -49,8 +51,14 @@ class CloudRecognition(AbstractWorkflow):
 
     def infer(self, encoded_image_bytes, _useless_push_client, _useless_frame_name):
         # _useless_push_client and _useless_frame_name are used for the rpc and json workflows
-        return self.InferResult(self._model.inference(
-            inputs=[deepomatic.api.inputs.ImageInput(encoded_image_bytes, encoding="binary")],
-            show_discarded=True,
-            return_task=True,
-            wait_task=False))
+        for n_try in range(0, API_MAX_RETRY):
+            try:
+                return self.InferResult(self._model.inference(
+                    inputs=[deepomatic.api.inputs.ImageInput(encoded_image_bytes, encoding="binary")],
+                    show_discarded=True,
+                    return_task=True,
+                    wait_task=False))
+            except BadStatus as e:
+                LOGGER.error("API raised a bad status code {} on try {}/{}".format(e.status_code, n_try + 1, API_MAX_RETRY))
+                if n_try == API_MAX_RETRY - 1:
+                    raise e
