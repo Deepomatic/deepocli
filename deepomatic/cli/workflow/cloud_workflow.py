@@ -1,5 +1,7 @@
 import os
 import sys
+import time
+import gevent
 import logging
 from .workflow_abstraction import AbstractWorkflow, InferenceError, InferenceTimeout
 from .. import common, exceptions
@@ -10,7 +12,8 @@ from deepomatic.api.exceptions import TaskError, TaskTimeout, BadStatus
 
 
 LOGGER = logging.getLogger(__name__)
-API_MAX_RETRY = 3  # Number of times to retry and API call on BadStatus
+API_MAX_RETRY = 5  # Number of API call retry on BadStatus
+API_RETRY_SLEEP_TIME = 0.2  # Time to wait between API call retry in seconds
 
 
 class CloudRecognition(AbstractWorkflow):
@@ -59,6 +62,8 @@ class CloudRecognition(AbstractWorkflow):
                     return_task=True,
                     wait_task=False))
             except BadStatus as e:
-                LOGGER.error("API raised a bad status code {} on try {}/{}".format(e.status_code, n_try + 1, API_MAX_RETRY))
+                LOGGER.warning("API raised a bad status code {} on try {}/{}".format(e.status_code, n_try + 1, API_MAX_RETRY))
+                gevent.sleep(API_RETRY_SLEEP_TIME)
                 if n_try == API_MAX_RETRY - 1:
+                    LOGGER.error("Maximum number of API call retry exceeded with bad status code {}".format(e.status_code))
                     raise e
