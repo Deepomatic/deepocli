@@ -1,6 +1,5 @@
 import os
 import sys
-import time
 import gevent
 import logging
 from .workflow_abstraction import AbstractWorkflow, InferenceError, InferenceTimeout
