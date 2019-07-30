@@ -156,8 +156,17 @@ class ThreadBase(object):
                             msg_in = self.pop_input()
                         except Empty:
                             empty = True
+
                     if self.input_queue is None or not empty:
-                        msg_out = self.process_msg(msg_in)
+                        try:
+                            msg_out = self.process_msg(msg_in)
+                        except Exception as e:
+                            msg_out = None
+                            if msg_in is None:
+                                LOGGER.error("Encountered an unexpected exception during routine: {}".format(e))
+                            else:
+                                LOGGER.error("Encountered an unexpected exception during handling of frame {}, skipping it: {}".format(msg_in.name, e))
+
                         if msg_out is not None:
                             self.put_to_output(msg_out)
             if empty:
@@ -299,7 +308,18 @@ class MainLoop(object):
             return
         if self.cleanup_func is not None:
             self.cleanup_func()
-        self.pbar.close()
+
+        # If needed, display the number of errors
+        total_inputs = self.pbar.total
+        inputs_without_error = self.pbar.n
+        if total_inputs != inputs_without_error:
+            self.pbar.update(total_inputs - inputs_without_error)
+            self.pbar.close()
+            LOGGER.warning('Encountered an unexpected exception during handling of {} frames out of {}'.format(
+                total_inputs - inputs_without_error, total_inputs
+            ))
+        else:
+            self.pbar.close()
         self.cleaned = True
 
     def run_forever(self):
