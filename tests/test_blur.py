@@ -26,7 +26,7 @@ def run_blur(*args, **kwargs):
         ([OUTPUTS['STR_WILDCARD_JSON']], {'expect_nb_json': 1}),
         ([OUTPUTS['NO_WILDCARD_JSON']], {'expect_nb_json': 1}),
         ([OUTPUTS['DIR']], {'expect_subir': {OUTPUTS['DIR']: {'expect_nb_image': 1}}}),
-        (OUTPUTS['ALL'], {'expect_nb_json': 1, 'expect_nb_image': 1, 'expect_nb_video': 1, 'expect_subir': {OUTPUTS['DIR']: {'expect_nb_image': 1}}})
+        (OUTPUTS['ALL'], {'expect_nb_json': 3, 'expect_nb_image': 1, 'expect_nb_video': 1, 'expect_subir': {OUTPUTS['DIR']: {'expect_nb_image': 1}}})
     ]
 )
 def test_e2e_image_blur(outputs, expected):
@@ -46,7 +46,7 @@ def test_e2e_image_blur(outputs, expected):
         ([OUTPUTS['STR_WILDCARD_JSON']], {'expect_nb_json': 21}),
         ([OUTPUTS['NO_WILDCARD_JSON']], {'expect_nb_json': 1}),
         ([OUTPUTS['DIR']], {'expect_subir': {OUTPUTS['DIR']: {'expect_nb_image': 21}}}),
-        (OUTPUTS['ALL'], {'expect_nb_json': 21, 'expect_nb_image': 21, 'expect_nb_video': 1, 'expect_subir': {OUTPUTS['DIR']: {'expect_nb_image': 21}}})
+        (OUTPUTS['ALL'], {'expect_nb_json': 43, 'expect_nb_image': 21, 'expect_nb_video': 1, 'expect_subir': {OUTPUTS['DIR']: {'expect_nb_image': 21}}})
     ]
 )
 def test_e2e_video_blur(outputs, expected):
@@ -66,7 +66,7 @@ def test_e2e_video_blur(outputs, expected):
         ([OUTPUTS['STR_WILDCARD_JSON']], {'expect_nb_json': 2}),
         ([OUTPUTS['NO_WILDCARD_JSON']], {'expect_nb_json': 1}),
         ([OUTPUTS['DIR']], {'expect_subir': {OUTPUTS['DIR']: {'expect_nb_image': 2, 'expect_nb_subdir': 1}}}),
-        (OUTPUTS['ALL'], {'expect_nb_json': 2, 'expect_nb_image': 2, 'expect_nb_video': 1, 'expect_subir': {OUTPUTS['DIR']: {'expect_nb_image': 2, 'expect_nb_subdir': 1}}})
+        (OUTPUTS['ALL'], {'expect_nb_json': 5, 'expect_nb_image': 2, 'expect_nb_video': 1, 'expect_subir': {OUTPUTS['DIR']: {'expect_nb_image': 2, 'expect_nb_subdir': 1}}})
     ]
 )
 def test_e2e_directory_blur(outputs, expected):
@@ -86,7 +86,7 @@ def test_e2e_directory_blur(outputs, expected):
         ([OUTPUTS['STR_WILDCARD_JSON']], {'expect_nb_json': 1}),
         ([OUTPUTS['NO_WILDCARD_JSON']], {'expect_nb_json': 1}),
         ([OUTPUTS['DIR']], {'expect_subir': {OUTPUTS['DIR']: {'expect_nb_image': 1}}}),
-        (OUTPUTS['ALL'], {'expect_nb_json': 1, 'expect_nb_image': 1, 'expect_nb_video': 1, 'expect_subir': {OUTPUTS['DIR']: {'expect_nb_image': 1}}})
+        (OUTPUTS['ALL'], {'expect_nb_json': 3, 'expect_nb_image': 1, 'expect_nb_video': 1, 'expect_subir': {OUTPUTS['DIR']: {'expect_nb_image': 1}}})
     ]
 )
 def test_e2e_json_blur(outputs, expected):
