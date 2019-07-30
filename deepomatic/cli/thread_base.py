@@ -312,7 +312,7 @@ class MainLoop(object):
         # If needed, display the number of errors
         total_inputs = self.pbar.total
         inputs_without_error = self.pbar.n
-        if total_inputs != inputs_without_error:
+        if inputs_without_error < total_inputs:
             self.pbar.update(total_inputs - inputs_without_error)
             self.pbar.close()
             LOGGER.warning('Encountered an unexpected exception during handling of {} frames out of {}'.format(
