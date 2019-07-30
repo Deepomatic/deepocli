@@ -22,7 +22,9 @@ def run_draw(*args, **kwargs):
         ([OUTPUTS['IMAGE']], {'expect_nb_image': 1}),
         ([OUTPUTS['VIDEO']], {'expect_nb_video': 1}),
         ([OUTPUTS['STD']], {}),
-        ([OUTPUTS['JSON']], {'expect_nb_json': 1}),
+        ([OUTPUTS['INT_WILDCARD_JSON']], {'expect_nb_json': 1}),
+        ([OUTPUTS['STR_WILDCARD_JSON']], {'expect_nb_json': 1}),
+        ([OUTPUTS['NO_WILDCARD_JSON']], {'expect_nb_json': 1}),
         ([OUTPUTS['DIR']], {'expect_subir': {OUTPUTS['DIR']: {'expect_nb_image': 1}}}),
         (OUTPUTS['ALL'], {'expect_nb_json': 1, 'expect_nb_image': 1, 'expect_nb_video': 1, 'expect_subir': {OUTPUTS['DIR']: {'expect_nb_image': 1}}})
     ]
@@ -40,7 +42,9 @@ def test_e2e_image_draw(outputs, expected):
         ([OUTPUTS['IMAGE']], {'expect_nb_image': 21}),
         ([OUTPUTS['VIDEO']], {'expect_nb_video': 1}),
         ([OUTPUTS['STD']], {}),
-        ([OUTPUTS['JSON']], {'expect_nb_json': 21}),
+        ([OUTPUTS['INT_WILDCARD_JSON']], {'expect_nb_json': 21}),
+        ([OUTPUTS['STR_WILDCARD_JSON']], {'expect_nb_json': 21}),
+        ([OUTPUTS['NO_WILDCARD_JSON']], {'expect_nb_json': 1}),
         ([OUTPUTS['DIR']], {'expect_subir': {OUTPUTS['DIR']: {'expect_nb_image': 21}}}),
         (OUTPUTS['ALL'], {'expect_nb_json': 21, 'expect_nb_image': 21, 'expect_nb_video': 1, 'expect_subir': {OUTPUTS['DIR']: {'expect_nb_image': 21}}})
     ]
@@ -58,7 +62,9 @@ def test_e2e_video_draw(outputs, expected):
         ([OUTPUTS['IMAGE']], {'expect_nb_image': 2}),
         ([OUTPUTS['VIDEO']], {'expect_nb_video': 1}),
         ([OUTPUTS['STD']], {}),
-        ([OUTPUTS['JSON']], {'expect_nb_json': 2}),
+        ([OUTPUTS['INT_WILDCARD_JSON']], {'expect_nb_json': 2}),
+        ([OUTPUTS['STR_WILDCARD_JSON']], {'expect_nb_json': 2}),
+        ([OUTPUTS['NO_WILDCARD_JSON']], {'expect_nb_json': 1}),
         ([OUTPUTS['DIR']], {'expect_subir': {OUTPUTS['DIR']: {'expect_nb_image': 2, 'expect_nb_subdir': 1}}}),
         (OUTPUTS['ALL'], {'expect_nb_json': 2, 'expect_nb_image': 2, 'expect_nb_video': 1, 'expect_subir': {OUTPUTS['DIR']: {'expect_nb_image': 2, 'expect_nb_subdir': 1}}})
     ]
@@ -76,7 +82,9 @@ def test_e2e_directory_draw(outputs, expected):
         ([OUTPUTS['IMAGE']], {'expect_nb_image': 1}),
         ([OUTPUTS['VIDEO']], {'expect_nb_video': 1}),
         ([OUTPUTS['STD']], {}),
-        ([OUTPUTS['JSON']], {'expect_nb_json': 1}),
+        ([OUTPUTS['INT_WILDCARD_JSON']], {'expect_nb_json': 1}),
+        ([OUTPUTS['STR_WILDCARD_JSON']], {'expect_nb_json': 1}),
+        ([OUTPUTS['NO_WILDCARD_JSON']], {'expect_nb_json': 1}),
         ([OUTPUTS['DIR']], {'expect_subir': {OUTPUTS['DIR']: {'expect_nb_image': 1}}}),
         (OUTPUTS['ALL'], {'expect_nb_json': 1, 'expect_nb_image': 1, 'expect_nb_video': 1, 'expect_subir': {OUTPUTS['DIR']: {'expect_nb_image': 1}}})
     ]
@@ -119,7 +127,7 @@ def test_e2e_image_draw_image_scores_and_labels():
 
 
 def test_e2e_image_draw_json_studio():
-    run_draw(INPUTS['IMAGE'], [OUTPUTS['JSON']], expect_nb_json=1, studio_format=True, extra_opts=['--studio_format'])
+    run_draw(INPUTS['IMAGE'], [OUTPUTS['NO_WILDCARD_JSON']], expect_nb_json=1, studio_format=True, extra_opts=['--studio_format'])
 
 
 def test_e2e_image_draw_from_file():

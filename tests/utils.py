@@ -14,7 +14,9 @@ OUTPUTS = {
     'WINDOW': 'window',
     'IMAGE': 'image_output%04d.jpg',
     'VIDEO': 'video_output.mp4',
-    'JSON': 'test_output%04d.json',
+    'INT_WILDCARD_JSON': 'test_output%04d.json',
+    'STR_WILDCARD_JSON': 'test_output%s.json',
+    'NO_WILDCARD_JSON': 'test_output.json',
     'DIR': 'output_dir'
 }
 OUTPUTS['ALL'] = [output for output in list(OUTPUTS.values()) if output != 'window']
