@@ -248,15 +248,24 @@ class JsonOutputData(OutputData):
         super(JsonOutputData, self).__init__(descriptor, **kwargs)
         self._i = 0
         self._to_studio_format = kwargs.get('studio_format')
-        # Check if the output is a wild card or not
+        # Check if the output is a string wildcard
         try:
-            descriptor % self._i
+            descriptor % 'string'
+            self._wildcard_type = 'string'
             self._all_predictions = None
         except TypeError:
-            if self._to_studio_format:
-                self._all_predictions = {'tags': [], 'images': []}
-            else:
-                self._all_predictions = []
+            # Check if the output is an integer wildcard
+            try:
+                descriptor % 0
+                self._wildcard_type = 'integer'
+                self._all_predictions = None
+            # Otherwise it's a pure json
+            except TypeError:
+                self._wildcard_type = None
+                if self._to_studio_format:
+                    self._all_predictions = {'tags': [], 'images': []}
+                else:
+                    self._all_predictions = []
 
     def close(self):
         if self._all_predictions is not None:
@@ -285,7 +294,10 @@ class JsonOutputData(OutputData):
                 self._all_predictions.append(predictions)
         # Otherwise we write them to file directly
         else:
-            json_path = os.path.splitext(self._descriptor % self._i)[0]
+            if self._wildcard_type == 'integer':
+                json_path = os.path.splitext(self._descriptor % self._i)[0]
+            elif self._wildcard_type == 'string':
+                json_path = os.path.splitext(self._descriptor % frame.name)[0]
             save_json_to_file(predictions, json_path)
 
 
