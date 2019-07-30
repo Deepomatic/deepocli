@@ -65,7 +65,10 @@ def check_directory(directory,
                     assert 'tags' in data
                     assert 'images' in data
                 else:
-                    assert 'outputs' in data
+                    if expect_nb_json == 1:
+                        assert (isinstance(data, dict) and 'outputs' in data)
+                    else:
+                        assert (isinstance(data, list) and len(data) > 1 and 'outputs' in data[0])
         elif path.endswith(('.jpg', '.jpeg')):
             nb_image += 1
         elif path.endswith('.mp4'):
