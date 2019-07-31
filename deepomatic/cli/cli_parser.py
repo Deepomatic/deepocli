@@ -73,6 +73,7 @@ def argparser_init():
     add_images_parser.add_argument('-o', '--organization', required=True, help="Deepomatic Studio organization slug.", type=str)
     add_images_parser.add_argument('-i', '--input', type=str, nargs='+', required=True, help="One or several input path, either an image or video file (*{}), a directory, or a Studio or Vulcan json (*.json).".format(', *'.join(SUPPORTED_FILE_INPUT_FORMAT)))
     add_images_parser.add_argument('--json', dest='json_file', action='store_true', help='Look for JSON files instead of images.')
+    add_images_parser.add_argument('--show_path', dest='show_path', action='store_true', help='Add the relative path as metadata.')
 
     return argparser
 

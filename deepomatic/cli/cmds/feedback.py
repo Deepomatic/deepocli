@@ -75,6 +75,7 @@ def main(args):
     paths = args.get('input', [])
     json_file = args.get('json_file', False)
     recursive = args.get('recursive', False)
+    show_path = args.get('show_path', False)
 
     # Scan to find all files
     files = get_all_files(paths=paths, find_json=json_file, recursive=recursive)
@@ -94,7 +95,7 @@ def main(args):
 
     pools = [
         Pool(GREENLET_NUMBER, UploadImageGreenlet,
-             thread_args=(exit_event, queue, clt.http_helper, clt.task, pbar.update))
+             thread_args=(exit_event, queue, clt.http_helper, clt.task, pbar.update, show_path))
     ]
 
     # Start uploading
