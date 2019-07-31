@@ -68,7 +68,7 @@ def check_directory(directory,
                     if isinstance(data, dict):
                         assert 'outputs' in data
                     elif isinstance(data, list):
-                        assert len(data) > 1 and 'outputs' in data[0]
+                        assert len(data) == 0 or 'outputs' in data[0]
         elif path.endswith(('.jpg', '.jpeg')):
             nb_image += 1
         elif path.endswith('.mp4'):

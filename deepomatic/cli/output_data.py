@@ -277,9 +277,6 @@ class JsonOutputData(OutputData):
 
     def close(self):
         if self._all_predictions is not None:
-            # If we have only one element, make it a pure Vulcan JSON
-            if len(self._all_predictions) == 1:
-                self._all_predictions = self._all_predictions[0]
             json_path = os.path.splitext(self._descriptor)[0]
             save_json_to_file(self._all_predictions, json_path)
 
