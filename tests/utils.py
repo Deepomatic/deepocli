@@ -14,7 +14,9 @@ OUTPUTS = {
     'WINDOW': 'window',
     'IMAGE': 'image_output%04d.jpg',
     'VIDEO': 'video_output.mp4',
-    'JSON': 'test_output%04d.json',
+    'INT_WILDCARD_JSON': 'test_output%04d.json',
+    'STR_WILDCARD_JSON': 'test_output%s.json',
+    'NO_WILDCARD_JSON': 'test_output.json',
     'DIR': 'output_dir'
 }
 OUTPUTS['ALL'] = [output for output in list(OUTPUTS.values()) if output != 'window']
@@ -63,7 +65,10 @@ def check_directory(directory,
                     assert 'tags' in data
                     assert 'images' in data
                 else:
-                    assert 'outputs' in data
+                    if isinstance(data, dict):
+                        assert 'outputs' in data
+                    elif isinstance(data, list):
+                        assert len(data) == 0 or 'outputs' in data[0]
         elif path.endswith(('.jpg', '.jpeg')):
             nb_image += 1
         elif path.endswith('.mp4'):

@@ -1,9 +1,9 @@
 import os
 import sys
-import logging
 import json
 import cv2
 import imutils
+import logging
 import traceback
 from .thread_base import Thread
 from .common import Empty, write_frame_to_disk, SUPPORTED_IMAGE_OUTPUT_FORMAT, SUPPORTED_VIDEO_OUTPUT_FORMAT
@@ -238,6 +238,13 @@ class DisplayOutputData(OutputData):
             cv2.waitKey(1)
 
 
+class WildCardType():
+    # Used to differentiate the different type of output json
+    NONE = None             # pred.json, not completed
+    INTEGER = 'integer'     # pred_%04d.json, completed with frame number
+    STRING = 'string'       # pred_%s.json, completed with frame name
+
+
 class JsonOutputData(OutputData):
     @classmethod
     def is_valid(cls, descriptor):
@@ -248,15 +255,25 @@ class JsonOutputData(OutputData):
         super(JsonOutputData, self).__init__(descriptor, **kwargs)
         self._i = 0
         self._to_studio_format = kwargs.get('studio_format')
-        # Check if the output is a wild card or not
+
+        # Check if the output is a string wildcard
         try:
-            descriptor % self._i
+            descriptor % 'string'
+            self._wildcard_type = WildCardType.STRING
             self._all_predictions = None
         except TypeError:
-            if self._to_studio_format:
-                self._all_predictions = {'tags': [], 'images': []}
-            else:
-                self._all_predictions = []
+            # Check if the output is an integer wildcard
+            try:
+                descriptor % 0
+                self._wildcard_type = WildCardType.INTEGER
+                self._all_predictions = None
+            # Otherwise it's a pure json
+            except TypeError:
+                self._wildcard_type = WildCardType.NONE
+                if self._to_studio_format:
+                    self._all_predictions = {'tags': [], 'images': []}
+                else:
+                    self._all_predictions = []
 
     def close(self):
         if self._all_predictions is not None:
@@ -285,7 +302,10 @@ class JsonOutputData(OutputData):
                 self._all_predictions.append(predictions)
         # Otherwise we write them to file directly
         else:
-            json_path = os.path.splitext(self._descriptor % self._i)[0]
+            if self._wildcard_type == WildCardType.INTEGER:
+                json_path = os.path.splitext(self._descriptor % self._i)[0]
+            elif self._wildcard_type == WildCardType.STRING:
+                json_path = os.path.splitext(self._descriptor % frame.name)[0]
             save_json_to_file(predictions, json_path)
 
 
