@@ -125,6 +125,7 @@ def init_files_setup():
     │   └── subdir
     │       └── img3.jpg
     ├── single_img.jpg
+    ├── single_img_corrupted.jpg
     ├── studio.json
     └── video.mp4
     """
@@ -133,6 +134,7 @@ def init_files_setup():
 
     # Download image and video files
     single_img_pth = download(tmpdir, 'https://s3-eu-west-1.amazonaws.com/deepo-tests/vulcain/images/test.jpg', 'single_img.jpg')
+    single_img_corrupted_pth = download(tmpdir, 'https://s3-eu-west-1.amazonaws.com/deepo-tests/vulcain/images/test_corrupted.jpg', 'single_img_corrupted.jpg')
     video_pth = download(tmpdir, 'https://s3-eu-west-1.amazonaws.com/deepo-tests/vulcain/videos/test.mp4', 'video.mp4')
     img_pth = download(tmpdir, 'https://s3-eu-west-1.amazonaws.com/deepo-tests/vulcain/images/test.jpg', 'img_dir/img1.jpg')
     download(tmpdir, 'https://s3-eu-west-1.amazonaws.com/deepo-tests/vulcain/images/test.jpg', 'img_dir/img2.jpg')
@@ -150,6 +152,7 @@ def init_files_setup():
     # Build input dictionnary for easier handling
     INPUTS = {
         'IMAGE': single_img_pth,
+        'IMAGE_CORRUPTED': single_img_corrupted_pth,
         'VIDEO': video_pth,
         'DIRECTORY': img_dir_pth,
         'STUDIO_JSON': studio_json_pth,

@@ -124,3 +124,7 @@ def test_e2e_image_draw_json_studio():
 
 def test_e2e_image_draw_from_file():
     run_draw(INPUTS['VIDEO'], [OUTPUTS['VIDEO']], expect_nb_video=1, extra_opts=['--from_file', INPUTS['OFFLINE_PRED']])
+
+
+def test_e2e_image_corrupted_draw_image():
+    run_draw(INPUTS['IMAGE_CORRUPTED'], [OUTPUTS['IMAGE']], expect_nb_image=0)

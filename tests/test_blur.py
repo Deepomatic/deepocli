@@ -124,3 +124,7 @@ def test_e2e_image_blur_json_studio():
 
 def test_e2e_image_blur_from_file():
     run_blur(INPUTS['VIDEO'], [OUTPUTS['VIDEO']], expect_nb_video=1, extra_opts=['--from_file', INPUTS['OFFLINE_PRED']])
+
+
+def test_e2e_image_corrupted_blur_image():
+    run_blur(INPUTS['IMAGE_CORRUPTED'], [OUTPUTS['IMAGE']], expect_nb_image=0)
