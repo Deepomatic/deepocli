@@ -14,7 +14,7 @@ from ..thread_base import Pool, MainLoop
 
 ###############################################################################
 
-GREENLET_NUMBER = 10
+GREENLET_NUMBER = int(os.getenv('DEEPOMATIC_GREENLET_NUMBER', 10))
 LOGGER = logging.getLogger(__name__)
 API_HOST = os.getenv('STUDIO_URL', 'https://studio.deepomatic.com/api/')
 
