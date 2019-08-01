@@ -301,22 +301,25 @@ class MainLoop(object):
         if self.cleanup_func is not None:
             self.cleanup_func()
 
-        # If needed, display the number of errors
+        # Compute the stats on number of errors
         total_inputs = self.pbar.total
         inputs_without_error = self.pbar.n
+
+        # Update progress bar to 100% and close it
         if inputs_without_error < total_inputs:
             self.pbar.update(total_inputs - inputs_without_error)
-            self.pbar.close()
-            if self.stop_asked:
-                LOGGER.warning('Handled {} frames out of {} before stopping.'.format(
-                    total_inputs - inputs_without_error, total_inputs
-                ))
-            else:
-                LOGGER.warning('Encountered an unexpected exception during handling of {} frames out of {}.'.format(
-                    total_inputs - inputs_without_error, total_inputs
-                ))
-        else:
-            self.pbar.close()
+        self.pbar.close()
+
+        # Display errors or images stopped if needed
+        if inputs_without_error < total_inputs and self.stop_asked:
+            LOGGER.warning('Handled {} frames out of {} before stopping.'.format(
+                total_inputs - inputs_without_error, total_inputs
+            ))
+        elif inputs_without_error < total_inputs:
+            LOGGER.warning('Encountered an unexpected exception during handling of {} frames out of {}.'.format(
+                total_inputs - inputs_without_error, total_inputs
+            ))
+
         self.cleaned = True
 
     def run_forever(self):
