@@ -138,13 +138,13 @@ class PrepareInferenceThread(thread_base.Thread):
     def process_msg(self, frame):
         try:
             _, buf = cv2.imencode('.jpg', frame.image)
-            buf_bytes = buf.tobytes()
-            frame.buf_bytes = buf_bytes
-            self.current_messages.add_frame(frame)
-            return frame
         except Exception as e:
             LOGGER.error('Could not decode image for frame {}: {}'.format(frame, e))
-        return None
+            return None
+        buf_bytes = buf.tobytes()
+        frame.buf_bytes = buf_bytes
+        self.current_messages.add_frame(frame)
+        return frame
 
 
 class SendInferenceGreenlet(thread_base.Greenlet):
