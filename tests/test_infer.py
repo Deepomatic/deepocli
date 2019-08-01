@@ -109,4 +109,4 @@ def test_e2e_image_infer_json_studio():
 
 
 def test_e2e_image_corrupted_infer_json():
-    run_infer(INPUTS['IMAGE_CORRUPTED'], [OUTPUTS['NO_WILDCARD_JSON']], expect_nb_json=0)
+    run_infer(INPUTS['IMAGE_CORRUPTED'], [OUTPUTS['INT_WILDCARD_JSON']], expect_nb_json=0)
