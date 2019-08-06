@@ -312,9 +312,7 @@ class MainLoop(object):
 
         # Display errors or images stopped if needed
         if inputs_without_error < total_inputs and self.stop_asked:
-            LOGGER.warning('Handled {} frames out of {} before stopping.'.format(
-                total_inputs - inputs_without_error, total_inputs
-            ))
+            LOGGER.warning('Handled {} frames out of {} before stopping.'.format(inputs_without_error, total_inputs))
         elif inputs_without_error < total_inputs:
             LOGGER.warning('Encountered an unexpected exception during handling of {} frames out of {}.'.format(
                 total_inputs - inputs_without_error, total_inputs
