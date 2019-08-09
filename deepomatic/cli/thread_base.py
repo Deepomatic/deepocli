@@ -302,7 +302,8 @@ class MainLoop(object):
             self.cleanup_func()
 
         # Compute the stats on number of errors
-        total_inputs = self.pbar.total
+        # pbar total may be None for infinite streams
+        total_inputs = float('inf') if self.pbar.total is None else self.pbar.total
         inputs_without_error = self.pbar.n
 
         # Update progress bar to 100% and close it
