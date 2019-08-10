@@ -148,7 +148,7 @@ def init_files_setup():
     # Download JSON files
     vulcan_json_pth = download(tmpdir, 'https://s3-eu-west-1.amazonaws.com/deepo-tests/vulcain/json/vulcan.json', 'vulcan.json')
     studio_json_pth = download(tmpdir, 'https://s3-eu-west-1.amazonaws.com/deepo-tests/vulcain/json/studio.json', 'studio.json')
-    offline_pred_pth = download(tmpdir, 'https://s3-eu-west-1.amazonaws.com/deepo-tests/vulcain/json/offline_pred.json', 'offline_pred.json')
+    offline_pred_pth = download(tmpdir, 'https://s3-eu-west-1.amazonaws.com/deepo-tests/vulcain/json/offline_pred2.json', 'offline_pred.json')
     img_dir_pth = os.path.dirname(img_pth)
 
     # Update json for path to match
