@@ -255,12 +255,16 @@ class JsonOutputData(OutputData):
         super(JsonOutputData, self).__init__(descriptor, **kwargs)
         self._i = 0
         self._to_studio_format = kwargs.get('studio_format')
+        self._reproduce_input_dir_structure = False
 
         # Check if the output is a string wildcard
         try:
             descriptor % 'string'
             self._wildcard_type = WildCardType.STRING
             self._all_predictions = None
+            if kwargs.get('recursive', False):
+                self._reproduce_input_dir_structure = True
+                self._input_path = kwargs.get('input')
         except TypeError:
             # Check if the output is an integer wildcard
             try:
@@ -302,10 +306,25 @@ class JsonOutputData(OutputData):
                 self._all_predictions.append(predictions)
         # Otherwise we write them to file directly
         else:
+            # Build the prediction json path
             if self._wildcard_type == WildCardType.INTEGER:
                 json_path = os.path.splitext(self._descriptor % self._i)[0]
             elif self._wildcard_type == WildCardType.STRING:
-                json_path = os.path.splitext(self._descriptor % frame.name)[0]
+                if not self._reproduce_input_dir_structure:
+                    json_path = os.path.splitext(self._descriptor % frame.name)[0]
+                else:
+                    # Build the output directory with input structure
+                    output_base_dir = os.path.dirname(self._descriptor)
+                    input_rel_dir = os.path.dirname(os.path.relpath(frame.filename, self._input_path))
+                    output_full_dir = os.path.join(output_base_dir, input_rel_dir)
+
+                    # Build the final path
+                    json_file = os.path.splitext(os.path.basename(self._descriptor) % frame.name)[0]
+                    json_path = os.path.join(output_full_dir, json_file)
+
+                    # Build the json directory if it doesn't exist
+                    if output_full_dir and not os.path.isdir(output_full_dir):
+                        os.makedirs(output_full_dir)
             save_json_to_file(predictions, json_path)
 
 
