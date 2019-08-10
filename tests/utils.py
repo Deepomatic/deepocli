@@ -73,7 +73,7 @@ def check_directory(directory,
             nb_image += 1
         elif path.endswith('.mp4'):
             nb_video += 1
-        elif os.path.isdir(path):
+        elif os.path.isdir(os.path.join(directory, path)):
             nb_subdir += 1
     assert expect_nb_json == nb_json
     assert expect_nb_image == nb_image
