@@ -160,12 +160,12 @@ def input_loop(kwargs, postprocessing=None):
 
 class InputData(object):
     def __init__(self, descriptor, **kwargs):
-        self._descriptor = descriptor
         self._args = kwargs
-        self._filename = os.path.normpath(str(descriptor))
-        self._name = os.path.basename(self._filename)
-        if os.path.isfile(self._filename):
-            base, ext = os.path.splitext(self._filename)
+        self._descriptor = descriptor
+        self._filename = str(descriptor)
+        self._name = os.path.basename(os.path.normpath(self._filename))
+        base, ext = os.path.splitext(self._name)
+        if ext:
             self._name = '{}_{}'.format(base, ext.lstrip('.'))
         recognition_id = kwargs.get('recognition_id', '')
         self._reco = '' if recognition_id is None else recognition_id
