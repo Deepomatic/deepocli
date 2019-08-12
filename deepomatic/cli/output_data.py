@@ -255,7 +255,8 @@ class JsonOutputData(OutputData):
         super(JsonOutputData, self).__init__(descriptor, **kwargs)
         self._i = 0
         self._to_studio_format = kwargs.get('studio_format')
-        self._reproduce_input_dir_structure = False
+        self._preserve_input_dir_structure = False
+        self._input_path = None
 
         # Check if the output is a string wildcard
         try:
@@ -263,7 +264,7 @@ class JsonOutputData(OutputData):
             self._wildcard_type = WildCardType.STRING
             self._all_predictions = None
             if kwargs.get('recursive', False):
-                self._reproduce_input_dir_structure = True
+                self._preserve_input_dir_structure = True
                 self._input_path = kwargs.get('input')
         except TypeError:
             # Check if the output is an integer wildcard
@@ -310,7 +311,7 @@ class JsonOutputData(OutputData):
             if self._wildcard_type == WildCardType.INTEGER:
                 json_path = os.path.splitext(self._descriptor % self._i)[0]
             elif self._wildcard_type == WildCardType.STRING:
-                if not self._reproduce_input_dir_structure:
+                if not self._preserve_input_dir_structure:
                     json_path = os.path.splitext(self._descriptor % frame.name)[0]
                 else:
                     # Build the output directory with input structure
