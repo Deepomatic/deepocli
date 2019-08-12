@@ -1,6 +1,6 @@
 import logging
 from .cloud_workflow import CloudRecognition
-from .rpc_workflow import RpcRecognition
+from .rpc_workflow import RpcRecognition, requires_deepomatic_rpc
 from .json_workflow import JsonRecognition
 from ..exceptions import DeepoWorkflowError
 

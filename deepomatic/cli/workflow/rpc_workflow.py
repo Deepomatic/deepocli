@@ -5,30 +5,42 @@ from .workflow_abstraction import AbstractWorkflow
 from ..exceptions import ResultInferenceError, ResultInferenceTimeout
 from ..exceptions import DeepoRPCRecognitionError, DeepoRPCUnavailableError
 
-# First we test whether the deepomatic-rpc module is installed. An error here indicates we need to install it.
-try:
-    from deepomatic.rpc.client import Client
-    RPC_PACKAGES_USABLE = True
-except ImportError:
-    RPC_PACKAGES_USABLE = False
 
-# If the deepomatic-rpc module is installed, then we try to import the other modules. An error here might indicate a
-# version mismatch, in which case we want to know which one and why, i.e. we don't want to catch the error but we want
-# to display it to the end user.
-if RPC_PACKAGES_USABLE:
-    from deepomatic.rpc import v07_ImageInput, BINARY_IMAGE_PREFIX
-    from deepomatic.rpc.exceptions import ServerError
-    from deepomatic.rpc.amqp.exceptions import Timeout
-    from deepomatic.rpc.response import wait_responses
-    from deepomatic.rpc.helpers.v07_proto import create_recognition_command_mix
-    from deepomatic.rpc.helpers.proto import create_v07_images_command
-    from google.protobuf.json_format import MessageToDict
+# decorator that prevents class instanciation when deepomatic rpc is not available
+def requires_deepomatic_rpc(cls):
+    def override_new(old_new):
+        def __new__(cls, *args, **kwargs):
+            # First we test whether the deepomatic-rpc module is installed. An error here indicates we need to install it.
+            try:
+                from deepomatic import rpc
+            except ImportError:
+                raise DeepoRPCUnavailableError('RPC not available')
+            # If the deepomatic-rpc module is installed, then we try to import the other modules. An error here might indicate a
+            # version mismatch, in which case we want to know which one and why, i.e. we don't want to catch the error but we want
+            # to display it to the end user.
+            try:
+                from deepomatic.rpc import v07_ImageInput, BINARY_IMAGE_PREFIX
+                from deepomatic.rpc.exceptions import ServerError
+                from deepomatic.rpc.amqp.exceptions import Timeout
+                from deepomatic.rpc.response import wait_responses
+                from deepomatic.rpc.helpers.v07_proto import create_recognition_command_mix
+                from deepomatic.rpc.helpers.proto import create_v07_images_command
+            except ImportError as e:
+                raise DeepoRPCUnavailableError('RPC version mismatch: %s' % e)
 
+            try:
+                return old_new(cls, *args, **kwargs)
+            except:
+                return old_new(cls)
 
+        return __new__
+    cls.__new__ = override_new(cls.__new__)
+    return cls
+
+@requires_deepomatic_rpc
 class RpcRecognition(AbstractWorkflow):
-
+    @requires_deepomatic_rpc
     class InferResult(AbstractWorkflow.AbstractInferResult):
-
         def __init__(self, correlation_id, consumer):
             self._correlation_id = correlation_id
             self._consumer = consumer
@@ -55,23 +67,20 @@ class RpcRecognition(AbstractWorkflow):
 
         recognition_cmd_kwargs = recognition_cmd_kwargs or {'show_discarded': True, 'max_predictions': 1000}
 
-        if RPC_PACKAGES_USABLE:
-            # We declare the client that will be used for consuming in one thread only
-            # RPC client is not thread safe
-            self._consume_client = Client(amqp_url)
-            self._recognition = None
-            try:
-                recognition_version_id = int(recognition_version_id)
-            except ValueError:
-                raise DeepoRPCRecognitionError("Cannot cast recognition ID into a number")
+        # We declare the client that will be used for consuming in one thread only
+        # RPC client is not thread safe
+        self._consume_client = Client(amqp_url)
+        self._recognition = None
+        try:
+            recognition_version_id = int(recognition_version_id)
+        except ValueError:
+            raise DeepoRPCRecognitionError("Cannot cast recognition ID into a number")
 
-            self._command_mix = create_recognition_command_mix(recognition_version_id,
-                                                               **recognition_cmd_kwargs)
-            self._command_queue = self._consume_client.new_queue(self._routing_key)
-            self._response_queue, self._consumer = self._consume_client.new_consuming_queue()
-        else:
-            self._client = None
-            raise DeepoRPCUnavailableError('RPC not available')
+        self._command_mix = create_recognition_command_mix(recognition_version_id,
+                                                            **recognition_cmd_kwargs)
+        self._command_queue = self._consume_client.new_queue(self._routing_key)
+        self._response_queue, self._consumer = self._consume_client.new_consuming_queue()
+
 
     def close_client(self, client):
         client.amqp_client.ensured_connection.close()
