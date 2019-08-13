@@ -5,12 +5,13 @@ from .workflow_abstraction import AbstractWorkflow
 from ..exceptions import ResultInferenceError, ResultInferenceTimeout
 from ..exceptions import DeepoRPCRecognitionError, DeepoRPCUnavailableError
 
-
-def import_rpc_package():
+def import_rpc_package(should_raise=False):
+    rpc, protobuf = None, None
     try:
         from deepomatic import rpc
     except ImportError:
-        rpc = None
+        if should_raise:
+            raise DeepoRPCUnavailableError('RPC not installed')
 
     try:
         from deepomatic.rpc import v07_ImageInput, BINARY_IMAGE_PREFIX
@@ -21,14 +22,11 @@ def import_rpc_package():
         from deepomatic.rpc.helpers.v07_proto import create_recognition_command_mix
         from deepomatic.rpc.helpers.proto import create_v07_images_command
         from deepomatic.rpc.buffers.protobuf.cli.Message_pb2 import Message
-    except ImportError:
-        rpc = None
-
-    try:
         from google import protobuf
         from google.protobuf.json_format import ParseDict, MessageToDict
     except ImportError:
-        protobuf = None
+        if should_raise:
+            raise DeepoRPCUnavailableError('RPC not up-to-date')
 
     return rpc, protobuf
 
@@ -39,7 +37,7 @@ def requires_deepomatic_rpc(cls):
     def override_new(old_new):
         def __new__(cls, *args, **kwargs):
             # checks that rpc is installed and up-to-date
-            import_rpc_package()
+            import_rpc_package(should_raise=True)
             try:
                 return old_new(cls, *args, **kwargs)
             except:

@@ -13,8 +13,6 @@ from .exceptions import DeepoUnknownOutputError, DeepoSaveJsonToFileError
 LOGGER = logging.getLogger(__name__)
 DEFAULT_OUTPUT_FPS = 25
 
-rpc, protobuf = import_rpc_package()
-
 try:
     # https://stackoverflow.com/questions/908331/how-to-write-binary-data-to-stdout-in-python-3
     write_bytes_to_stdout = sys.stdout.buffer.write
