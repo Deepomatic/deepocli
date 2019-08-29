@@ -63,8 +63,8 @@ def argparser_init():
         parser.add_argument('-F', '--fullscreen', help="Fullscreen if window output.", action="store_true")
         parser.add_argument('--from_file', type=str, dest='pred_from_file', help="Uses prediction from a Vulcan or Studio JSON.")
 
-    draw_parser.add_argument('-S', '--draw_scores', help="Overlays the prediction scores.", action="store_true")
-    draw_parser.add_argument('-L', '--draw_labels', help="Overlays the prediction labels.", action="store_true")
+    draw_parser.add_argument('-S', '--draw_scores', help="Overlays the prediction scores. Default is to display both scores and labels.", action="store_true")
+    draw_parser.add_argument('-L', '--draw_labels', help="Overlays the prediction labels. Default is to display both scores and labels.", action="store_true")
 
     blur_parser.add_argument('-M', '--blur_method', help="Blur method to apply, either 'pixel', 'gaussian' or 'black', defaults to 'pixel'.", default='pixel', choices=['pixel', 'gaussian', 'black'])
     blur_parser.add_argument('-B', '--blur_strength', help="Blur strength, defaults to 10.", default=10)
