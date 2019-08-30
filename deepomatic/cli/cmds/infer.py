@@ -32,8 +32,8 @@ def get_coordinates_from_roi(roi, width, height):
 class DrawImagePostprocessing(object):
 
     def __init__(self, **kwargs):
-        self._draw_labels = kwargs.get('draw_labels', False)
-        self._draw_scores = kwargs.get('draw_scores', False)
+        self._draw_labels = kwargs.get('draw_labels', False) or kwargs.get('no_draw_labels', True)
+        self._draw_scores = kwargs.get('draw_scores', False) or kwargs.get('no_draw_scores', True)
 
     def __call__(self, frame):
         frame.output_image = frame.image.copy()
@@ -52,8 +52,7 @@ class DrawImagePostprocessing(object):
                 label = label_label
             elif self._draw_scores and not self._draw_labels:
                 label = label_score
-            else:
-                label = label_label + ' ' + label_score
+
             # Make sure labels are ascii because cv2.FONT_HERSHEY_SIMPLEX doesn't support non-ascii
             label = unidecode(label)
 
@@ -87,8 +86,9 @@ class DrawImagePostprocessing(object):
                 text_corner = substract_tuple(text_corner, (x_offset, y_offset))
 
                 # Finally draw everything
-                cv2.rectangle(output_image, background_corner1, background_corner2, BACKGROUND_COLOR, -1)
-                cv2.putText(output_image, label, text_corner, cv2.FONT_HERSHEY_SIMPLEX, FONT_SCALE, TEXT_COLOR, 1)
+                if label != '':
+                    cv2.rectangle(output_image, background_corner1, background_corner2, BACKGROUND_COLOR, -1)
+                    cv2.putText(output_image, label, text_corner, cv2.FONT_HERSHEY_SIMPLEX, FONT_SCALE, TEXT_COLOR, 1)
             elif label != '':
                 # First get ideal corners
                 if tag_drawn == 0:
