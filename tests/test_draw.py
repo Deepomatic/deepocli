@@ -142,12 +142,24 @@ def test_e2e_image_draw_image_scores():
     run_draw(INPUTS['IMAGE'], [OUTPUTS['IMAGE']], expect_nb_image=1, extra_opts=['--draw_scores'])
 
 
+def test_e2e_image_draw_image_no_scores():
+    run_draw(INPUTS['IMAGE'], [OUTPUTS['IMAGE']], expect_nb_image=1, extra_opts=['--no_draw_scores'])
+
+
 def test_e2e_image_draw_image_labels():
     run_draw(INPUTS['IMAGE'], [OUTPUTS['IMAGE']], expect_nb_image=1, extra_opts=['--draw_labels'])
 
 
+def test_e2e_image_draw_image_no_labels():
+    run_draw(INPUTS['IMAGE'], [OUTPUTS['IMAGE']], expect_nb_image=1, extra_opts=['--no_draw_labels'])
+
+
 def test_e2e_image_draw_image_scores_and_labels():
     run_draw(INPUTS['IMAGE'], [OUTPUTS['IMAGE']], expect_nb_image=1, extra_opts=['--draw_scores', '--draw_labels'])
+
+
+def test_e2e_image_draw_image_no_scores_and_no_labels():
+    run_draw(INPUTS['IMAGE'], [OUTPUTS['IMAGE']], expect_nb_image=1, extra_opts=['--no_draw_scores', '--no_draw_labels'])
 
 
 def test_e2e_image_draw_json_studio():
