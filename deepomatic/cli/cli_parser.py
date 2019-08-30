@@ -28,52 +28,94 @@ def argparser_init():
     subparsers = argparser.add_subparsers(dest='command', help='')
     subparsers.required = True
 
-    infer_parser = subparsers.add_parser('infer', help="Computes prediction on a file or directory and outputs results as a JSON file.")
+    help_msg = "Computes prediction on a file or directory and outputs results as a JSON file."
+    desc_mgs = help_msg + " Typical usage is: deepo infer -i img.png -o pred.json -r 12345"
+    infer_parser = subparsers.add_parser('infer', help=help_msg, description=desc_mgs)
     infer_parser.set_defaults(func=input_loop)
 
-    draw_parser = subparsers.add_parser('draw', help="Generates new images and videos with predictions results drawn on them. Computes prediction if JSON has not yet been generated.")
+    help_msg = "Generates new images and videos with predictions results drawn on them. Computes prediction if JSON has not yet been generated."
+    desc_mgs = help_msg + " Typical usage is: deepo draw -i img.png -o pred.json draw.png -r 12345"
+    draw_parser = subparsers.add_parser('draw', help=help_msg, description=desc_mgs)
     draw_parser.set_defaults(func=lambda args: input_loop(args, DrawImagePostprocessing(**args)))
 
-    blur_parser = subparsers.add_parser('blur', help="Generates new images and videos with predictions results blurred on them. Computes prediction if JSON has not yet been generated.")
+    help_msg = "Generates new images and videos with predictions results blurred on them. Computes prediction if JSON has not yet been generated."
+    desc_mgs = help_msg + " Typical usage is: deepo blur -i img.png -o pred.json draw.png -r 12345"
+    blur_parser = subparsers.add_parser('blur', help=help_msg, description=desc_mgs)
     blur_parser.set_defaults(func=lambda args: input_loop(args, BlurImagePostprocessing(**args)))
 
-    studio_parser = subparsers.add_parser('studio', help='Deepomatic Studio related commands')
+    help_msg = "Deepomatic Studio related commands"
+    studio_parser = subparsers.add_parser('studio', help=help_msg, description=help_msg)
     studio_subparser = studio_parser.add_subparsers(dest='studio_command', help='')
     studio_subparser.required = True
-    add_images_parser = studio_subparser.add_parser('add_images', help='Uploads images from the local machine to Deepomatic Studio.')
+    help_msg = "Uploads images from the local machine to Deepomatic Studio."
+    desc_mgs = help_msg + " Typical usage is: deepo studio add_images -i img.png -d mydataset -o myorg"
+    add_images_parser = studio_subparser.add_parser('add_images', help=help_msg, description=desc_mgs)
     add_images_parser.set_defaults(func=feedback, recursive=False)
 
-    for parser in [infer_parser, draw_parser, blur_parser, add_images_parser]:
-        parser.add_argument('-R', '--recursive', dest='recursive', action='store_true', help='If a directory input is used, goes through all files in subdirectories.')
-        parser.add_argument('--verbose', dest='verbose', action='store_true', help='Increase output verbosity.')
+    # Define argument groups
+    input_groups = [parser.add_argument_group('Input parameters') for parser in [infer_parser, draw_parser, blur_parser, add_images_parser]]
+    output_groups = [parser.add_argument_group('Output parameters') for parser in [infer_parser, draw_parser, blur_parser]]
+    option_groups = [parser.add_argument_group('Option parameters') for parser in [infer_parser, draw_parser, blur_parser, add_images_parser]]
+    model_groups = [parser.add_argument_group('Model parameters') for parser in [infer_parser, draw_parser, blur_parser]]
+    onprem_groups = [parser.add_argument_group('On-premises parameters') for parser in [infer_parser, draw_parser, blur_parser]]
 
-    for parser in [infer_parser, draw_parser, blur_parser]:
-        parser.add_argument('-i', '--input', required=True, help="Input path, either an image (*{}), a video (*{}), a directory, a stream (*{}), or a Studio json (*.json). If the given path is a directory, it will recursively run inference on all the supported files in this directory if the -R option is used.".format(', *'.join(SUPPORTED_IMAGE_INPUT_FORMAT), ', *'.join(SUPPORTED_VIDEO_INPUT_FORMAT), ', *'.join(SUPPORTED_PROTOCOLS_INPUT)))
-        parser.add_argument('-o', '--outputs', required=True, nargs='+', help="Output path, either an image (*{}), a video (*{}), a json (*.json) or a directory.".format(', *'.join(SUPPORTED_IMAGE_OUTPUT_FORMAT), ', *'.join(SUPPORTED_VIDEO_OUTPUT_FORMAT)))
-        parser.add_argument('-r', '--recognition_id', required=True, help="Neural network recognition version ID.")
-        parser.add_argument('-u', '--amqp_url', help="AMQP url for on-premises deployments.")
-        parser.add_argument('-k', '--routing_key', help="Recognition routing key for on-premises deployments.")
-        parser.add_argument('-t', '--threshold', type=float, help="Threshold above which a prediction is considered valid.", default=None)
-        parser.add_argument('--input_fps', type=int, help="FPS used for input video frame skipping and extraction. If higher than the original video FPS, all frames will be analysed only once having the same effect as not using this parameter. If lower than the original video FPS, some frames will be discarded to simulate an input of the given FPS.", default=None)
-        parser.add_argument('--skip_frame', type=int, help="Number of frame to skip between two frames from the input. It can be combined with input_fps", default=0)
-        parser.add_argument('--output_fps', type=int, help="FPS usef for output video reconstruction.", default=None)
-        parser.add_argument('-s', '--studio_format', action='store_true', help="Convert deepomatic run predictions into deepomatic studio format.")
+    # Define input group for infer draw blur
+    for group in input_groups[:3]:
+        group.add_argument('-i', '--input', required=True, help="Input path, either an image (*{}), a video (*{}), a directory, a stream (*{}), or a Studio json (*.json). If the given path is a directory, it will recursively run inference on all the supported files in this directory if the -R option is used.".format(', *'.join(SUPPORTED_IMAGE_INPUT_FORMAT), ', *'.join(SUPPORTED_VIDEO_INPUT_FORMAT), ', *'.join(SUPPORTED_PROTOCOLS_INPUT)))
+        group.add_argument('--input_fps', type=int, help="FPS used for input video frame skipping and extraction. If higher than the original video FPS, all frames will be analysed only once having the same effect as not using this parameter. If lower than the original video FPS, some frames will be discarded to simulate an input of the given FPS.", default=None)
+        group.add_argument('--skip_frame', type=int, help="Number of frame to skip between two frames from the input. It can be combined with input_fps", default=0)
 
-    for parser in [draw_parser, blur_parser]:
-        parser.add_argument('-F', '--fullscreen', help="Fullscreen if window output.", action="store_true")
-        parser.add_argument('--from_file', type=str, dest='pred_from_file', help="Uses prediction from a Vulcan or Studio JSON.")
+    # Define output group for infer draw blur
+    for group in output_groups:
+        group.add_argument('-o', '--outputs', required=True, nargs='+', help="Output path, either an image (*{}), a video (*{}), a json (*.json) or a directory.".format(', *'.join(SUPPORTED_IMAGE_OUTPUT_FORMAT), ', *'.join(SUPPORTED_VIDEO_OUTPUT_FORMAT)))
+        group.add_argument('--output_fps', type=int, help="FPS usef for output video reconstruction.", default=None)
+        group.add_argument('-s', '--studio_format', action='store_true', help="Convert deepomatic run predictions into deepomatic studio format.")
 
-    draw_parser.add_argument('-S', '--draw_scores', help="Overlays the prediction scores.", action="store_true")
-    draw_parser.add_argument('-L', '--draw_labels', help="Overlays the prediction labels.", action="store_true")
+    # Define output group for draw blur
+    for group in output_groups[1:]:
+        group.add_argument('-F', '--fullscreen', help="Fullscreen if window output.", action="store_true")
 
-    blur_parser.add_argument('-M', '--blur_method', help="Blur method to apply, either 'pixel', 'gaussian' or 'black', defaults to 'pixel'.", default='pixel', choices=['pixel', 'gaussian', 'black'])
-    blur_parser.add_argument('-B', '--blur_strength', help="Blur strength, defaults to 10.", default=10)
+    # Define option group for draw blur
+    for group in option_groups[1:3]:
+        group.add_argument('--from_file', type=str, dest='pred_from_file', help="Uses prediction from a Vulcan or Studio JSON.")
 
-    add_images_parser.add_argument('-d', '--dataset', required=True, help="Deepomatic Studio dataset name.", type=str)
-    add_images_parser.add_argument('-o', '--organization', required=True, help="Deepomatic Studio organization slug.", type=str)
-    add_images_parser.add_argument('-i', '--input', type=str, nargs='+', required=True, help="One or several input path, either an image or video file (*{}), a directory, or a Studio or Vulcan json (*.json).".format(', *'.join(SUPPORTED_FILE_INPUT_FORMAT)))
-    add_images_parser.add_argument('--json', dest='json_file', action='store_true', help='Look for JSON files instead of images.')
-    add_images_parser.add_argument('--set_metadata_path', dest='set_metadata_path', action='store_true', help='Add the relative path as metadata.')
+    # Define model group for infer draw blur
+    for group in model_groups:
+        group.add_argument('-r', '--recognition_id', required=True, help="Neural network recognition version ID.")
+        group.add_argument('-t', '--threshold', type=float, help="Threshold above which a prediction is considered valid.", default=None)
+
+    # Define output group for infer draw blur
+    for group in onprem_groups:
+        group.add_argument('-u', '--amqp_url', help="AMQP url for on-premises deployments.")
+        group.add_argument('-k', '--routing_key', help="Recognition routing key for on-premises deployments.")
+
+    # Define draw specific options
+    group = draw_parser.add_argument_group('Drawing parameters')
+    group.add_argument('-S', '--draw_scores', help="Overlays the prediction scores.", action="store_true")
+    group.add_argument('-L', '--draw_labels', help="Overlays the prediction labels.", action="store_true")
+
+    # Define blur specific options
+    group = blur_parser.add_argument_group('Blurring parameters')
+    group.add_argument('-M', '--blur_method', help="Blur method to apply, either 'pixel', 'gaussian' or 'black', defaults to 'pixel'.", default='pixel', choices=['pixel', 'gaussian', 'black'])
+    group.add_argument('-B', '--blur_strength', help="Blur strength, defaults to 10.", default=10)
+
+    # Define studio group for add_images
+    group = add_images_parser.add_argument_group('Studio parameters')
+    group.add_argument('-d', '--dataset', required=True, help="Deepomatic Studio dataset name.", type=str)
+    group.add_argument('-o', '--organization', required=True, help="Deepomatic Studio organization slug.", type=str)
+
+    # Define input group for add_images
+    input_groups[3].add_argument('-i', '--input', type=str, nargs='+', required=True, help="One or several input path, either an image or video file (*{}), a directory, or a Studio or Vulcan json (*.json).".format(', *'.join(SUPPORTED_FILE_INPUT_FORMAT)))
+    input_groups[3].add_argument('--json', dest='json_file', action='store_true', help='Look for JSON files instead of images.')
+    option_groups[3].add_argument('--set_metadata_path', dest='set_metadata_path', action='store_true', help='Add the relative path as metadata.')
+
+    # Define input groupe for infer draw blur add_images
+    for group in input_groups:
+        group.add_argument('-R', '--recursive', dest='recursive', action='store_true', help='If a directory input is used, goes through all files in subdirectories.')
+
+    # Define option group for infer draw blur add_images
+    for group in option_groups:
+        group.add_argument('--verbose', dest='verbose', action='store_true', help='Increase output verbosity.')
 
     return argparser
 
