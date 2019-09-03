@@ -64,11 +64,14 @@ def argparser_init():
         parser.add_argument('--from_file', type=str, dest='pred_from_file', help="Uses prediction from a Vulcan or Studio JSON.")
 
     score_group = draw_parser.add_mutually_exclusive_group()
-    score_group.add_argument('-S', '--draw_scores', help="Overlay the prediction scores. Default behavior.", action="store_true")
-    score_group.add_argument('--no_draw_scores', help="Do not overlay the prediction scores.", action="store_false")
+    score_group.add_argument('-S', '--draw_scores', dest='draw_scores', help="Overlay the prediction scores. Default behavior.", action="store_true")
+    score_group.add_argument('--no_draw_scores', dest='draw_scores', help="Do not overlay the prediction scores.", action="store_false")
+    score_group.set_defaults(draw_scores=True)
+
     label_group = draw_parser.add_mutually_exclusive_group()
-    label_group.add_argument('-L', '--draw_labels', help="Overlay the prediction labels. Default behavior.", action="store_true")
-    label_group.add_argument('--no_draw_labels', help="Do not overlay the prediction labels.", action="store_false")
+    label_group.add_argument('-L', '--draw_labels', dest='draw_labels', help="Overlay the prediction labels. Default behavior.", action="store_true")
+    label_group.add_argument('--no_draw_labels', dest='draw_labels', help="Do not overlay the prediction labels.", action="store_false")
+    label_group.set_defaults(draw_labels=True)
 
     blur_parser.add_argument('-M', '--blur_method', help="Blur method to apply, either 'pixel', 'gaussian' or 'black', defaults to 'pixel'.", default='pixel', choices=['pixel', 'gaussian', 'black'])
     blur_parser.add_argument('-B', '--blur_strength', help="Blur strength, defaults to 10.", default=10)
