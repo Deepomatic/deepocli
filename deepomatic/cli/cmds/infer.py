@@ -68,25 +68,25 @@ class DrawImagePostprocessing(object):
                 # Draw bounding box
                 cv2.rectangle(output_image, (xmin, ymin), (xmax, ymax), BOX_COLOR, 1)
 
-                # First get ideal corners
-                background_corner1 = (xmin, ymax + 2)
-                background_corner2 = (background_corner1[0] + ret[0], background_corner1[1] + ret[1] + baseline)
-                text_corner = (background_corner1[0], background_corner1[1] + ret[1])
-
-                # Then make sure they fit in the image
-                # For x-axis, simply shift the box to the left
-                # For y-axis, put the label at the top if it doesn't fit under the box
-                x_offset = max(0, background_corner2[0] - width + 1)
-                if background_corner2[1] > height - 1:
-                    y_offset = background_corner2[1] - ymin + 2
-                else:
-                    y_offset = 0
-                background_corner1 = substract_tuple(background_corner1, (x_offset, y_offset))
-                background_corner2 = substract_tuple(background_corner2, (x_offset, y_offset))
-                text_corner = substract_tuple(text_corner, (x_offset, y_offset))
-
-                # Finally draw everything
                 if label != '':
+                    # First get ideal corners
+                    background_corner1 = (xmin, ymax + 2)
+                    background_corner2 = (background_corner1[0] + ret[0], background_corner1[1] + ret[1] + baseline)
+                    text_corner = (background_corner1[0], background_corner1[1] + ret[1])
+
+                    # Then make sure they fit in the image
+                    # For x-axis, simply shift the box to the left
+                    # For y-axis, put the label at the top if it doesn't fit under the box
+                    x_offset = max(0, background_corner2[0] - width + 1)
+                    if background_corner2[1] > height - 1:
+                        y_offset = background_corner2[1] - ymin + 2
+                    else:
+                        y_offset = 0
+                    background_corner1 = substract_tuple(background_corner1, (x_offset, y_offset))
+                    background_corner2 = substract_tuple(background_corner2, (x_offset, y_offset))
+                    text_corner = substract_tuple(text_corner, (x_offset, y_offset))
+
+                    # Finally draw everything
                     cv2.rectangle(output_image, background_corner1, background_corner2, BACKGROUND_COLOR, -1)
                     cv2.putText(output_image, label, text_corner, cv2.FONT_HERSHEY_SIMPLEX, FONT_SCALE, TEXT_COLOR, 1)
             elif label != '':
