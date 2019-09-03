@@ -44,14 +44,12 @@ class DrawImagePostprocessing(object):
         for pred in frame.predictions['outputs'][0]['labels']['predicted']:
             # Build legend
             label = u''
-            label_label = pred['label_name']
-            label_score = str(round(pred['score'], SCORE_DECIMAL_PRECISION))
+            if self._draw_labels:
+                label = pred['label_name']
             if self._draw_labels and self._draw_scores:
-                label = label_label + ' ' + label_score
-            elif self._draw_labels and not self._draw_scores:
-                label = label_label
-            elif self._draw_scores and not self._draw_labels:
-                label = label_score
+                label += ' '
+            if self._draw_scores:
+                label += str(round(pred['score'], SCORE_DECIMAL_PRECISION))
 
             # Make sure labels are ascii because cv2.FONT_HERSHEY_SIMPLEX doesn't support non-ascii
             label = unidecode(label)
