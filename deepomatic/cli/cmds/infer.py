@@ -32,8 +32,8 @@ def get_coordinates_from_roi(roi, width, height):
 class DrawImagePostprocessing(object):
 
     def __init__(self, **kwargs):
-        self._draw_labels = kwargs.get('draw_labels', False) or kwargs.get('no_draw_labels', True)
-        self._draw_scores = kwargs.get('draw_scores', False) or kwargs.get('no_draw_scores', True)
+        self._draw_labels = kwargs['draw_labels'] or kwargs['no_draw_labels']
+        self._draw_scores = kwargs['draw_scores'] or kwargs.['no_draw_scores']
 
     def __call__(self, frame):
         frame.output_image = frame.image.copy()
