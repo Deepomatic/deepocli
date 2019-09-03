@@ -33,7 +33,7 @@ class DrawImagePostprocessing(object):
 
     def __init__(self, **kwargs):
         self._draw_labels = kwargs['draw_labels'] or kwargs['no_draw_labels']
-        self._draw_scores = kwargs['draw_scores'] or kwargs.['no_draw_scores']
+        self._draw_scores = kwargs['draw_scores'] or kwargs['no_draw_scores']
 
     def __call__(self, frame):
         frame.output_image = frame.image.copy()
