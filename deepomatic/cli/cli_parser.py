@@ -107,8 +107,14 @@ def argparser_init():
 
     # Define draw specific options
     group = draw_parser.add_argument_group('Drawing parameters')
-    group.add_argument('-S', '--draw_scores', help="Overlays the prediction scores.", action="store_true")
-    group.add_argument('-L', '--draw_labels', help="Overlays the prediction labels.", action="store_true")
+    score_group = group.add_mutually_exclusive_group()
+    score_group.add_argument('-S', '--draw_scores', dest='draw_scores', help="Overlay the prediction scores. Default behavior.", action="store_true")
+    score_group.add_argument('--no_draw_scores', dest='draw_scores', help="Do not overlay the prediction scores.", action="store_false")
+    score_group.set_defaults(draw_scores=True)
+    label_group = group.add_mutually_exclusive_group()
+    label_group.add_argument('-L', '--draw_labels', dest='draw_labels', help="Overlay the prediction labels. Default behavior.", action="store_true")
+    label_group.add_argument('--no_draw_labels', dest='draw_labels', help="Do not overlay the prediction labels.", action="store_false")
+    label_group.set_defaults(draw_labels=True)
 
     # Define blur specific options
     group = blur_parser.add_argument_group('Blurring parameters')
