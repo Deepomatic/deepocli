@@ -123,8 +123,8 @@ class BlurImagePostprocessing(object):
                 if self._method == 'black':
                     cv2.rectangle(output_image, (xmin, ymin), (xmax, ymax), (0, 0, 0), -1)
                 elif self._method == 'gaussian':
-                    rectangle = frame[ymin:ymax, xmin:xmax]
-                    rectangle = cv2.GaussianBlur(rectangle, (15, 15), self._strength)
+                    rectangle = output_image[ymin:ymax, xmin:xmax]
+                    rectangle = cv2.GaussianBlur(rectangle, (0, 0), self._strength)
                     output_image[ymin:ymax, xmin:xmax] = rectangle
                 elif self._method == 'pixel':
                     rectangle = output_image[ymin:ymax, xmin:xmax]
