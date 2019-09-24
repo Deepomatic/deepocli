@@ -86,6 +86,7 @@ class ThreadBase(object):
         self.exit_event = exit_event
         self.stop_asked = False
         self.name = name or self.__class__.__name__
+        # Allow to not stop when an item is still being processed
         self.processing_item_lock = Lock()
         self.current_messages = current_messages
         self.alive = False
@@ -341,7 +342,7 @@ class MainLoop(object):
         for pool in self.pools:
             if pool.input_queue is None:
                 # when pool has no input queue
-                # either the pool stop by itself and by calling self.stop()
+                # either the pool stop by itself by calling self.stop()
                 # either another thread call pool.stop()
                 # otherwise it will wait indefinitely
                 pool.join()
