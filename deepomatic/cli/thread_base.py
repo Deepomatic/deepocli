@@ -99,9 +99,14 @@ class ThreadBase(object):
         return True
 
     def stop(self):
+        # Can be called from the same thread or from another
         self.stop_asked = True
 
-    def stop_when_empty(self):
+    def stop_when_input_empty(self):
+        # Must be called externally (from another thread)
+        # Wait for the thread to process the whole input queue (until empty)
+        # Then ask it to stop
+        assert self.input_queue is not None # pool must have an input queue
         long_sleep = 0.05
         sleep_time = long_sleep
         while not self.exit_event.is_set():
@@ -236,9 +241,12 @@ class Pool(object):
             self.threads.append(th)
             th.start()
 
-    def stop_when_empty(self):
+    def stop_when_input_empty(self):
+        # Must be called externally (from another thread)
+        # Wait for the pool to process the whole input queue (until empty)
+        # Then ask it to stop
         for th in self.threads:
-            th.stop_when_empty()
+            th.stop_when_input_empty()
 
     def stop(self):
         for th in self.threads:
@@ -331,7 +339,16 @@ class MainLoop(object):
         gevent.signal(gevent.signal.SIGTERM, self.stop)
 
         for pool in self.pools:
-            pool.stop_when_empty()
+            if pool.input_queue is None:
+                # when pool has no input queue
+                # either the pool stop by itself and by calling self.stop()
+                # either another thread call pool.stop()
+                # otherwise it will wait indefinitely
+                pool.join()
+            else:
+                # when pool has an input queue and previous pools are stopped
+                # we can stop when the input queue is empty
+                pool.stop_when_input_empty()
 
         if not self.exit_event.is_set():
             gevent.signal(gevent.signal.SIGINT, lambda: signal.SIG_IGN)
