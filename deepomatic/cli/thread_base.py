@@ -41,7 +41,8 @@ def blocking_lock(lock, sleep_time=SLEEP_TIME):
 
 class CurrentMessages(object):
     """
-    Track all messages currently being processed in the Pipeline
+    Track all messages currently being processed in the Pipeline.
+    Also allow to track number of errors.
     """
     def __init__(self):
         self.heap_lock = Lock()
@@ -66,6 +67,13 @@ class CurrentMessages(object):
             if len(self.messages) > 0:
                 return heapq.heappop(self.messages)
         return None
+
+    def report_error(self):
+        self.report_errors(1)
+
+    def report_errors(self, nb_errors):
+        with self.lock():
+            self.nb_errors += nb_errors
 
     def forget_message(self, msg, count_as_error=True):
         try:
