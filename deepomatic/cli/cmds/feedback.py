@@ -101,7 +101,7 @@ def main(args):
     ]
 
     # Start uploading
-    loop = MainLoop(pools, [queue], pbar, exit_event, current_frames)
+    loop = MainLoop(pools, [queue], pbar, exit_event, current_messages)
     try:
         loop.run_forever()
     except Exception:
