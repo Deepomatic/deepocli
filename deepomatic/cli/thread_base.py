@@ -46,6 +46,7 @@ class CurrentMessages(object):
     def __init__(self):
         self.heap_lock = Lock()
         self.messages = []
+        self.nb_errors = 0
 
     def lock(self):
         return blocking_lock(self.heap_lock)
@@ -66,12 +67,15 @@ class CurrentMessages(object):
                 return heapq.heappop(self.messages)
         return None
 
-    def forget_message(self, msg):
-        try:
-            with self.lock():
-                self.messages.remove(msg)
-                heapq.heapify(self.messages)
+    def forget_message(self, msg, count_as_error=True):
+        with self.lock():
+            if count_as_error:
+                self.nb_errors += 1
+            self.messages.remove(msg)
+            heapq.heapify(self.messages)
         except ValueError as e:
+            # TODO: remove the try/catch
+            # we should call it only if we are sure the message it there
             LOGGER.error(str(e))
 
 
@@ -250,11 +254,12 @@ class Pool(object):
 
 
 class MainLoop(object):
-    def __init__(self, pools, queues, pbar, exit_event, cleanup_func=None):
+    def __init__(self, pools, queues, pbar, exit_event, current_messages, cleanup_func=None):
         self.pools = pools
         self.queues = queues
         self.pbar = pbar
         self.exit_event = exit_event
+        self.current_messages = current_messages
         self.cleanup_func = cleanup_func
         self.stop_asked = 0
         self.cleaned = False
@@ -304,21 +309,12 @@ class MainLoop(object):
         # Compute the stats on number of errors
         # pbar total may be None for infinite streams
         total_inputs = float('inf') if self.pbar.total is None else self.pbar.total
-        inputs_without_error = self.pbar.n
 
-        # Update progress bar to 100% and close it
-        if inputs_without_error < total_inputs:
-            self.pbar.update(total_inputs - inputs_without_error)
+        LOGGER.info('Exiting: errors={} successful={} total={}'.format(self.current_messages.nb_errors,
+                                                                       self.pbar.n - self.current_messages.nb_errors,
+                                                                       total_inputs)
+
         self.pbar.close()
-
-        # Display errors or images stopped if needed
-        if inputs_without_error < total_inputs and self.stop_asked:
-            LOGGER.warning('Handled {} frames out of {} before stopping.'.format(inputs_without_error, total_inputs))
-        elif inputs_without_error < total_inputs:
-            LOGGER.warning('Encountered an unexpected exception during handling of {} frames out of {}.'.format(
-                total_inputs - inputs_without_error, total_inputs
-            ))
-
         self.cleaned = True
 
     def run_forever(self):

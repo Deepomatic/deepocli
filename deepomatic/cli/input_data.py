@@ -141,7 +141,7 @@ def input_loop(kwargs, postprocessing=None):
         Pool(1, OutputThread, thread_args=(exit_event, queues[3], None, current_frames, pbar.update, postprocessing), thread_kwargs=kwargs)
     ]
 
-    loop = MainLoop(pools, queues, pbar, exit_event, lambda: workflow.close())
+    loop = MainLoop(pools, queues, pbar, exit_event, current_messages, lambda: workflow.close())
     try:
         stop_asked = loop.run_forever()
     except Exception:

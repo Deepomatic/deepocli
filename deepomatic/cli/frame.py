@@ -20,8 +20,8 @@ class Frame(object):
 
 
 class CurrentFrames(CurrentMessages):
-    def forget_frame(self, frame):
-        self.forget_message(frame.frame_number)
+    def forget_frame(self, frame, count_as_error=True):
+        self.forget_message(frame.frame_number, count_as_error=count_as_error)
 
     def add_frame(self, frame):
         self.add_message(frame.frame_number)
