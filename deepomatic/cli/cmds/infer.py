@@ -2,7 +2,7 @@ import cv2
 import logging
 from text_unidecode import unidecode
 from ..exceptions import (SendInferenceError,
-                          ResultInferenceError
+                          ResultInferenceError,
                           ResultInferenceTimeout)
 from .. import thread_base
 

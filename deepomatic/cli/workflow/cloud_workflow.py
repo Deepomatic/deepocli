@@ -1,9 +1,9 @@
 import os
 import sys
 import logging
-from .workflow_abstraction import AbstractWorkflow,
+from .workflow_abstraction import AbstractWorkflow
 from ..exceptions import (SendInferenceError,
-                          ResultInferenceError
+                          ResultInferenceError,
                           ResultInferenceTimeout)
 from .. import common, exceptions
 import deepomatic.api.client

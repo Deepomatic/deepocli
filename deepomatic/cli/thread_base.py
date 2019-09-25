@@ -68,11 +68,12 @@ class CurrentMessages(object):
         return None
 
     def forget_message(self, msg, count_as_error=True):
-        with self.lock():
-            if count_as_error:
-                self.nb_errors += 1
-            self.messages.remove(msg)
-            heapq.heapify(self.messages)
+        try:
+            with self.lock():
+                if count_as_error:
+                    self.nb_errors += 1
+                self.messages.remove(msg)
+                heapq.heapify(self.messages)
         except ValueError as e:
             # TODO: remove the try/catch
             # we should call it only if we are sure the message it there
@@ -312,7 +313,7 @@ class MainLoop(object):
 
         LOGGER.info('Exiting: errors={} successful={} total={}'.format(self.current_messages.nb_errors,
                                                                        self.pbar.n - self.current_messages.nb_errors,
-                                                                       total_inputs)
+                                                                       total_inputs))
 
         self.pbar.close()
         self.cleaned = True
