@@ -1,7 +1,9 @@
 import cv2
 import logging
 from text_unidecode import unidecode
-from ..workflow.workflow_abstraction import InferenceError, InferenceTimeout
+from ..exceptions import (SendInferenceError,
+                          ResultInferenceError
+                          ResultInferenceTimeout)
 from .. import thread_base
 
 LOGGER = logging.getLogger(__name__)
@@ -162,8 +164,9 @@ class SendInferenceGreenlet(thread_base.Greenlet):
         try:
             frame.inference_async_result = self.workflow.infer(frame.buf_bytes, self.push_client, frame.name)
             return frame
-        except InferenceError as e:
-            LOGGER.error('Error getting predictions for frame {}: {}'.format(frame, e))
+        except SendInferenceError as e:
+            self.current_messages.forget_frame(frame)
+            LOGGER.error('Error sending frame {}: {}'.format(frame, e))
             return None
 
 
@@ -196,10 +199,10 @@ class ResultInferenceGreenlet(thread_base.Greenlet):
 
             frame.predictions = predictions
             return frame
-        except InferenceError as e:
+        except ResultInferenceError as e:
             self.current_messages.forget_frame(frame)
             LOGGER.error('Error getting predictions for frame {}: {}'.format(frame, e))
-        except InferenceTimeout as e:
+        except ResultInferenceTimeout as e:
             self.current_messages.forget_frame(frame)
             LOGGER.error("Couldn't get predictions in {} seconds. Ignoring frame {}.".format(e.timeout, frame))
         return None
