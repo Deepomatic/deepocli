@@ -77,7 +77,6 @@ def argparser_init():
     blur_parser.add_argument('-B', '--blur_strength', help="Blur strength, defaults to 10.", default=10)
 
     add_images_parser.add_argument('-d', '--dataset', required=True, help="Deepomatic Studio dataset name.", type=str)
-    add_images_parser.add_argument('-o', '--organization', required=True, help="Deepomatic Studio organization slug.", type=str)
     add_images_parser.add_argument('-i', '--input', type=str, nargs='+', required=True, help="One or several input path, either an image or video file (*{}), a directory, or a Studio or Vulcan json (*.json).".format(', *'.join(SUPPORTED_FILE_INPUT_FORMAT)))
     add_images_parser.add_argument('--json', dest='json_file', action='store_true', help='Look for JSON files instead of images.')
     add_images_parser.add_argument('--set_metadata_path', dest='set_metadata_path', action='store_true', help='Add the relative path as metadata.')
