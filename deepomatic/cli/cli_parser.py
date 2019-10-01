@@ -25,9 +25,12 @@ def argparser_init():
         '-v', '--version', action='version',
         version='{title} {version}'.format(title=__title__, version=__version__)
     )
-    argparser.set_defaults(func=input_loop)
+
     subparsers = argparser.add_subparsers(dest='command', help='')
-    subparsers.required = False
+    subparsers.required = True
+
+    noop_parser = subparsers.add_parser('noop', help="Does nothing but reading the input and outputting it.")
+    noop_parser.set_defaults(func=input_loop)
 
     infer_parser = subparsers.add_parser('infer', help="Computes prediction on a file or directory and outputs results as a JSON file.")
     infer_parser.set_defaults(func=input_loop)
@@ -44,12 +47,12 @@ def argparser_init():
     add_images_parser = studio_subparser.add_parser('add_images', help='Uploads images from the local machine to Deepomatic Studio.')
     add_images_parser.set_defaults(func=feedback, recursive=False)
 
-    for parser in [argparser, infer_parser, draw_parser, blur_parser, add_images_parser]:
+    for parser in [noop_parser, infer_parser, draw_parser, blur_parser, add_images_parser]:
         parser.add_argument('-R', '--recursive', dest='recursive', action='store_true', help='If a directory input is used, goes through all files in subdirectories.')
         parser.add_argument('--verbose', dest='verbose', action='store_true', help='Increase output verbosity.')
 
     # input / outputs parameters
-    for parser in [argparser, infer_parser, draw_parser, blur_parser]:
+    for parser in [noop_parser, infer_parser, draw_parser, blur_parser]:
         parser.add_argument('-i', '--input', required=True, help="Input path, either an image (*{}), a video (*{}), a directory, a stream (*{}), or a Studio json (*.json). If the given path is a directory, it will recursively run inference on all the supported files in this directory if the -R option is used.".format(', *'.join(SUPPORTED_IMAGE_INPUT_FORMAT), ', *'.join(SUPPORTED_VIDEO_INPUT_FORMAT), ', *'.join(SUPPORTED_PROTOCOLS_INPUT)))
         parser.add_argument('-o', '--outputs', required=True, nargs='+', help="Output path, either an image (*{}), a video (*{}), a json (*.json) or a directory.".format(', *'.join(SUPPORTED_IMAGE_OUTPUT_FORMAT), ', *'.join(SUPPORTED_VIDEO_OUTPUT_FORMAT)))
         parser.add_argument('--input_fps', type=int, help="FPS used for input video frame skipping and extraction. If higher than the original video FPS, all frames will be analysed only once having the same effect as not using this parameter. If lower than the original video FPS, some frames will be discarded to simulate an input of the given FPS.", default=None)
