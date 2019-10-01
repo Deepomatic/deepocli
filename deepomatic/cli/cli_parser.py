@@ -25,8 +25,9 @@ def argparser_init():
         '-v', '--version', action='version',
         version='{title} {version}'.format(title=__title__, version=__version__)
     )
+    argparser.set_defaults(func=input_loop)
     subparsers = argparser.add_subparsers(dest='command', help='')
-    subparsers.required = True
+    subparsers.required = False
 
     infer_parser = subparsers.add_parser('infer', help="Computes prediction on a file or directory and outputs results as a JSON file.")
     infer_parser.set_defaults(func=input_loop)
@@ -43,26 +44,31 @@ def argparser_init():
     add_images_parser = studio_subparser.add_parser('add_images', help='Uploads images from the local machine to Deepomatic Studio.')
     add_images_parser.set_defaults(func=feedback, recursive=False)
 
-    for parser in [infer_parser, draw_parser, blur_parser, add_images_parser]:
+    for parser in [argparser, infer_parser, draw_parser, blur_parser, add_images_parser]:
         parser.add_argument('-R', '--recursive', dest='recursive', action='store_true', help='If a directory input is used, goes through all files in subdirectories.')
         parser.add_argument('--verbose', dest='verbose', action='store_true', help='Increase output verbosity.')
 
-    for parser in [infer_parser, draw_parser, blur_parser]:
+    # input / outputs parameters
+    for parser in [argparser, infer_parser, draw_parser, blur_parser]:
         parser.add_argument('-i', '--input', required=True, help="Input path, either an image (*{}), a video (*{}), a directory, a stream (*{}), or a Studio json (*.json). If the given path is a directory, it will recursively run inference on all the supported files in this directory if the -R option is used.".format(', *'.join(SUPPORTED_IMAGE_INPUT_FORMAT), ', *'.join(SUPPORTED_VIDEO_INPUT_FORMAT), ', *'.join(SUPPORTED_PROTOCOLS_INPUT)))
         parser.add_argument('-o', '--outputs', required=True, nargs='+', help="Output path, either an image (*{}), a video (*{}), a json (*.json) or a directory.".format(', *'.join(SUPPORTED_IMAGE_OUTPUT_FORMAT), ', *'.join(SUPPORTED_VIDEO_OUTPUT_FORMAT)))
+        parser.add_argument('--input_fps', type=int, help="FPS used for input video frame skipping and extraction. If higher than the original video FPS, all frames will be analysed only once having the same effect as not using this parameter. If lower than the original video FPS, some frames will be discarded to simulate an input of the given FPS.", default=None)
+        parser.add_argument('--skip_frame', type=int, help="Number of frame to skip between two frames from the input. It can be combined with input_fps", default=0)
+        parser.add_argument('--output_fps', type=int, help="FPS usef for output video reconstruction.", default=None)
+        parser.add_argument('-F', '--fullscreen', help="Fullscreen if window output.", action="store_true")
+    
+    # inference parameters
+    for parser in [infer_parser, draw_parser, blur_parser]: 
         parser.add_argument('-r', '--recognition_id', required=True, help="Neural network recognition version ID.")
         parser.add_argument('-u', '--amqp_url', help="AMQP url for on-premises deployments.")
         parser.add_argument('-k', '--routing_key', help="Recognition routing key for on-premises deployments.")
         parser.add_argument('-t', '--threshold', type=float, help="Threshold above which a prediction is considered valid.", default=None)
-        parser.add_argument('--input_fps', type=int, help="FPS used for input video frame skipping and extraction. If higher than the original video FPS, all frames will be analysed only once having the same effect as not using this parameter. If lower than the original video FPS, some frames will be discarded to simulate an input of the given FPS.", default=None)
-        parser.add_argument('--skip_frame', type=int, help="Number of frame to skip between two frames from the input. It can be combined with input_fps", default=0)
-        parser.add_argument('--output_fps', type=int, help="FPS usef for output video reconstruction.", default=None)
         parser.add_argument('-s', '--studio_format', action='store_true', help="Convert deepomatic run predictions into deepomatic studio format.")
 
     for parser in [draw_parser, blur_parser]:
-        parser.add_argument('-F', '--fullscreen', help="Fullscreen if window output.", action="store_true")
         parser.add_argument('--from_file', type=str, dest='pred_from_file', help="Uses prediction from a Vulcan or Studio JSON.")
 
+    # draw parameters
     score_group = draw_parser.add_mutually_exclusive_group()
     score_group.add_argument('-S', '--draw_scores', dest='draw_scores', help="Overlay the prediction scores. Default behavior.", action="store_true")
     score_group.add_argument('--no_draw_scores', dest='draw_scores', help="Do not overlay the prediction scores.", action="store_false")
@@ -73,9 +79,11 @@ def argparser_init():
     label_group.add_argument('--no_draw_labels', dest='draw_labels', help="Do not overlay the prediction labels.", action="store_false")
     label_group.set_defaults(draw_labels=True)
 
+    # blur parameters
     blur_parser.add_argument('-M', '--blur_method', help="Blur method to apply, either 'pixel', 'gaussian' or 'black', defaults to 'pixel'.", default='pixel', choices=['pixel', 'gaussian', 'black'])
     blur_parser.add_argument('-B', '--blur_strength', help="Blur strength, defaults to 10.", default=10)
 
+    # studio parameters
     add_images_parser.add_argument('-d', '--dataset', required=True, help="Deepomatic Studio dataset name.", type=str)
     add_images_parser.add_argument('-o', '--organization', required=True, help="Deepomatic Studio organization slug.", type=str)
     add_images_parser.add_argument('-i', '--input', type=str, nargs='+', required=True, help="One or several input path, either an image or video file (*{}), a directory, or a Studio or Vulcan json (*.json).".format(', *'.join(SUPPORTED_FILE_INPUT_FORMAT)))
