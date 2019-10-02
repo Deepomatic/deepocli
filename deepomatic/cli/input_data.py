@@ -125,7 +125,11 @@ def input_loop(kwargs, postprocessing=None):
     # IMPORTANT: maxsize is important, it allows to regulate the pipeline and avoid to pushes too many requests to rabbitmq when we are already waiting for many results
     queue_cls = LifoQueue if inputs.is_infinite() else Queue
 
-    queues = [queue_cls(maxsize=QUEUE_MAX_SIZE) for _ in range(4 if workflow else 2)]
+    nb_queue = 2 # input => prepare inference => output
+    if workflow:
+        nb_queue += 2 # prepare inference => send inference => result inference
+
+    queues = [queue_cls(maxsize=QUEUE_MAX_SIZE) for _ in range(nb_queue)]
 
     exit_event = threading.Event()
 

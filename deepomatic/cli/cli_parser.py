@@ -29,7 +29,7 @@ def argparser_init():
     subparsers = argparser.add_subparsers(dest='command', help='')
     subparsers.required = True
 
-    noop_parser = subparsers.add_parser('noop', help="Does nothing but reading the input and outputting it.")
+    noop_parser = subparsers.add_parser('noop', help="Does nothing but reading the input and outputting it in the specified format, without predictions.")
     noop_parser.set_defaults(func=input_loop)
 
     infer_parser = subparsers.add_parser('infer', help="Computes prediction on a file or directory and outputs results as a JSON file.")
