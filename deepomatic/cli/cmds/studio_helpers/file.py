@@ -43,7 +43,7 @@ class UploadImageGreenlet(Greenlet):
             except RuntimeError as e:
                 LOGGER.error('Something when wrong with {}: {}. Skipping it.'.format(file['path'], e))
         try:
-            rq = self._helper.post(url, data={"objects": json.dumps(meta)}, content_type='multipart/form', files=files)
+            rq = self._helper.post(url, data={"objects": json.dumps(meta)}, content_type='multipart/mixed', files=files)
             self._task.retrieve(rq['task_id'])
         except RuntimeError as e:
             LOGGER.error("Failed to upload batch of images {}: {}.".format(files, e))
