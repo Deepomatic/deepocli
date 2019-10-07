@@ -5,7 +5,7 @@ import sys
 import logging
 import threading
 from tqdm import tqdm
-from .studio_helpers.http_helper import HTTPHelper
+from deepomatic.api.http_helper import HTTPHelper
 from .studio_helpers.file import DatasetFiles, UploadImageGreenlet
 from .studio_helpers.task import Task
 from ..common import TqdmToLogger, Queue, SUPPORTED_IMAGE_INPUT_FORMAT, SUPPORTED_VIDEO_INPUT_FORMAT, SUPPORTED_FILE_INPUT_FORMAT
@@ -22,11 +22,11 @@ API_HOST = os.getenv('STUDIO_URL', 'https://studio.deepomatic.com/api/')
 
 
 class Client(object):
-    def __init__(self, token=None, verify_ssl=True, check_query_parameters=True, host=None, user_agent_suffix='', pool_maxsize=GREENLET_NUMBER):
+    def __init__(self, token=None, verify_ssl=True, check_query_parameters=True, host=None, user_agent_prefix='', pool_maxsize=GREENLET_NUMBER):
         if host is None:
             host = API_HOST
 
-        self.http_helper = HTTPHelper(token, verify_ssl, host, check_query_parameters, user_agent_suffix, pool_maxsize)
+        self.http_helper = HTTPHelper(token, verify_ssl, host, check_query_parameters, user_agent_prefix, pool_maxsize)
         self.task = Task(self.http_helper)
 
 
