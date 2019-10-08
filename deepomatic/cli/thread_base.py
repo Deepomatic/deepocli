@@ -48,6 +48,8 @@ class CurrentMessages(object):
         self.heap_lock = Lock()
         self.messages = []
         self.nb_errors = 0
+        self.nb_successes = 0
+        self.nb_added_messages = 0
 
     def lock(self):
         return blocking_lock(self.heap_lock)
@@ -55,6 +57,7 @@ class CurrentMessages(object):
     def add_message(self, msg):
         with self.lock():
             heapq.heappush(self.messages, msg)
+            self.nb_added_messages += 1
 
     def get_min(self):
         with self.lock():
@@ -67,6 +70,13 @@ class CurrentMessages(object):
             if len(self.messages) > 0:
                 return heapq.heappop(self.messages)
         return None
+
+    def report_success(self):
+        self.report_successes(1)
+
+    def report_successes(self, nb_successes)
+        with self.lock():
+            self.nb_success += nb_successes
 
     def report_error(self):
         self.report_errors(1)
@@ -319,9 +329,15 @@ class MainLoop(object):
         # pbar total may be None for infinite streams
         total_inputs = float('inf') if self.pbar.total is None else self.pbar.total
 
-        LOGGER.info('Exiting: errors={} successful={} total={}'.format(self.current_messages.nb_errors,
-                                                                       self.pbar.n - self.current_messages.nb_errors,
-                                                                       total_inputs))
+        nb_uncompleted = (self.current_messages.nb_added_messages -
+                          self.current_messages.nb_errors -
+                          self.current_messages.nb_successes)
+
+        LOGGER.info('Exiting ..')
+        LOGGER.info('Summary: errors={} uncompleted={} successful={} total={}.'.format(self.current_messages.nb_errors,
+                                                                                       nb_uncompleted,
+                                                                                       self.current_messages.nb_successes,
+                                                                                       total_inputs)
 
         self.pbar.close()
         self.cleaned = True
