@@ -76,7 +76,7 @@ class CurrentMessages(object):
 
     def report_successes(self, nb_successes):
         with self.lock():
-            self.nb_success += nb_successes
+            self.nb_successes += nb_successes
 
     def report_error(self):
         self.report_errors(1)
