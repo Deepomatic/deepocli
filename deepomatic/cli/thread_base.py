@@ -74,7 +74,7 @@ class CurrentMessages(object):
     def report_success(self):
         self.report_successes(1)
 
-    def report_successes(self, nb_successes)
+    def report_successes(self, nb_successes):
         with self.lock():
             self.nb_success += nb_successes
 
@@ -333,7 +333,7 @@ class MainLoop(object):
                           self.current_messages.nb_errors -
                           self.current_messages.nb_successes)
 
-        LOGGER.info('Exiting ..')
+        LOGGER.info('Exiting..')
         LOGGER.info('Summary: errors={} uncompleted={} successful={} total={}.'.format(self.current_messages.nb_errors,
                                                                                        nb_uncompleted,
                                                                                        self.current_messages.nb_successes,
