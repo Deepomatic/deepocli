@@ -124,7 +124,6 @@ def argparser_init():
     # Define studio group for add_images
     group = add_images_parser.add_argument_group('Studio parameters')
     group.add_argument('-d', '--dataset', required=True, help="Deepomatic Studio dataset name.", type=str)
-    group.add_argument('-o', '--organization', required=True, help="Deepomatic Studio organization slug.", type=str)
 
     # Define input group for add_images
     input_groups['add_images'].add_argument('-i', '--input', type=str, nargs='+', required=True, help="One or several input path, either an image or video file (*{}), a directory, or a Studio or Vulcan json (*.json).".format(', *'.join(SUPPORTED_FILE_INPUT_FORMAT)))
@@ -143,7 +142,7 @@ def argparser_init():
 
     return argparser
 
-  
+
 def run(args):
     # Initialize the argparser
     argparser = argparser_init()
