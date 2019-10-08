@@ -337,7 +337,7 @@ class MainLoop(object):
         LOGGER.info('Summary: errors={} uncompleted={} successful={} total={}.'.format(self.current_messages.nb_errors,
                                                                                        nb_uncompleted,
                                                                                        self.current_messages.nb_successes,
-                                                                                       total_inputs)
+                                                                                       total_inputs))
 
         self.pbar.close()
         self.cleaned = True
