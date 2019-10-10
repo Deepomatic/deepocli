@@ -333,7 +333,6 @@ class MainLoop(object):
                           self.current_messages.nb_errors -
                           self.current_messages.nb_successes)
 
-        LOGGER.info('Exiting..')
         LOGGER.info('Summary: errors={} uncompleted={} successful={} total={}.'.format(self.current_messages.nb_errors,
                                                                                        nb_uncompleted,
                                                                                        self.current_messages.nb_successes,
