@@ -347,13 +347,11 @@ class MainLoop(object):
         nb_uncompleted = (self.current_messages.nb_added_messages -
                           self.current_messages.nb_errors -
                           self.current_messages.nb_successes)
-
+        self.pbar.close()
         LOGGER.info('Summary: errors={} uncompleted={} successful={} total={}.'.format(self.current_messages.nb_errors,
                                                                                        nb_uncompleted,
                                                                                        self.current_messages.nb_successes,
                                                                                        total_inputs))
-
-        self.pbar.close()
         self.cleaned = True
 
     def run_forever(self):
