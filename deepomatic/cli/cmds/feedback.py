@@ -9,7 +9,7 @@ from .studio_helpers.http_helper import HTTPHelper
 from .studio_helpers.file import DatasetFiles, UploadImageGreenlet
 from .studio_helpers.task import Task
 from ..common import TqdmToLogger, Queue, SUPPORTED_IMAGE_INPUT_FORMAT, SUPPORTED_VIDEO_INPUT_FORMAT, SUPPORTED_FILE_INPUT_FORMAT
-from ..thread_base import Pool, MainLoop
+from ..thread_base import Pool, MainLoop, CurrentMessages
 
 
 ###############################################################################
@@ -87,17 +87,21 @@ def main(args):
 
     exit_event = threading.Event()
 
+    current_messages = CurrentMessages()
+
     # Initialize progress bar
     tqdmout = TqdmToLogger(LOGGER, level=logging.INFO)
     pbar = tqdm(total=total_files, file=tqdmout, desc='Uploading images', smoothing=0)
 
     pools = [
         Pool(GREENLET_NUMBER, UploadImageGreenlet,
-             thread_args=(exit_event, queue, clt.http_helper, clt.task, pbar.update, set_metadata_path))
+             thread_args=(exit_event, queue, current_messages,
+                          clt.http_helper, clt.task, pbar.update,
+                          set_metadata_path))
     ]
 
     # Start uploading
-    loop = MainLoop(pools, [queue], pbar, exit_event)
+    loop = MainLoop(pools, [queue], pbar, exit_event, current_messages)
     try:
         loop.run_forever()
     except Exception:

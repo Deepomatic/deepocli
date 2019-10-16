@@ -13,6 +13,7 @@ class Task(object):
         sleep_time = 0.3
         while ret['next'] is not None and ret['status'] != 'SUCCESS':
             if ret['status'] in ('FAILURE', 'REVOKED'):
+                # TODO: use current_message.report_error()
                 raise RuntimeError("Task {} stopped with status".format(task_id))
             elif ret['status'] == 'SUCCESS':
                 task_id = ret['next']

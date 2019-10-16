@@ -116,6 +116,7 @@ class OutputThread(Thread):
             output.output_frame(frame)
         if self.on_progress:
             self.on_progress()
+        self.current_messages.report_success()
         self.task_done()
         self.frame_to_output = None
 

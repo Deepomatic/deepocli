@@ -15,8 +15,11 @@ LOGGER = logging.getLogger(__name__)
 
 
 class UploadImageGreenlet(Greenlet):
-    def __init__(self, exit_event, input_queue, helper, task, on_progress=None, set_metadata_path=False, **kwargs):
-        super(UploadImageGreenlet, self).__init__(exit_event, input_queue)
+    def __init__(self, exit_event, input_queue, current_messages,
+                 helper, task, on_progress=None, set_metadata_path=False,
+                 **kwargs):
+        super(UploadImageGreenlet, self).__init__(exit_event, input_queue,
+                                                  current_messages=current_messages)
         self.args = kwargs
         self.on_progress = on_progress
         self._helper = helper
@@ -41,11 +44,13 @@ class UploadImageGreenlet(Greenlet):
                         file_meta['data'] = {'image_path': file['path']}
                 meta[file['key']] = file_meta
             except RuntimeError as e:
+                self.current_messages.report_error()
                 LOGGER.error('Something when wrong with {}: {}. Skipping it.'.format(file['path'], e))
         try:
             rq = self._helper.post(url, data={"objects": json.dumps(meta)}, content_type='multipart/form', files=files)
             self._task.retrieve(rq['task_id'])
         except RuntimeError as e:
+            self.current_messages.report_errors(len(meta))
             LOGGER.error("Failed to upload batch of images {}: {}.".format(files, e))
 
         for fd in files.values():
@@ -56,6 +61,7 @@ class UploadImageGreenlet(Greenlet):
 
         if self.on_progress:
             self.on_progress(len(batch))
+        self.current_messages.report_successes(len(batch))
         self.task_done()
 
 

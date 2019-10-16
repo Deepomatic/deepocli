@@ -152,7 +152,8 @@ def input_loop(kwargs, postprocessing=None):
     # Output predictions
     pools.append(Pool(1, OutputThread, thread_args=(exit_event, queues[-1], None, current_frames, pbar.update, postprocessing), thread_kwargs=kwargs))
 
-    loop = MainLoop(pools, queues, pbar, exit_event, lambda: workflow.close() if workflow else None)
+    loop = MainLoop(pools, queues, pbar, exit_event, current_frames, lambda: workflow.close() if workflow else None)
+
     try:
         stop_asked = loop.run_forever()
     except Exception:

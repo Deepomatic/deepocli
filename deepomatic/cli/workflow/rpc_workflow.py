@@ -1,7 +1,8 @@
 import cv2
 import time
 import logging
-from .workflow_abstraction import AbstractWorkflow, InferenceError, InferenceTimeout
+from .workflow_abstraction import AbstractWorkflow
+from ..exceptions import ResultInferenceError, ResultInferenceTimeout
 from ..exceptions import DeepoRPCRecognitionError, DeepoRPCUnavailableError
 
 # First we test whether the deepomatic-rpc module is installed. An error here indicates we need to install it.
@@ -40,9 +41,9 @@ class RpcRecognition(AbstractWorkflow):
                     predictions = {'outputs': [{'labels': MessageToDict(output.labels, including_default_value_fields=True, preserving_proto_field_name=True)} for output in outputs]}
                     return predictions
                 except ServerError as e:
-                    raise InferenceError({'error': str(e), 'code': e.code})
+                    raise ResultInferenceError({'error': str(e), 'code': e.code})
             except Timeout:
-                raise InferenceTimeout(timeout)
+                raise ResultInferenceTimeout(timeout)
 
     def __init__(self, recognition_version_id, amqp_url, routing_key, recognition_cmd_kwargs=None):
         super(RpcRecognition, self).__init__('recognition_{}'.format(recognition_version_id))
