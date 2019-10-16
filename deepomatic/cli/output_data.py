@@ -288,6 +288,9 @@ class JsonOutputData(OutputData):
 
     def output_frame(self, frame):
         self._i += 1
+        if frame.predictions is None:
+            LOGGER.warning('No predictions to output.')
+            return
         predictions = frame.predictions
         predictions['location'] = frame.filename
         predictions['data'] = {
