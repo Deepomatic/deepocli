@@ -125,9 +125,9 @@ def input_loop(kwargs, postprocessing=None):
     # IMPORTANT: maxsize is important, it allows to regulate the pipeline and avoid to pushes too many requests to rabbitmq when we are already waiting for many results
     queue_cls = LifoQueue if inputs.is_infinite() else Queue
 
-    nb_queue = 2 # input => prepare inference => output
+    nb_queue = 2  # input => prepare inference => output
     if workflow:
-        nb_queue += 2 # prepare inference => send inference => result inference
+        nb_queue += 2  # prepare inference => send inference => result inference
 
     queues = [queue_cls(maxsize=QUEUE_MAX_SIZE) for _ in range(nb_queue)]
 
@@ -416,6 +416,7 @@ class StreamInputData(VideoInputData):
     def __init__(self, descriptor, **kwargs):
         super(StreamInputData, self).__init__(descriptor, **kwargs)
         self._name = 'stream_%s_%s' % ('%05d', self._reco)
+        self._reconnect = kwargs['stream_reconnect']
 
     def get_frame_count(self):
         return -1
@@ -423,9 +424,41 @@ class StreamInputData(VideoInputData):
     def is_infinite(self):
         return True
 
+    def _grab_next(self):
+        grabbed = self._cap.grab()
+        if not grabbed:
+            if self._reconnect:
+                self._open_video()
+                self._grab_next()
+            else:
+                self._stop_video()
+
+    def _decode_next(self):
+        decoded, frame = self._cap.retrieve()
+        if not decoded:
+            if self._reconnect:
+                self._open_video()
+                return self._decode_next()
+            else:
+                self._stop_video()
+        else:
+            self._i += 1
+            return Frame(self._name % self._i, self._filename, frame, self._i)
+
+    def _read_next(self):
+        read, frame = self._cap.read()
+        if not read:
+            if self._reconnect:
+                self._open_video()
+                return self._read_next()
+            else:
+                self._stop_video()
+        else:
+            self._i += 1
+            return Frame(self._name % self._i, self._filename, frame, self._i)
+
 
 class DeviceInputData(VideoInputData):
-
     @classmethod
     def is_valid(cls, descriptor):
         return descriptor.isdigit()
@@ -442,7 +475,6 @@ class DeviceInputData(VideoInputData):
 
 
 class StudioJsonInputData(InputData):
-
     @classmethod
     def is_valid(cls, descriptor):
         try:

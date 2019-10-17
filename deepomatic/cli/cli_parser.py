@@ -38,7 +38,7 @@ def argparser_init():
     infer_parser.set_defaults(func=input_loop)
     subparsers_dict['infer'] = infer_parser
 
-   # Initialize subparser: noop
+    # Initialize subparser: noop
     help_msg = "Does nothing but reading the input and outputting it in the specified format, without predictions."
     desc_mgs = help_msg + " Typical usage is: deepo noop -i 0 -o window"
     noop_parser = subparsers.add_parser('noop', help=help_msg, description=desc_mgs)
@@ -83,13 +83,14 @@ def argparser_init():
         group.add_argument('-i', '--input', required=True, help="Input path, either an image (*{}), a video (*{}), a directory, a stream (*{}), or a Studio json (*.json). If the given path is a directory, it will recursively run inference on all the supported files in this directory if the -R option is used.".format(', *'.join(SUPPORTED_IMAGE_INPUT_FORMAT), ', *'.join(SUPPORTED_VIDEO_INPUT_FORMAT), ', *'.join(SUPPORTED_PROTOCOLS_INPUT)))
         group.add_argument('--input_fps', type=int, help="FPS used for input video frame skipping and extraction. If higher than the original video FPS, all frames will be analysed only once having the same effect as not using this parameter. If lower than the original video FPS, some frames will be discarded to simulate an input of the given FPS.", default=None)
         group.add_argument('--skip_frame', type=int, help="Number of frame to skip between two frames from the input. It can be combined with input_fps", default=0)
+        group.add_argument('--stream_reconnect', dest='stream_reconnect', help="Automatically attempt to reconnect if the video stream stops.", action="store_true")
 
     # Define output group for infer draw blur
     for cmd in ['infer', 'draw', 'blur', 'noop']:
         group = output_groups[cmd]
         group.add_argument('-o', '--outputs', required=True, nargs='+', help="Output path, either an image (*{}), a video (*{}), a json (*.json) or a directory.".format(', *'.join(SUPPORTED_IMAGE_OUTPUT_FORMAT), ', *'.join(SUPPORTED_VIDEO_OUTPUT_FORMAT)))
         group.add_argument('--output_fps', type=int, help="FPS used for output video reconstruction.", default=None)
-        
+
     # Define output group for infer draw blur
     for cmd in ['infer', 'draw', 'blur']:
         group = output_groups[cmd]
