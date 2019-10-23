@@ -59,6 +59,11 @@ def get_outputs(descriptors, kwargs):
 
 
 class NotProcessedYet(object):
+    # OutputThread can receive frames in wrong order
+    # When a frame arrives and is not the one we want to process,
+    # we cache it internally and return a NotProcessedYet object
+    # Then we override OutputThread.task_done so that we don't consider
+    # the task to be done when NotProcessedYet is returned
     pass
 
 
@@ -110,7 +115,7 @@ class OutputThread(Thread):
 
     def put_to_output(self, frame_out):
         if frame_out is self.NOT_PROCESSED_YET:
-            # Nothing to output
+            # Nothing to output, the frame has not been processed yet
             return
         super(OutputThread, self).put_to_output(frame_out)
 
@@ -146,7 +151,11 @@ class OutputThread(Thread):
             self.on_progress()
 
         if self.output_queue is not None:
+            # In some case we might attach other pools after the output pool
+            # In this case we return the frame for the next processing
             return frame
+        # No other pool attached
+        # End of pipeline
         return None
 
 
