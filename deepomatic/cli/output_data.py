@@ -2,7 +2,6 @@ import os
 import sys
 import json
 import cv2
-import imutils
 import logging
 import traceback
 from .thread_base import Thread
@@ -209,12 +208,7 @@ class DisplayOutputData(OutputData):
 
         if self._fullscreen:
             cv2.namedWindow(self._window_name, cv2.WINDOW_NORMAL)
-            if imutils.is_cv2():
-                prop_value = cv2.cv.CV_WINDOW_FULLSCREEN
-            elif imutils.is_cv3():
-                prop_value = cv2.WINDOW_FULLSCREEN
-            else:
-                assert('Unsupported opencv version')
+            prop_value = cv2.WINDOW_FULLSCREEN
             cv2.setWindowProperty(self._window_name,
                                   cv2.WND_PROP_FULLSCREEN,
                                   prop_value)
