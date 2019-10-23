@@ -58,7 +58,13 @@ def get_outputs(descriptors, kwargs):
     return [get_output(descriptor, kwargs) for descriptor in descriptors]
 
 
+class NotProcessedYet(object):
+    pass
+
+
 class OutputThread(Thread):
+    NOT_PROCESSED_YET = NotProcessedYet()
+
     def __init__(self, exit_event, input_queue, output_queue, current_messages,
                  on_progress, postprocessing, **kwargs):
         super(OutputThread, self).__init__(exit_event, input_queue,
@@ -102,10 +108,31 @@ class OutputThread(Thread):
             frame = super(OutputThread, self).pop_input()
         return frame
 
+    def put_to_output(self, frame_out):
+        if frame_out is self.NOT_PROCESSED_YET:
+            # Nothing to output
+            return
+        super(OutputThread, self).put_to_output(frame_out)
+
+    def task_done(self, frame_in, frame_out):
+        if frame_out is self.NOT_PROCESSED_YET:
+            # We kept the frame for later, the task is not done
+            return
+
+        super(OutputThread, self).task_done(frame_in, frame_out)
+        self.frame_to_output = None
+
+        if self.output_queue is None:
+            # process_msg() returns frame None when output_queue is None
+            assert frame_out is None
+            # Reporting success only if last pool of the pipeline
+            self.current_messages.report_success()
+
     def process_msg(self, frame):
         if self.frame_to_output != frame.frame_number:
             self.frames_to_check_first[frame.frame_number] = frame
-            return
+            # We keep it for later
+            return self.NOT_PROCESSED_YET
 
         if self.postprocessing is not None:
             self.postprocessing(frame)
@@ -114,11 +141,13 @@ class OutputThread(Thread):
 
         for output in self.outputs:
             output.output_frame(frame)
+
         if self.on_progress:
             self.on_progress()
-        self.current_messages.report_success()
-        self.task_done()
-        self.frame_to_output = None
+
+        if self.output_queue is not None:
+            return frame
+        return None
 
 
 class OutputData(object):
@@ -289,6 +318,7 @@ class JsonOutputData(OutputData):
     def output_frame(self, frame):
         self._i += 1
         if frame.predictions is None:
+            # For noop command
             LOGGER.warning('No predictions to output.')
             return
         predictions = frame.predictions

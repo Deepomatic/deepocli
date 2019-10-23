@@ -166,13 +166,12 @@ class ThreadBase(object):
         while True:
             try:
                 self.output_queue.put(msg_out, block=False)
-                self.task_done()
                 break
             except Full:
                 # don't touch until we have non performance regression tests
                 gevent.sleep(SLEEP_TIME)
 
-    def task_done(self):
+    def task_done(self, msg_in, msg_out):
         if self.input_queue is not None:
             self.input_queue.task_done()
 
@@ -198,6 +197,7 @@ class ThreadBase(object):
                         msg_out = self.process_msg(msg_in)
                         if msg_out is not None:
                             self.put_to_output(msg_out)
+                        self.task_done(msg_in, msg_out)
             if empty:
                 # don't touch until we have non performance regression tests
                 gevent.sleep(SLEEP_TIME)
@@ -262,15 +262,14 @@ class Pool(object):
         self.nb_thread = nb_thread
         self.name = name or thread_cls.__name__
         self.threads = []
-        self.thread_cls = thread_cls
-        self.thread_args = thread_args
-        self.thread_kwargs = thread_kwargs or {}
-
-    def start(self):
+        thread_kwargs = thread_kwargs or {}
         for i in range(self.nb_thread):
-            th = self.thread_cls(*self.thread_args, **self.thread_kwargs)
+            th = thread_cls(*thread_args, **thread_kwargs)
             th.name = '{}_{}'.format(self.name, i)
             self.threads.append(th)
+
+    def start(self):
+        for th in self.threads:
             th.start()
 
     def wait_until_nothing_to_process(self):
@@ -288,7 +287,8 @@ class Pool(object):
 
 
 class MainLoop(object):
-    def __init__(self, pools, queues, pbar, exit_event, current_messages, cleanup_func=None):
+    def __init__(self, pools, queues, pbar, exit_event,
+                 current_messages, cleanup_func=None):
         self.pools = pools
         self.queues = queues
         self.pbar = pbar
@@ -355,7 +355,6 @@ class MainLoop(object):
         self.cleaned = True
 
     def run_forever(self):
-
         # Start threads
         for pool in self.pools:
             pool.start()
