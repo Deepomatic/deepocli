@@ -23,10 +23,10 @@ def import_rpc_package(should_raise=False):
         from deepomatic.rpc.helpers.proto import create_v07_images_command
         from deepomatic.rpc.buffers.protobuf.cli.Message_pb2 import Message
         from google import protobuf
-        from google.protobuf.json_format import ParseDict, MessageToDict
-    except ImportError:
+        import google.protobuf.json_format
+    except ImportError as e:
         if should_raise:
-            raise DeepoRPCUnavailableError('RPC not up-to-date')
+            raise DeepoRPCUnavailableError('RPC not up-to-date: %s' % e)
 
     return rpc, protobuf
 
