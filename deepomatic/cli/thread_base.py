@@ -12,7 +12,7 @@ from .exceptions import DeepoCLIException
 
 
 LOGGER = logging.getLogger(__name__)
-QUEUE_MAX_SIZE = 50
+QUEUE_MAX_SIZE = 1
 SLEEP_TIME = 0.0001  # don't touch until we have non performance regression tests
 
 
@@ -186,6 +186,7 @@ class ThreadBase(object):
             empty = False
             with self.try_lock() as acquired:
                 if acquired:
+                    # LOGGER.info('%d < %s < %d' % (-1 if self.input_queue is None else self.input_queue.qsize(), self.__class__, -1 if self.output_queue is None else self.output_queue.qsize()))
                     msg_in = None
                     if self.input_queue is not None:
                         try:

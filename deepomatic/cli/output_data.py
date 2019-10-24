@@ -5,14 +5,16 @@ import cv2
 import logging
 import traceback
 from .thread_base import Thread
+from .workflow import requires_deepomatic_rpc, import_rpc_package
 from .common import Empty, write_frame_to_disk, SUPPORTED_IMAGE_OUTPUT_FORMAT, SUPPORTED_VIDEO_OUTPUT_FORMAT
 from .cmds.studio_helpers.vulcan2studio import transform_json_from_vulcan_to_studio
-from .exceptions import DeepoUnknownOutputError, DeepoSaveJsonToFileError
+from .exceptions import DeepoCLIException, DeepoUnknownOutputError, DeepoSaveJsonToFileError
 
 
 LOGGER = logging.getLogger(__name__)
 DEFAULT_OUTPUT_FPS = 25
 
+rpc, protobuf = import_rpc_package()
 
 try:
     # https://stackoverflow.com/questions/908331/how-to-write-binary-data-to-stdout-in-python-3
@@ -20,6 +22,12 @@ try:
 except AttributeError:
     write_bytes_to_stdout = sys.stdout.write
 
+try:
+    # python 2
+    import urlparse
+except ImportError:
+    # python3
+    import urllib.parse as urlparse
 
 def save_json_to_file(json_data, json_path):
     try:
@@ -41,6 +49,8 @@ def get_output(descriptor, kwargs):
             return JsonOutputData(descriptor, **kwargs)
         elif DirectoryOutputData.is_valid(descriptor):
             return DirectoryOutputData(descriptor, **kwargs)
+        elif AMQPOutputData.is_valid(descriptor):
+            return AMQPOutputData(descriptor, **kwargs)
         elif descriptor == 'stdout':
             return StdOutputData(**kwargs)
         elif descriptor == 'window':
@@ -87,6 +97,10 @@ class OutputThread(Thread):
                     break
         else:
             self.outputs = get_outputs(self.args.get('outputs', None), self.args)
+
+    def init(self):
+        for output in self.outputs:
+            output.init()
 
     def close(self):
         self.frames_to_check_first = {}
@@ -161,6 +175,9 @@ class OutputData(object):
         self._descriptor = descriptor
         self._args = kwargs
 
+    def init(self):
+        pass
+
     def close(self):
         pass
 
@@ -189,6 +206,50 @@ class ImageOutputData(OutputData):
         finally:
             write_frame_to_disk(frame, path)
 
+@requires_deepomatic_rpc
+class AMQPOutputData(OutputData):
+
+    @classmethod
+    def is_valid(cls, descriptor):
+        return descriptor.startswith('amqp://')
+
+    def __init__(self, descriptor, **kwargs):
+        super(AMQPOutputData, self).__init__(descriptor, **kwargs)
+        try:
+            parsed = urlparse.urlparse(descriptor)
+            self._amqp_url = parsed.scheme + "://" + parsed.netloc + parsed.path
+            self._routing_key = urlparse.parse_qs(parsed.query)['routing_key'][0]
+        except (ValueError, KeyError):
+            raise DeepoCLIException("Cannot parse the descriptor for amqp output. It should have the `amqp://HOST:PORT?routing_key=ROUTING_KEY` format")
+
+        self._client = None
+        self._queue = None
+
+    def init(self):
+        self.close()
+        self._client = rpc.client.Client(self._amqp_url)
+        self._queue = self._client.amqp_client.force_declare_tmp_queue(routing_key=self._routing_key, exchange=self._client.amqp_exchange, message_expiration=1000)
+
+    def close(self):
+        if self._client is not None:
+            self._client.remove_queue(self._queue)
+            self._client.amqp_client.ensured_connection.close()
+
+    def output_frame(self, frame):
+        if frame.output_image is None:
+            LOGGER.warning('No frame to output.')
+        else:
+            message = rpc.buffers.protobuf.cli.Message_pb2.Message()
+            protobuf.json_format.ParseDict({
+                'result': {
+                    'v07_recognition': frame.predictions
+                },
+                'command': {
+                }
+            }, message)
+            image_input = rpc.v07_ImageInput(source=rpc.BINARY_IMAGE_PREFIX + frame.buf_bytes)
+            message.command.input_mix.CopyFrom(rpc.helpers.v07_proto.create_images_input_mix([image_input]))
+            self._client.send_binary(message.SerializeToString(), self._queue.routing_key)
 
 class VideoOutputData(OutputData):
     @classmethod

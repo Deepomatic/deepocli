@@ -68,6 +68,7 @@ def argparser_init():
     desc_mgs = help_msg + " Typical usage is: deepo studio add_images -i img.png -d mydataset -o myorg"
     add_images_parser = studio_subparser.add_parser('add_images', help=help_msg, description=desc_mgs)
     add_images_parser.set_defaults(func=feedback, recursive=False)
+
     subparsers_dict['add_images'] = add_images_parser
 
     # Define argument groups for easier reading
@@ -81,6 +82,7 @@ def argparser_init():
     for cmd in ['infer', 'draw', 'blur', 'noop']:
         group = input_groups[cmd]
         group.add_argument('-i', '--input', required=True, help="Input path, either an image (*{}), a video (*{}), a directory, a stream (*{}), or a Studio json (*.json). If the given path is a directory, it will recursively run inference on all the supported files in this directory if the -R option is used.".format(', *'.join(SUPPORTED_IMAGE_INPUT_FORMAT), ', *'.join(SUPPORTED_VIDEO_INPUT_FORMAT), ', *'.join(SUPPORTED_PROTOCOLS_INPUT)))
+        group.add_argument('--realtime', action='store_true', help="Skip frames to ensure realtime processing.")
         group.add_argument('--input_fps', type=int, help="FPS used for input video frame skipping and extraction. If higher than the original video FPS, all frames will be analysed only once having the same effect as not using this parameter. If lower than the original video FPS, some frames will be discarded to simulate an input of the given FPS.", default=None)
         group.add_argument('--skip_frame', type=int, help="Number of frame to skip between two frames from the input. It can be combined with input_fps", default=0)
 

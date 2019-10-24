@@ -4,6 +4,7 @@ import sys
 import json
 import logging
 import threading
+import numpy as np
 from .json_schema import is_valid_studio_json, is_valid_vulcan_json
 from .exceptions import DeepoCLICredentialsError
 from .thread_base import Pool, Thread, MainLoop, CurrentMessages, blocking_lock, QUEUE_MAX_SIZE
@@ -16,10 +17,18 @@ from .output_data import OutputThread
 from .frame import Frame, CurrentFrames
 from .cmds.studio_helpers.vulcan2studio import transform_json_from_vulcan_to_studio
 from .exceptions import DeepoWorkflowError, DeepoFPSError, DeepoVideoOpenError, DeepoInputError
-
+from .workflow.rpc_workflow import import_rpc_package
 
 LOGGER = logging.getLogger(__name__)
 
+rpc, protobuf = import_rpc_package()
+
+try:
+    # python 2
+    import urlparse
+except ImportError:
+    # python3
+    import urllib.parse as urlparse
 
 def get_input(descriptor, kwargs):
     if descriptor is None:
@@ -54,6 +63,10 @@ def get_input(descriptor, kwargs):
     elif StreamInputData.is_valid(descriptor):
         LOGGER.debug('Stream input data detected for {}'.format(descriptor))
         return StreamInputData(descriptor, **kwargs)
+    # AMQP queue that contains buffers.protobuf.cli.Message defined in deepomatic-rpc
+    elif AMQPInputData.is_valid(descriptor):
+        LOGGER.debug('AMQP input data detected for {}'.format(descriptor))
+        return AMQPInputData(descriptor, **kwargs)
     else:
         raise DeepoInputError('Unknown input')
 
@@ -131,6 +144,9 @@ def input_loop(kwargs, postprocessing=None):
 
     queues = [queue_cls(maxsize=QUEUE_MAX_SIZE) for _ in range(nb_queue)]
 
+    if workflow and kwargs['realtime']:
+        kwargs['realtime'] = queues[-1]
+
     exit_event = threading.Event()
 
     current_frames = CurrentFrames()
@@ -138,7 +154,7 @@ def input_loop(kwargs, postprocessing=None):
     pools = [
         Pool(1, InputThread, thread_args=(exit_event, None, queues[0], inputs)),
         # Encode image into jpeg
-        Pool(1, PrepareInferenceThread, thread_args=(exit_event, queues[0], queues[1], current_frames)),
+        Pool(1, PrepareInferenceThread, thread_args=(exit_event, queues[0], queues[1], current_frames))
     ]
 
     if workflow:
@@ -423,6 +439,71 @@ class StreamInputData(VideoInputData):
     def is_infinite(self):
         return True
 
+class AMQPInputData(InputData):
+    @classmethod
+    def is_valid(cls, descriptor):
+        return descriptor.startswith('amqp://')
+
+    def __init__(self, descriptor, **kwargs):
+        super(AMQPInputData, self).__init__(descriptor, **kwargs)
+        self._i = 0
+        self._name = 'amqp_%s_%s' % ('%05d', self._reco)
+        self._client = None
+        self._queue, self._consumer = None, None
+        try:
+            parsed = urlparse.urlparse(descriptor)
+            self._amqp_url = parsed.scheme + "://" + parsed.netloc + parsed.path
+            query = urlparse.parse_qs(parsed.query)
+            self._queue_name = query['queue'][0]
+            self._durable = 'durable' in query and query['durable'][0] == '1'
+        
+        except (ValueError, KeyError):
+            raise DeepoCLIException("Cannot parse the descriptor for amqp output. It should have the `amqp://HOST:PORT?queue=QUEUE_NAME?durable=1` format")
+
+    def __iter__(self):
+        self._client = rpc.client.Client(self._amqp_url)
+        if self._durable:
+            self._queue, self._consumer = self._client.new_consuming_queue(queue_name=self._queue_name)
+        else:
+            self._queue = self._client.amqp_client.force_declare_tmp_queue(routing_key=self._queue_name, exchange=self._client.amqp_exchange)
+            self._consumer =  self._client.amqp_client.force_declare_lru_consumer([self._queue])
+            self._consumer.consume()
+        return self
+
+    def __next__(self):
+        try:
+            response = self._consumer.get()
+        except rpc.amqp.exceptions.Timeout as t:
+            LOGGER.debug('Timeout in AMQP input: %s' % t)
+            raise StopIteration()
+
+            # parse message
+            message = rpc.buffers.protobuf.cli.Message_pb2.Message.FromString(response.body)
+
+            # get frame data
+            frame_data = bytearray(message.command.input_mix.v07_inputs.inputs[0].image.source)
+            del frame_data[:len(rpc.BINARY_IMAGE_PREFIX)]
+            
+            # decode frame data
+            image = cv2.imdecode(np.frombuffer(frame_data, np.uint8), flags=-1)
+            
+            frame = Frame(self._name % self._i, self._filename, image, self._i)
+            frame.buf_bytes = frame_data
+            self._i += 1
+            return frame
+
+    def __del__(self):
+        if self._consumer is not None:
+            self._client.remove_consumer(self._consumer)
+        if self._queue is not None:
+            self._client.remove_queue(self._queue)
+
+    def get_frame_count(self):
+        return -1
+
+    def is_infinite(self):
+        return True
+    
 
 class DeviceInputData(VideoInputData):
 
