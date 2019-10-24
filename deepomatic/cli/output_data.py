@@ -30,8 +30,6 @@ def save_json_to_file(json_data, json_path):
     except Exception:
         raise DeepoSaveJsonToFileError("Could not save file {} in json format: {}".format(json_path, traceback.format_exc()))
 
-    return
-
 
 def get_output(descriptor, kwargs):
     if descriptor is not None:
@@ -365,10 +363,8 @@ class DirectoryOutputData(OutputData):
 
         # If the input is an image, then use the same extension if supported
         _, ext = os.path.splitext(frame.filename)
-        if ext.lower() in SUPPORTED_IMAGE_OUTPUT_FORMAT:
-            pass
-        # Otherwise defaults to jpg
-        else:
+        if ext.lower() not in SUPPORTED_IMAGE_OUTPUT_FORMAT:
+            # Otherwise defaults to jpg
             ext = '.jpg'
 
         # Finally write the image to file with its name
