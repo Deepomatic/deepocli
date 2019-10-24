@@ -208,10 +208,9 @@ class DisplayOutputData(OutputData):
 
         if self._fullscreen:
             cv2.namedWindow(self._window_name, cv2.WINDOW_NORMAL)
-            prop_value = cv2.WINDOW_FULLSCREEN
             cv2.setWindowProperty(self._window_name,
                                   cv2.WND_PROP_FULLSCREEN,
-                                  prop_value)
+                                  cv2.WINDOW_FULLSCREEN)
 
     def output_frame(self, frame):
         if frame.output_image is None:
