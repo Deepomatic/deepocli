@@ -48,3 +48,29 @@ class DeepoPredictionJsonError(DeepoCLIException):
 
 class DeepoUploadJsonError(DeepoCLIException):
     pass
+
+
+# Inference errors
+
+
+class InferenceError(DeepoCLIException):
+    def __init__(self, error):
+        super(InferenceError, self).__init__(str(error))
+        self.error = error
+
+
+class SendInferenceError(InferenceError):
+    pass
+
+
+class ResultInferenceError(InferenceError):
+    pass
+
+
+class ResultInferenceTimeout(ResultInferenceError):
+    def __init__(self, timeout=None):
+        self.timeout = timeout
+        error = 'timeout reached'
+        if timeout is not None:
+            error += ' after {}'.format(timeout)
+        super(InferenceTimeout, self).__init__(error)
