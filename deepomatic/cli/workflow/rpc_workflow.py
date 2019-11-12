@@ -75,19 +75,21 @@ class RpcRecognition(AbstractWorkflow):
         self._consumer = None
         self.amqp_url = amqp_url
 
-        recognition_cmd_kwargs = recognition_cmd_kwargs or {'show_discarded': True, 'max_predictions': 1000}
-
         # We declare the client that will be used for consuming in one thread only
         # RPC client is not thread safe
         self._consume_client = rpc.client.Client(amqp_url)
-        self._recognition = None
-        try:
-            recognition_version_id = int(recognition_version_id)
-        except ValueError:
-            raise DeepoRPCRecognitionError("Cannot cast recognition ID into a number")
+        if recognition_version_id is None:
+            self._command_mix = rpc.helpers.v07_proto.create_workflow_command_mix()
+        else:
+            recognition_cmd_kwargs = recognition_cmd_kwargs or {'show_discarded': True, 'max_predictions': 1000}
 
-        self._command_mix = rpc.helpers.v07_proto.create_recognition_command_mix(recognition_version_id,
-                                                            **recognition_cmd_kwargs)
+            try:
+                recognition_version_id = int(recognition_version_id)
+            except ValueError:
+                raise DeepoRPCRecognitionError("Cannot cast recognition ID into a number")
+
+            self._command_mix = rpc.helpers.v07_proto.create_recognition_command_mix(recognition_version_id,
+                                                                **recognition_cmd_kwargs)
         self._command_queue = self._consume_client.new_queue(self._routing_key)
         self._response_queue, self._consumer = self._consume_client.new_consuming_queue()
 

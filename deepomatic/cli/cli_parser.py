@@ -108,7 +108,7 @@ def argparser_init():
     # Define model group for infer draw blur
     for cmd in ['infer', 'draw', 'blur']:
         group = model_groups[cmd]
-        group.add_argument('-r', '--recognition_id', required=True, help="Neural network recognition version ID.")
+        group.add_argument('-r', '--recognition_id', help="Neural network recognition version ID.")
         group.add_argument('-t', '--threshold', type=float, help="Threshold above which a prediction is considered valid.", default=None)
 
     # Define onprem group for infer draw blur
