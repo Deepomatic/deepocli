@@ -1,7 +1,6 @@
 from deepomatic.cli.cli_parser import run
 from utils import init_files_setup
 
-
 # ------- Files setup ------------------------------------------------------------------------------------------------ #
 
 
