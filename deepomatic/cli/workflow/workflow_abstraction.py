@@ -1,21 +1,6 @@
 import os
 
 
-class InferenceError(Exception):
-    def __init__(self, error):
-        super(InferenceError, self).__init__(str(error))
-        self.error = error
-
-
-class InferenceTimeout(Exception):
-    def __init__(self, timeout=None):
-        self.timeout = timeout
-        error = 'timeout reached'
-        if timeout is not None:
-            error += ' after {}'.format(timeout)
-        super(InferenceTimeout, self).__init__(error)
-
-
 class AbstractWorkflow(object):
     class AbstractInferResult(object):
         def get_predictions(self):

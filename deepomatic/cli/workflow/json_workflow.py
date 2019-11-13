@@ -1,10 +1,10 @@
 import sys
 import json
 import logging
-from .workflow_abstraction import AbstractWorkflow, InferenceError
+from .workflow_abstraction import AbstractWorkflow
 from ..json_schema import is_valid_studio_json, is_valid_vulcan_json
 from ..cmds.studio_helpers.vulcan2studio import transform_json_from_studio_to_vulcan
-from ..exceptions import DeepoPredictionJsonError, DeepoOpenJsonError
+from ..exceptions import DeepoPredictionJsonError, DeepoOpenJsonError, SendInferenceError
 
 
 LOGGER = logging.getLogger(__name__)
@@ -51,7 +51,7 @@ class JsonRecognition(AbstractWorkflow):
         # _useless_encoded_image_bytes and _useless_push_client are used only for rpc and cloud workflows
         try:
             frame_pred = self._all_predictions[frame_name]
-        except Exception:
-            raise InferenceError("Could not find predictions for frame {}".format(frame_name))
+        except KeyError:
+            raise SendInferenceError("Could not find predictions for frame {}".format(frame_name))
 
         return self.InferResult(frame_name, frame_pred)

@@ -168,6 +168,7 @@ def init_files_setup():
 
 
 def run_cmd(cmds, inp, outputs, *args, **kwargs):
+    reco_opts = [] if 'noop' in cmds else ['-r', 'fashion-v4']
     extra_opts = kwargs.pop('extra_opts', [])
     absolute_outputs = []
     with create_tmp_dir() as tmpdir:
@@ -180,5 +181,5 @@ def run_cmd(cmds, inp, outputs, *args, **kwargs):
                 absolute_outputs.append(output_dir)
             else:
                 absolute_outputs.append(os.path.join(tmpdir, output))
-        run(cmds + ['-i', inp, '-o'] + absolute_outputs + ['-r', 'fashion-v4'] + extra_opts)
+        run(cmds + ['-i', inp, '-o'] + absolute_outputs + reco_opts + extra_opts)
         check_directory(tmpdir, *args, **kwargs)
