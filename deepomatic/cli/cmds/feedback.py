@@ -3,18 +3,12 @@
 import os
 import sys
 import logging
-import requests
 import threading
-import platform
 from tqdm import tqdm
-from deepomatic.api.exceptions import (BadStatus, ServerError,
-                                       ClientError, DeepomaticException)
-from deepomatic.api.http_helper import HTTPHelper, RequestsTimeout
-from deepomatic.api.http_retry import HTTPRetry
-from deepomatic.api.version import __title__, __version__
+from deepomatic.api.http_helper import HTTPHelper
 from .studio_helpers.file import DatasetFiles, UploadImageGreenlet
 from .studio_helpers.task import Task
-from ..common import TqdmToLogger, Queue, SUPPORTED_IMAGE_INPUT_FORMAT, SUPPORTED_VIDEO_INPUT_FORMAT, SUPPORTED_FILE_INPUT_FORMAT
+from ..common import TqdmToLogger, Queue, SUPPORTED_FILE_INPUT_FORMAT
 from ..thread_base import Pool, MainLoop, CurrentMessages
 
 
@@ -32,7 +26,7 @@ class Client(object):
         if host is None:
             host = API_HOST
 
-        self.http_helper = HTTPHelper(api_key=token, verify_ssl=None, host=host, check_query_parameters=check_query_parameters,
+        self.http_helper = HTTPHelper(api_key=token, verify_ssl=verify_ssl, host=host, check_query_parameters=check_query_parameters,
                                       user_agent_prefix=user_agent_prefix, pool_maxsize=pool_maxsize, version=None)
         self.task = Task(self.http_helper)
 
@@ -46,8 +40,7 @@ def get_all_files_with_ext(path, supported_ext, recursive=True):
         for file in os.listdir(path):
             file_path = os.path.join(path, file)
             if recursive:
-                all_files.extend(get_all_files_with_ext(
-                    file_path, supported_ext))
+                all_files.extend(get_all_files_with_ext(file_path, supported_ext))
             elif os.path.isfile(file_path) and os.path.splitext(file_path)[1].lower() in supported_ext:
                 all_files.append(file_path)
     else:

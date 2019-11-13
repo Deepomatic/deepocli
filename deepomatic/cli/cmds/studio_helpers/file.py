@@ -110,7 +110,7 @@ class DatasetFiles(object):
                 try:
                     with open(upload_file, 'r') as fd:
                         json_data = json.load(fd)
-                except IOError:
+                except IOError as e:
                     raise DeepoOpenJsonError("Upload JSON file {} failed: {}".format(upload_file, e))
                 except ValueError:
                     raise DeepoOpenJsonError("Upload JSON file {} is not a valid JSON file".format(upload_file))
