@@ -4,4 +4,4 @@ requests>=2.19.0,<3  # will not work below in python3
 text-unidecode==1.2
 gevent==1.4.0
 jsonschema==3.0.1
-git+https://github.com/Deepomatic/deepomatic-client-python.git#egg=deepomatic-api
+deepomatic-api==0.9.1
