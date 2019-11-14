@@ -22,11 +22,11 @@ API_HOST = os.getenv('STUDIO_URL', 'https://studio.deepomatic.com/api/')
 
 
 class Client(object):
-    def __init__(self, token=None, verify_ssl=True, check_query_parameters=True, host=None, user_agent_prefix='', pool_maxsize=GREENLET_NUMBER):
+    def __init__(self, token=None, check_query_parameters=True, host=None, user_agent_prefix='', pool_maxsize=GREENLET_NUMBER):
         if host is None:
             host = API_HOST
 
-        self.http_helper = HTTPHelper(api_key=token, verify_ssl=verify_ssl, host=host, check_query_parameters=check_query_parameters,
+        self.http_helper = HTTPHelper(api_key=token, host=host, check_query_parameters=check_query_parameters,
                                       user_agent_prefix=user_agent_prefix, pool_maxsize=pool_maxsize, version=None)
         self.task = Task(self.http_helper)
 
