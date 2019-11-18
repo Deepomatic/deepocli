@@ -1,5 +1,6 @@
 import cv2
 import logging
+import time
 from text_unidecode import unidecode
 from ..exceptions import (SendInferenceError,
                           ResultInferenceError,
@@ -43,7 +44,11 @@ class DrawImagePostprocessing(object):
         height = output_image.shape[0]
         width = output_image.shape[1]
         tag_drawn = 0  # Used to store the number of tags already drawn
-        for pred in frame.predictions['outputs'][0]['labels']['predicted']:
+        try:
+            predictions = frame.predictions['outputs'][0]['labels']['predicted']
+        except (KeyError, TypeError):
+            predictions = []
+        for pred in predictions:
             # Build legend
             label = u''
             if self._draw_labels:
@@ -114,7 +119,11 @@ class BlurImagePostprocessing(object):
         output_image = frame.output_image
         height = output_image.shape[0]
         width = output_image.shape[1]
-        for pred in frame.predictions['outputs'][0]['labels']['predicted']:
+        try:
+            predictions = frame.predictions['outputs'][0]['labels']['predicted']
+        except (KeyError, TypeError):
+            predictions = []
+        for pred in predictions:
             # Check that we have a bounding box
             roi = pred.get('roi')
             if roi is not None:
@@ -152,16 +161,34 @@ class PrepareInferenceThread(thread_base.Thread):
 
 
 class SendInferenceGreenlet(thread_base.Greenlet):
-    def __init__(self, exit_event, input_queue, output_queue, current_messages, workflow):
+    def __init__(self, exit_event, input_queue, output_queue, current_messages, workflow, skip=None, inference_fps=float('inf')):
         super(SendInferenceGreenlet, self).__init__(exit_event, input_queue, output_queue, current_messages)
         self.workflow = workflow
-        self.push_client = workflow.new_client()
+        self.skip = skip
+        self._last_inference = 0
+        self.push_client = self.workflow.new_client()
 
     def close(self):
         self.workflow.close_client(self.push_client)
 
+    def _should_skip(self):
+        too_soon = (time.time() - self._last_inference) < (1. / self.workflow._inference_fps)
+        return self.output_queue.full() or too_soon
+
     def process_msg(self, frame):
         try:
+            if self.skip and self._should_skip():
+                frame.predictions = {
+                    'outputs': [{
+                        'labels': {
+                            'predicted': [],
+                            'discarded': []
+                        }
+                    }]
+                }
+                self.skip.put(frame)
+                return None
+            self._last_inference = time.time()
             frame.inference_async_result = self.workflow.infer(frame.buf_bytes, self.push_client, frame.name)
             return frame
         except SendInferenceError as e:
@@ -174,30 +201,10 @@ class ResultInferenceGreenlet(thread_base.Greenlet):
     def __init__(self, exit_event, input_queue, output_queue, current_messages, workflow, **kwargs):
         super(ResultInferenceGreenlet, self).__init__(exit_event, input_queue, output_queue, current_messages)
         self.workflow = workflow
-        self.threshold = kwargs.get('threshold')
-
-    def fill_predictions(self, predictions, new_predicted, new_discarded):
-        for prediction in predictions:
-            if prediction['score'] >= self.threshold:
-                new_predicted.append(prediction)
-            else:
-                new_discarded.append(prediction)
 
     def process_msg(self, frame):
         try:
-            predictions = frame.inference_async_result.get_predictions(timeout=60)
-            if self.threshold is not None:
-                # Keep only predictions higher than threshold
-                for output in predictions['outputs']:
-                    new_predicted = []
-                    new_discarded = []
-                    labels = output['labels']
-                    self.fill_predictions(labels['predicted'], new_predicted, new_discarded)
-                    self.fill_predictions(labels['discarded'], new_predicted, new_discarded)
-                    labels['predicted'] = new_predicted
-                    labels['discarded'] = new_discarded
-
-            frame.predictions = predictions
+            frame.predictions = frame.inference_async_result.get_predictions(timeout=60)
             return frame
         except ResultInferenceError as e:
             self.current_messages.forget_frame(frame)

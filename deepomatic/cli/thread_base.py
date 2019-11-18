@@ -9,7 +9,7 @@ from threading import Lock
 from .common import clear_queue, Full, Empty
 from deepomatic.api.exceptions import BadStatus
 from .exceptions import DeepoCLIException
-
+import time
 
 LOGGER = logging.getLogger(__name__)
 QUEUE_MAX_SIZE = 50

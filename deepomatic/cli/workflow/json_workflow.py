@@ -11,19 +11,19 @@ LOGGER = logging.getLogger(__name__)
 
 
 class JsonRecognition(AbstractWorkflow):
-
     class InferResult(AbstractWorkflow.AbstractInferResult):
-        def __init__(self, frame_name, frame_pred):
+        def __init__(self, frame_name, frame_pred, threshold):
+            super(JsonRecognition.InferResult, self).__init__(threshold)
             self.frame_name = frame_name
             self.frame_pred = frame_pred
 
         def get_predictions(self, timeout):
-            return self.frame_pred
+            return self.filter_by_threshold(self.frame_pred)
 
-    def __init__(self, recognition_version_id, pred_file):
-        super(JsonRecognition, self).__init__('r{}'.format(recognition_version_id))
+    def __init__(self, recognition_version_id, pred_file, threshold=None):
         self._id = recognition_version_id
         self._pred_file = pred_file
+        self._threshold = threshold
 
         # Load the json
         try:
@@ -54,4 +54,4 @@ class JsonRecognition(AbstractWorkflow):
         except KeyError:
             raise SendInferenceError("Could not find predictions for frame {}".format(frame_name))
 
-        return self.InferResult(frame_name, frame_pred)
+        return self.InferResult(frame_name, frame_pred, self._threshold)

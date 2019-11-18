@@ -51,7 +51,8 @@ def requires_deepomatic_rpc(cls):
 class RpcRecognition(AbstractWorkflow):
     @requires_deepomatic_rpc
     class InferResult(AbstractWorkflow.AbstractInferResult):
-        def __init__(self, correlation_id, consumer):
+        def __init__(self, correlation_id, consumer, threshold):
+            super(RpcRecognition.InferResult, self).__init__(threshold)
             self._correlation_id = correlation_id
             self._consumer = consumer
 
@@ -67,13 +68,15 @@ class RpcRecognition(AbstractWorkflow):
             except rpc.amqp.exceptions.Timeout:
                 raise ResultInferenceTimeout(timeout)
 
-    def __init__(self, recognition_version_id, amqp_url, routing_key, recognition_cmd_kwargs=None):
-        super(RpcRecognition, self).__init__('recognition_{}'.format(recognition_version_id))
+    def __init__(self, recognition_version_id, amqp_url, routing_key, threshold=None, inference_fps=float('inf'), recognition_cmd_kwargs=None):
         self._id = recognition_version_id
-
+        self._recognition_version_id = recognition_version_id
         self._routing_key = routing_key
+        self._inference_fps = inference_fps
+        self._amqp_url = amqp_url
         self._consumer = None
-        self.amqp_url = amqp_url
+        self._threshold = threshold
+        recognition_cmd_kwargs = recognition_cmd_kwargs or {'show_discarded': True, 'max_predictions': 1000}
 
         # We declare the client that will be used for consuming in one thread only
         # RPC client is not thread safe
@@ -82,7 +85,6 @@ class RpcRecognition(AbstractWorkflow):
             self._command_mix = rpc.helpers.v07_proto.create_workflow_command_mix()
         else:
             recognition_cmd_kwargs = recognition_cmd_kwargs or {'show_discarded': True, 'max_predictions': 1000}
-
             try:
                 recognition_version_id = int(recognition_version_id)
             except ValueError:
@@ -93,14 +95,13 @@ class RpcRecognition(AbstractWorkflow):
         self._command_queue = self._consume_client.new_queue(self._routing_key)
         self._response_queue, self._consumer = self._consume_client.new_consuming_queue()
 
-
     def close_client(self, client):
         client.amqp_client.ensured_connection.close()
 
     def new_client(self):
         # Allow to create multiple clients for threads that will push
         # Since RPC client is not thread safe
-        return rpc.client.Client(self.amqp_url)
+        return rpc.client.Client(self._amqp_url)
 
     def close(self):
         if self._consumer is not None:
@@ -111,7 +112,8 @@ class RpcRecognition(AbstractWorkflow):
         # _useless_frame_name is used for the json workflow
         image_input = rpc.v07_ImageInput(source=rpc.BINARY_IMAGE_PREFIX + encoded_image_bytes)
         # forward_to parameter can be removed for images of worker nn with tag >= 0.7.8
+
         reply_to = self._response_queue.name
         serialized_buffer = rpc.helpers.proto.create_v07_images_command([image_input], self._command_mix, forward_to=[reply_to])
         correlation_id = push_client.send_binary(serialized_buffer, self._command_queue.name, reply_to=reply_to)
-        return self.InferResult(correlation_id, self._consumer)
+        return self.InferResult(correlation_id, self._consumer, self._threshold)

@@ -3,11 +3,11 @@ import sys
 import logging
 import argparse
 from .cmds.feedback import main as feedback
-from .input_data import input_loop
-from .cmds.infer import BlurImagePostprocessing, DrawImagePostprocessing
+from .pipeline import Pipeline, get_input, get_outputs
 from .version import __version__, __title__
 from .common import SUPPORTED_IMAGE_OUTPUT_FORMAT, SUPPORTED_VIDEO_OUTPUT_FORMAT, SUPPORTED_IMAGE_INPUT_FORMAT, SUPPORTED_VIDEO_INPUT_FORMAT, SUPPORTED_PROTOCOLS_INPUT, SUPPORTED_FILE_INPUT_FORMAT
 
+LOGGER = logging.getLogger(__name__)
 
 class ParserWithHelpOnError(argparse.ArgumentParser):
     """
@@ -31,32 +31,33 @@ def argparser_init():
     subparsers.required = True
     subparsers_dict = {}
 
+
     # Initialize subparser: infer
     help_msg = "Computes prediction on a file or directory and outputs results as a JSON file."
     desc_mgs = help_msg + " Typical usage is: deepo infer -i img.png -o pred.json -r 12345"
     infer_parser = subparsers.add_parser('infer', help=help_msg, description=desc_mgs)
-    infer_parser.set_defaults(func=input_loop)
+    infer_parser.set_defaults(func=lambda args: Pipeline.from_kwargs(args).run())
     subparsers_dict['infer'] = infer_parser
 
    # Initialize subparser: noop
     help_msg = "Does nothing but reading the input and outputting it in the specified format, without predictions."
     desc_mgs = help_msg + " Typical usage is: deepo noop -i 0 -o window"
     noop_parser = subparsers.add_parser('noop', help=help_msg, description=desc_mgs)
-    noop_parser.set_defaults(func=input_loop)
+    noop_parser.set_defaults(func=lambda args: Pipeline(get_input(args), [], get_outputs(args), None).run())
     subparsers_dict['noop'] = noop_parser
 
     # Initialize subparser: draw
     help_msg = "Generates new images and videos with predictions results drawn on them. Computes prediction if JSON has not yet been generated."
     desc_mgs = help_msg + " Typical usage is: deepo draw -i img.png -o pred.json draw.png -r 12345"
     draw_parser = subparsers.add_parser('draw', help=help_msg, description=desc_mgs)
-    draw_parser.set_defaults(func=lambda args: input_loop(args, DrawImagePostprocessing(**args)))
+    draw_parser.set_defaults(func=lambda args: Pipeline.from_kwargs(args).run())
     subparsers_dict['draw'] = draw_parser
 
     # Initialize subparser: blur
     help_msg = "Generates new images and videos with predictions results blurred on them. Computes prediction if JSON has not yet been generated."
     desc_mgs = help_msg + " Typical usage is: deepo blur -i img.png -o pred.json draw.png -r 12345"
     blur_parser = subparsers.add_parser('blur', help=help_msg, description=desc_mgs)
-    blur_parser.set_defaults(func=lambda args: input_loop(args, BlurImagePostprocessing(**args)))
+    blur_parser.set_defaults(func=lambda args: Pipeline.from_kwargs(args).run())
     subparsers_dict['blur'] = blur_parser
 
     # Initialize subparser: studio add_images
@@ -68,6 +69,7 @@ def argparser_init():
     desc_mgs = help_msg + " Typical usage is: deepo studio add_images -i img.png -d mydataset -o myorg"
     add_images_parser = studio_subparser.add_parser('add_images', help=help_msg, description=desc_mgs)
     add_images_parser.set_defaults(func=feedback, recursive=False)
+
     subparsers_dict['add_images'] = add_images_parser
 
     # Define argument groups for easier reading

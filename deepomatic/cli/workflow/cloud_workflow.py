@@ -18,13 +18,14 @@ LOGGER = logging.getLogger(__name__)
 class CloudRecognition(AbstractWorkflow):
 
     class InferResult(AbstractWorkflow.AbstractInferResult):
-        def __init__(self, task):
+        def __init__(self, task, threshold):
+            super(CloudRecognition.InferResult, self).__init__(threshold)
             self._task = task
 
         def get_predictions(self, timeout):
             try:
                 self._task.wait(timeout=timeout)
-                return self._task['data']
+                return self.filter_by_threshold(self._task['data'])
             except BadStatus as e:
                 # HTTP Error
                 raise ResultInferenceError(e)
@@ -39,9 +40,10 @@ class CloudRecognition(AbstractWorkflow):
     def close(self):
         self._client.http_helper.session.close()
 
-    def __init__(self, recognition_version_id):
-        super(CloudRecognition, self).__init__('r{}'.format(recognition_version_id))
+    def __init__(self, recognition_version_id, threshold=None, inference_fps=float('inf')):
         self._id = recognition_version_id
+        self._threshold = threshold
+        self._inference_fps = inference_fps
 
         app_id = os.getenv('DEEPOMATIC_APP_ID', None)
         api_key = os.getenv('DEEPOMATIC_API_KEY', None)
@@ -68,11 +70,11 @@ class CloudRecognition(AbstractWorkflow):
     def infer(self, encoded_image_bytes, _useless_push_client, _useless_frame_name):
         # _useless_push_client and _useless_frame_name are used for the rpc and json workflows
         try:
-            return self.InferResult(self._model.inference(
-                inputs=[deepomatic.api.inputs.ImageInput(encoded_image_bytes, encoding="binary")],
-                show_discarded=True,
-                return_task=True,
-                wait_task=False))
+          return self.InferResult(self._model.inference(
+              inputs=[deepomatic.api.inputs.ImageInput(encoded_image_bytes, encoding="binary")],
+              show_discarded=True,
+              return_task=True,
+              wait_task=False), threshold=self._threshold)
         except BadStatus as e:
             # HTTP error
             raise SendInferenceError(e)

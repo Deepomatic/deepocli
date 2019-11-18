@@ -11,7 +11,6 @@ from .cmds.infer import SendInferenceGreenlet, ResultInferenceGreenlet, PrepareI
 from tqdm import tqdm
 from .common import TqdmToLogger, Queue, LifoQueue, clear_queue, SUPPORTED_IMAGE_INPUT_FORMAT, SUPPORTED_VIDEO_INPUT_FORMAT, SUPPORTED_PROTOCOLS_INPUT
 from threading import Lock
-from .workflow import get_workflow
 from .output_data import OutputThread
 from .frame import Frame, CurrentFrames
 from .cmds.studio_helpers.vulcan2studio import transform_json_from_vulcan_to_studio
@@ -20,8 +19,30 @@ from .exceptions import DeepoWorkflowError, DeepoFPSError, DeepoVideoOpenError, 
 
 LOGGER = logging.getLogger(__name__)
 
+def update_input_fps(kwargs):
+    # Adds smartness to fps handling
+    #   1) If both input_fps and output_fps are set, then use them as is.
+    #   2) If only one of the two is used, make both equal
+    #   3) If none is set:
+    #       * If the input is not a video, do nothing and use the default DEFAULT_FPS output value
+    #       * If the input is a video, use the input fps as the output fps
+    if kwargs['input_fps'] and not kwargs['output_fps']:
+        kwargs['output_fps'] = kwargs['input_fps']
+        LOGGER.info('Input fps of {} specified, but no output fps specified. Using same value for both.'.format(kwargs['input_fps']))
+    elif kwargs['output_fps'] and not kwargs['input_fps']:
+        kwargs['input_fps'] = kwargs['output_fps']
+        LOGGER.info('Output fps of {} specified, but no input fps specified. Using same value for both.'.format(kwargs['output_fps']))
 
-def get_input(descriptor, kwargs):
+def update_output_fps(input, kwargs):
+    # Deal with last case for fps
+    if not(kwargs['input_fps']) and not(kwargs['output_fps']) and isinstance(input, VideoInputData):
+        kwargs['input_fps'] = input.get_fps()
+        kwargs['output_fps'] = kwargs['input_fps']
+        LOGGER.info('Input fps of {} automatically detected, but no output fps specified. Using same value for both.'.format(kwargs['input_fps']))
+
+def get_input(kwargs):
+    update_input_fps(kwargs)
+    descriptor = kwargs.get('input', 0)
     if descriptor is None:
         raise DeepoInputError('No input specified. use -i flag')
     elif os.path.exists(descriptor):
@@ -82,92 +103,6 @@ class InputThread(Thread):
     def put_to_output(self, msg):
         super(InputThread, self).put_to_output(msg)
         self.frame_number += 1
-
-
-def input_loop(kwargs, postprocessing=None):
-    # Adds smartness to fps handling
-    #   1) If both input_fps and output_fps are set, then use them as is.
-    #   2) If only one of the two is used, make both equal
-    #   3) If none is set:
-    #       * If the input is not a video, do nothing and use the default DEFAULT_FPS output value
-    #       * If the input is a video, use the input fps as the output fps
-    if kwargs['input_fps'] and not kwargs['output_fps']:
-        kwargs['output_fps'] = kwargs['input_fps']
-        LOGGER.info('Input fps of {} specified, but no output fps specified. Using same value for both.'.format(kwargs['input_fps']))
-    elif kwargs['output_fps'] and not kwargs['input_fps']:
-        kwargs['input_fps'] = kwargs['output_fps']
-        LOGGER.info('Output fps of {} specified, but no input fps specified. Using same value for both.'.format(kwargs['output_fps']))
-
-    # Compute inputs now to access actual input fps if it's a video
-    inputs = iter(get_input(kwargs.get('input', 0), kwargs))
-
-    # Deal with last case for fps
-    if not(kwargs['input_fps']) and not(kwargs['output_fps']) and isinstance(inputs, VideoInputData):
-        kwargs['input_fps'] = inputs.get_fps()
-        kwargs['output_fps'] = kwargs['input_fps']
-        LOGGER.info('Input fps of {} automatically detected, but no output fps specified. Using same value for both.'.format(kwargs['input_fps']))
-
-    # Initialize progress bar
-    frame_count = inputs.get_frame_count()
-    max_value = int(frame_count) if frame_count >= 0 else None
-    tqdmout = TqdmToLogger(LOGGER, level=LOGGER.getEffectiveLevel())
-    pbar = tqdm(total=max_value, file=tqdmout, desc='Input processing', smoothing=0)
-
-    # Initialize workflow for mutual use between send inference pool and result inference pool
-    try:
-        workflow = get_workflow(kwargs)
-    except DeepoCLICredentialsError as e:
-        LOGGER.error(str(e))
-        sys.exit(1)
-
-    # For realtime, queue should be LIFO
-    # TODO: might need to rethink the whole pipeling for infinite streams
-    # IMPORTANT: maxsize is important, it allows to regulate the pipeline and avoid to pushes too many requests to rabbitmq when we are already waiting for many results
-    queue_cls = LifoQueue if inputs.is_infinite() else Queue
-
-    nb_queue = 2 # input => prepare inference => output
-    if workflow:
-        nb_queue += 2 # prepare inference => send inference => result inference
-
-    queues = [queue_cls(maxsize=QUEUE_MAX_SIZE) for _ in range(nb_queue)]
-
-    exit_event = threading.Event()
-
-    current_frames = CurrentFrames()
-
-    pools = [
-        Pool(1, InputThread, thread_args=(exit_event, None, queues[0], inputs)),
-        # Encode image into jpeg
-        Pool(1, PrepareInferenceThread, thread_args=(exit_event, queues[0], queues[1], current_frames)),
-    ]
-
-    if workflow:
-        pools.extend([
-            # Send inference
-            Pool(5, SendInferenceGreenlet, thread_args=(exit_event, queues[1], queues[2], current_frames, workflow)),
-            # Gather inference predictions from the worker(s)
-            Pool(1, ResultInferenceGreenlet, thread_args=(exit_event, queues[2], queues[3], current_frames, workflow), thread_kwargs=kwargs),
-        ])
-
-    # Output predictions
-    pools.append(Pool(1, OutputThread, thread_args=(exit_event, queues[-1], None, current_frames, pbar.update, postprocessing), thread_kwargs=kwargs))
-
-    loop = MainLoop(pools, queues, pbar, exit_event, current_frames, lambda: workflow.close() if workflow else None)
-
-    try:
-        stop_asked = loop.run_forever()
-    except Exception:
-        loop.cleanup()
-        raise
-
-    # If the process encountered an error, the exit code is 1.
-    # If the process is interrupted using SIGINT (ctrl + C) or SIGTERM, the queues are emptied and processed by the
-    # threads, and the exit code is 0.
-    # If SIGINT or SIGTERM is sent again during this shutdown phase, the threads are killed, and the exit code is 2.
-    if exit_event.is_set():
-        sys.exit(1)
-    elif stop_asked >= 2:
-        sys.exit(2)
 
 
 class InputData(object):
@@ -244,6 +179,8 @@ class VideoInputData(InputData):
         self._skip_frame = kwargs['skip_frame']
         self._extract_fps = None
         self._fps = self.get_fps()
+
+        update_output_fps(self, kwargs)
 
     def _open_video(self, raise_exc=True):
         if self._cap is not None:

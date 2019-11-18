@@ -50,8 +50,24 @@ def get_output(descriptor, kwargs):
         return DisplayOutputData(**kwargs)
 
 
-def get_outputs(descriptors, kwargs):
-    return [get_output(descriptor, kwargs) for descriptor in descriptors]
+def get_outputs(kwargs):
+    descriptors = kwargs.get('outputs', [])
+    # Update output fps to default value if none was specified.
+    # Logs information only if one of the outputs uses fps.
+    if not kwargs['output_fps']:
+        kwargs['output_fps'] = DEFAULT_OUTPUT_FPS
+        outputs = [get_output(descriptor, kwargs) for descriptor in descriptors]
+        for output in outputs:
+            if isinstance(output, VideoOutputData) or isinstance(output, DisplayOutputData):
+                LOGGER.info('No --output_fps value specified for output, using default value of {}.'.format(DEFAULT_OUTPUT_FPS))
+                break
+    else:
+        outputs = [get_output(descriptor, kwargs) for descriptor in descriptors]
+    return outputs
+
+
+class NotProcessedYet(object):
+    pass
 
 
 class NotProcessedYet(object):
@@ -67,25 +83,14 @@ class OutputThread(Thread):
     NOT_PROCESSED_YET = NotProcessedYet()
 
     def __init__(self, exit_event, input_queue, output_queue, current_messages,
-                 on_progress, postprocessing, **kwargs):
+                 on_progress, outputs, postprocessing):
         super(OutputThread, self).__init__(exit_event, input_queue,
                                            output_queue, current_messages)
-        self.args = kwargs
         self.on_progress = on_progress
+        self.outputs = outputs
         self.postprocessing = postprocessing
         self.frames_to_check_first = {}
         self.frame_to_output = None
-        # Update output fps to default value if none was specified.
-        # Logs information only if one of the outputs uses fps.
-        if not kwargs['output_fps']:
-            kwargs['output_fps'] = DEFAULT_OUTPUT_FPS
-            self.outputs = get_outputs(self.args.get('outputs', None), self.args)
-            for output in self.outputs:
-                if isinstance(output, VideoOutputData) or isinstance(output, DisplayOutputData):
-                    LOGGER.info('No --output_fps value specified for output, using default value of {}.'.format(DEFAULT_OUTPUT_FPS))
-                    break
-        else:
-            self.outputs = get_outputs(self.args.get('outputs', None), self.args)
 
     def close(self):
         self.frames_to_check_first = {}
@@ -153,7 +158,6 @@ class OutputThread(Thread):
         # No other pool attached
         # End of pipeline
         return None
-
 
 class OutputData(object):
     def __init__(self, descriptor, **kwargs):
