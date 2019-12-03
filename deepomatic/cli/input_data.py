@@ -9,7 +9,7 @@ from .exceptions import DeepoCLICredentialsError
 from .thread_base import Pool, Thread, MainLoop, CurrentMessages, blocking_lock, QUEUE_MAX_SIZE
 from .cmds.infer import SendInferenceGreenlet, ResultInferenceGreenlet, PrepareInferenceThread
 from tqdm import tqdm
-from .common import TqdmToLogger, Queue, LifoQueue, clear_queue, SUPPORTED_IMAGE_INPUT_FORMAT, SUPPORTED_VIDEO_INPUT_FORMAT, SUPPORTED_PROTOCOLS_INPUT
+from .common import TqdmToLogger, Queue, clear_queue, SUPPORTED_IMAGE_INPUT_FORMAT, SUPPORTED_VIDEO_INPUT_FORMAT, SUPPORTED_PROTOCOLS_INPUT
 from threading import Lock
 from .workflow import get_workflow
 from .output_data import OutputThread

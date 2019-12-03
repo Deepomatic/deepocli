@@ -3,9 +3,9 @@ import os
 import cv2
 import logging
 try:
-    from Queue import Empty, Full, Queue, LifoQueue
+    from Queue import Empty, Full, Queue
 except ImportError:
-    from queue import Empty, Full, Queue, LifoQueue
+    from queue import Empty, Full, Queue
 
 
 LOGGER = logging.getLogger(__name__)
@@ -37,10 +37,7 @@ class TqdmToLogger(io.StringIO):
 
 def clear_queue(queue):
     with queue.mutex:
-        if isinstance(queue, LifoQueue):
-            queue.queue = []
-        else:
-            queue.queue.clear()
+        queue.queue.clear()
 
 
 def write_frame_to_disk(frame, path):
