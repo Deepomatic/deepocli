@@ -17,3 +17,6 @@ __pycache__
 venv*
 Pipfile
 Pipfile.lock
+
+# tests
+.coverage
