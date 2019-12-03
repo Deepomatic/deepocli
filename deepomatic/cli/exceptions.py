@@ -73,4 +73,4 @@ class ResultInferenceTimeout(ResultInferenceError):
         error = 'timeout reached'
         if timeout is not None:
             error += ' after {}'.format(timeout)
-        super(InferenceTimeout, self).__init__(error)
+        super(ResultInferenceTimeout, self).__init__(error)
