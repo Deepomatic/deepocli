@@ -10,7 +10,7 @@ import deepomatic.api.client
 import deepomatic.api.inputs
 from ..version import __title__, __version__
 from tenacity import stop_never
-from deepomatic.api.exceptions import TaskError, TaskTimeout, BadStatus
+from deepomatic.api.exceptions import TaskError, TaskTimeout, BadStatus, DeepomaticException
 
 LOGGER = logging.getLogger(__name__)
 
@@ -35,7 +35,6 @@ class CloudRecognition(AbstractWorkflow):
                 # Task did not finish on time
                 raise ResultInferenceTimeout(timeout)
 
-
     def close(self):
         self._client.http_helper.session.close()
 
@@ -43,19 +42,17 @@ class CloudRecognition(AbstractWorkflow):
         super(CloudRecognition, self).__init__('r{}'.format(recognition_version_id))
         self._id = recognition_version_id
 
-        app_id = os.getenv('DEEPOMATIC_APP_ID', None)
-        api_key = os.getenv('DEEPOMATIC_API_KEY', None)
-        if app_id is None or api_key is None:
-            error = 'Credentials not found. Please define the DEEPOMATIC_APP_ID and DEEPOMATIC_API_KEY environment variables to use cloud-based recognition models.'
-            raise exceptions.DeepoCLICredentialsError(error)
-
         # Retry indefinitely until the API is available
         http_retry = deepomatic.api.http_retry.HTTPRetry(stop=stop_never)
 
         user_agent_prefix = '{}/{}'.format(__title__, __version__)
-        self._client = deepomatic.api.client.Client(app_id, api_key,
-                                                    user_agent_prefix=user_agent_prefix,
-                                                    http_retry=http_retry)
+        try:
+            self._client = deepomatic.api.client.Client(user_agent_prefix=user_agent_prefix,
+                                                        http_retry=http_retry)
+        except DeepomaticException:  # TODO later replace with CredentialsNotFound
+            error = 'Credentials not found. Please define the DEEPOMATIC_API_KEY environment variables to use cloud-based recognition models.'
+            raise exceptions.DeepoCLICredentialsError(error)
+
         self._model = None
         try:
             recognition_version_id = int(recognition_version_id)
