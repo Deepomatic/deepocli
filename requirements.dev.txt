@@ -1,0 +1,4 @@
+-r requirements.txt
+pytest==4.3.0
+flake8==3.7.9
+wheel
