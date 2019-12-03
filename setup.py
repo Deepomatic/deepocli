@@ -2,9 +2,9 @@ import os
 import io
 from setuptools import find_packages, setup
 
-try: # for pip >= 10
+try:  # for pip >= 10
     from pip._internal.req import parse_requirements
-except ImportError: # for pip <= 9.0.3
+except ImportError:  # for pip <= 9.0.3
     from pip.req import parse_requirements
 
 

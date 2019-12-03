@@ -4,18 +4,20 @@ import sys
 import json
 import logging
 import threading
-from .json_schema import is_valid_studio_json, is_valid_vulcan_json
-from .exceptions import DeepoCLICredentialsError
-from .thread_base import Pool, Thread, MainLoop, CurrentMessages, blocking_lock, QUEUE_MAX_SIZE
-from .cmds.infer import SendInferenceGreenlet, ResultInferenceGreenlet, PrepareInferenceThread
 from tqdm import tqdm
-from .common import TqdmToLogger, Queue, LifoQueue, clear_queue, SUPPORTED_IMAGE_INPUT_FORMAT, SUPPORTED_VIDEO_INPUT_FORMAT, SUPPORTED_PROTOCOLS_INPUT
-from threading import Lock
-from .workflow import get_workflow
+
+from .cmds.infer import (PrepareInferenceThread, ResultInferenceGreenlet,
+                         SendInferenceGreenlet)
+from .common import (SUPPORTED_IMAGE_INPUT_FORMAT, SUPPORTED_PROTOCOLS_INPUT,
+                     SUPPORTED_VIDEO_INPUT_FORMAT, LifoQueue, Queue,
+                     TqdmToLogger, clear_queue)
+from .exceptions import (DeepoCLICredentialsError, DeepoFPSError,
+                         DeepoInputError, DeepoVideoOpenError)
+from .frame import CurrentFrames, Frame
+from .json_schema import is_valid_studio_json
 from .output_data import OutputThread
-from .frame import Frame, CurrentFrames
-from .cmds.studio_helpers.vulcan2studio import transform_json_from_vulcan_to_studio
-from .exceptions import DeepoWorkflowError, DeepoFPSError, DeepoVideoOpenError, DeepoInputError
+from .thread_base import QUEUE_MAX_SIZE, MainLoop, Pool, Thread
+from .workflow import get_workflow
 
 
 LOGGER = logging.getLogger(__name__)
@@ -105,7 +107,8 @@ def input_loop(kwargs, postprocessing=None):
     if not(kwargs['input_fps']) and not(kwargs['output_fps']) and isinstance(inputs, VideoInputData):
         kwargs['input_fps'] = inputs.get_fps()
         kwargs['output_fps'] = kwargs['input_fps']
-        LOGGER.info('Input fps of {} automatically detected, but no output fps specified. Using same value for both.'.format(kwargs['input_fps']))
+        LOGGER.info('Input fps of {} automatically detected, but no output fps specified.'
+                    ' Using same value for both.'.format(kwargs['input_fps']))
 
     # Initialize progress bar
     frame_count = inputs.get_frame_count()
@@ -122,12 +125,13 @@ def input_loop(kwargs, postprocessing=None):
 
     # For realtime, queue should be LIFO
     # TODO: might need to rethink the whole pipeling for infinite streams
-    # IMPORTANT: maxsize is important, it allows to regulate the pipeline and avoid to pushes too many requests to rabbitmq when we are already waiting for many results
+    # IMPORTANT: maxsize is important, it allows to regulate the pipeline
+    #  and avoid to pushes too many requests to rabbitmq when we are already waiting for many results
     queue_cls = LifoQueue if inputs.is_infinite() else Queue
 
-    nb_queue = 2 # input => prepare inference => output
+    nb_queue = 2  # input => prepare inference => output
     if workflow:
-        nb_queue += 2 # prepare inference => send inference => result inference
+        nb_queue += 2  # prepare inference => send inference => result inference
 
     queues = [queue_cls(maxsize=QUEUE_MAX_SIZE) for _ in range(nb_queue)]
 
@@ -146,11 +150,13 @@ def input_loop(kwargs, postprocessing=None):
             # Send inference
             Pool(5, SendInferenceGreenlet, thread_args=(exit_event, queues[1], queues[2], current_frames, workflow)),
             # Gather inference predictions from the worker(s)
-            Pool(1, ResultInferenceGreenlet, thread_args=(exit_event, queues[2], queues[3], current_frames, workflow), thread_kwargs=kwargs),
+            Pool(1, ResultInferenceGreenlet, thread_args=(exit_event, queues[2], queues[3], current_frames, workflow),
+                 thread_kwargs=kwargs),
         ])
 
     # Output predictions
-    pools.append(Pool(1, OutputThread, thread_args=(exit_event, queues[-1], None, current_frames, pbar.update, postprocessing), thread_kwargs=kwargs))
+    pools.append(Pool(1, OutputThread, thread_args=(exit_event, queues[-1], None, current_frames, pbar.update, postprocessing),
+                      thread_kwargs=kwargs))
 
     loop = MainLoop(pools, queues, pbar, exit_event, current_frames, lambda: workflow.close() if workflow else None)
 
@@ -338,7 +344,8 @@ class VideoInputData(InputData):
             LOGGER.debug('Using user-specified --input_fps of {} instead of raw video fps of {}'.format(self._kwargs_fps, self._video_fps))
         else:
             self._extract_fps = self._video_fps
-            LOGGER.debug('User-specified --input_fps of {} specified but using maximum raw video fps of {}'.format(self._kwargs_fps, self._video_fps))
+            LOGGER.debug('User-specified --input_fps of {} specified'
+                         ' but using maximum raw video fps of {}'.format(self._kwargs_fps, self._video_fps))
 
         return self._extract_fps
 
@@ -477,7 +484,8 @@ class StudioJsonInputData(InputData):
                 self._inputs.append(VideoInputData(img_location, **kwargs))
             # If the video is neither image or video, ignore it
             else:
-                LOGGER.warning("File {} referenced in JSON {} is neither a proper image or video, skipping it".format(img_location, descriptor))
+                LOGGER.warning("File {} referenced in JSON {}"
+                               " is neither a proper image or video, skipping it".format(img_location, descriptor))
 
     def _gen(self):
         for source in self._inputs:

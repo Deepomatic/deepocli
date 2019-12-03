@@ -138,17 +138,27 @@ def init_files_setup():
     tmpdir = tempfile.mkdtemp()
 
     # Download image and video files
-    single_img_pth = download(tmpdir, 'https://s3-eu-west-1.amazonaws.com/deepo-tests/vulcain/images/test.jpg', 'single_img.jpg')
-    single_img_corrupted_pth = download(tmpdir, 'https://s3-eu-west-1.amazonaws.com/deepo-tests/vulcain/images/test_corrupted.jpg', 'single_img_corrupted.jpg')
+    single_img_pth = download(tmpdir,
+                              'https://s3-eu-west-1.amazonaws.com/deepo-tests/vulcain/images/test.jpg',
+                              'single_img.jpg')
+    single_img_corrupted_pth = download(tmpdir,
+                                        'https://s3-eu-west-1.amazonaws.com/deepo-tests/vulcain/images/test_corrupted.jpg',
+                                        'single_img_corrupted.jpg')
     video_pth = download(tmpdir, 'https://s3-eu-west-1.amazonaws.com/deepo-tests/vulcain/videos/test.mp4', 'video.mp4')
     img_pth = download(tmpdir, 'https://s3-eu-west-1.amazonaws.com/deepo-tests/vulcain/images/test.jpg', 'img_dir/img1.jpg')
     download(tmpdir, 'https://s3-eu-west-1.amazonaws.com/deepo-tests/vulcain/images/test.jpg', 'img_dir/img2.jpg')
     download(tmpdir, 'https://s3-eu-west-1.amazonaws.com/deepo-tests/vulcain/images/test.jpg', 'img_dir/subdir/img3.jpg')
 
     # Download JSON files
-    vulcan_json_pth = download(tmpdir, 'https://s3-eu-west-1.amazonaws.com/deepo-tests/vulcain/json/vulcan.json', 'vulcan.json')
-    studio_json_pth = download(tmpdir, 'https://s3-eu-west-1.amazonaws.com/deepo-tests/vulcain/json/studio.json', 'studio.json')
-    offline_pred_pth = download(tmpdir, 'https://s3-eu-west-1.amazonaws.com/deepo-tests/vulcain/json/offline_pred2.json', 'offline_pred.json')
+    vulcan_json_pth = download(tmpdir,
+                               'https://s3-eu-west-1.amazonaws.com/deepo-tests/vulcain/json/vulcan.json',
+                               'vulcan.json')
+    studio_json_pth = download(tmpdir,
+                               'https://s3-eu-west-1.amazonaws.com/deepo-tests/vulcain/json/studio.json',
+                               'studio.json')
+    offline_pred_pth = download(tmpdir,
+                                'https://s3-eu-west-1.amazonaws.com/deepo-tests/vulcain/json/offline_pred2.json',
+                                'offline_pred.json')
     img_dir_pth = os.path.dirname(img_pth)
 
     # Update json for path to match

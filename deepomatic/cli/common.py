@@ -5,7 +5,7 @@ import logging
 try:
     from Queue import Empty, Full, Queue, LifoQueue
 except ImportError:
-    from queue import Empty, Full, Queue, LifoQueue
+    from queue import Empty, Full, Queue, LifoQueue  # noqa: F401
 
 
 LOGGER = logging.getLogger(__name__)

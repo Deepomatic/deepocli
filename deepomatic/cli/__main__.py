@@ -8,5 +8,6 @@ def main(args=None):
         args = sys.argv[1:]
     run(args)
 
+
 if __name__ == "__main__":
     main()
