@@ -50,7 +50,7 @@ class CloudRecognition(AbstractWorkflow):
             self._client = deepomatic.api.client.Client(user_agent_prefix=user_agent_prefix,
                                                         http_retry=http_retry)
         except DeepomaticException:  # TODO later replace with CredentialsNotFound
-            error = 'Credentials not found. Please define the DEEPOMATIC_API_KEY environment variables to use cloud-based recognition models.'
+            error = 'Credentials not found. Please define the DEEPOMATIC_API_KEY environment variable to use cloud-based recognition models.'
             raise exceptions.DeepoCLICredentialsError(error)
 
         self._model = None
