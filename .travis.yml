@@ -18,7 +18,7 @@ script:
   # linter
   - flake8 --statistics --verbose
   # unit tests
-  - pytest -vv --cov=deepomatic
+  - pytest -n 2 -vv --cov=deepomatic
   # package build test
   - python setup.py bdist_wheel
   # package install test
