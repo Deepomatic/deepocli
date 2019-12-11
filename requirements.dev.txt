@@ -1,7 +1,7 @@
 -r requirements.txt
 flake8==3.7.9
-pytest==4.3.0
+pytest==4.4.0
 pytest-cov==2.8.1
 pytest-sugar==0.9.2
-pytest-xdist
+pytest-xdist==1.30.0
 wheel
