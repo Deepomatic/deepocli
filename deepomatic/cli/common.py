@@ -8,6 +8,7 @@ except ImportError:
     from queue import Empty, Full, Queue
 
 
+
 LOGGER = logging.getLogger(__name__)
 SUPPORTED_IMAGE_INPUT_FORMAT = ['.bmp', '.jpeg', '.jpg', '.jpe', '.png', '.tif', '.tiff']
 SUPPORTED_VIDEO_INPUT_FORMAT = ['.avi', '.mp4', '.webm', '.mjpg']

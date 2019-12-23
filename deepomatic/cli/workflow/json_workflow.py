@@ -1,4 +1,3 @@
-import sys
 import json
 import logging
 from .workflow_abstraction import AbstractWorkflow

@@ -1,5 +1,6 @@
 from gevent.monkey import patch_all
-patch_all(thread=False, time=False)
+patch_all(thread=False, time=False)  # NOQA
+
 from .version import __version__
-import logging
-import os
+
+__all__ = ["__version__"]
