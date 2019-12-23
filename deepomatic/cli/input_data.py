@@ -123,7 +123,8 @@ def input_loop(kwargs, postprocessing=None):
         LOGGER.error(str(e))
         sys.exit(1)
 
-    # IMPORTANT: maxsize is important, it allows to regulate the pipeline and avoid to pushes too many requests to rabbitmq when we are already waiting for many results
+    # IMPORTANT: maxsize is important, it allows to regulate the pipeline and
+    # avoid to pushes too many requests to rabbitmq when we are already waiting for many results
 
     nb_queue = 2  # input => prepare inference => output
     if workflow:

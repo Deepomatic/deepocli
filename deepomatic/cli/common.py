@@ -3,11 +3,13 @@ import os
 import cv2
 import logging
 try:
-    from Queue import Empty, Full, Queue
+    import Queue as queue
 except ImportError:
-    from queue import Empty, Full, Queue
+    import queue as queue
 
-
+Full = queue.Full
+Queue = queue.Queue
+Empty = queue.Empty
 
 LOGGER = logging.getLogger(__name__)
 SUPPORTED_IMAGE_INPUT_FORMAT = ['.bmp', '.jpeg', '.jpg', '.jpe', '.png', '.tif', '.tiff']
