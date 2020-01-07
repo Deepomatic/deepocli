@@ -123,7 +123,7 @@ def validate_json(json_data):
     - schema_type: Studio or Vulcan, or None if both schema raise an error at the root of the JSON
     """
     is_valid, error, schema_type = False, None, None
-    schema_dict = {'Studio':STUDIO_JSON_SCHEMA, 'Vulcan':VULCAN_JSON_SCHEMA}
+    schema_dict = {'Studio': STUDIO_JSON_SCHEMA, 'Vulcan': VULCAN_JSON_SCHEMA}
     for schema_name, json_schema in schema_dict.items():
         try:
             validate(instance=json_data, schema=json_schema)
