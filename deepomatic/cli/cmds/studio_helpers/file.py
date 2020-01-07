@@ -6,7 +6,7 @@ import logging
 from .vulcan2studio import transform_json_from_vulcan_to_studio
 from ...thread_base import Greenlet
 from ...common import SUPPORTED_IMAGE_INPUT_FORMAT, SUPPORTED_VIDEO_INPUT_FORMAT
-from ...json_schema import is_valid_studio_json, is_valid_vulcan_json, validate_json
+from ...json_schema import validate_json
 from ...exceptions import DeepoOpenJsonError, DeepoUploadJsonError
 
 
