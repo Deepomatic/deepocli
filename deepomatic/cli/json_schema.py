@@ -112,3 +112,28 @@ def is_valid_studio_json(json_data):
 def is_valid_vulcan_json(json_data):
     """Validate a JSON using the vulcan schema"""
     return is_valid_json_with_schema(json_data, VULCAN_JSON_SCHEMA)
+
+
+def validate_json(json_data):
+    """
+    Validate a JSON using the Studio and Vulcan schema
+    Returns:
+    - is_valid: True if the JSON is valid
+    - error: ValidationError raised if not valid
+    - schema_type: Studio or Vulcan, or None if both schema raise an error at the root of the JSON
+    """
+    is_valid, error, schema_type = False, None, None
+    schema_dict = {'Studio':STUDIO_JSON_SCHEMA, 'Vulcan':VULCAN_JSON_SCHEMA}
+    for schema_name, json_schema in schema_dict.items():
+        try:
+            validate(instance=json_data, schema=json_schema)
+            is_valid = True
+            schema_type = schema_name
+            break
+        except Exception as e:
+            # If the error did not happen at the root, return the error and the current schema type
+            if len(e.absolute_path) > 0:
+                error = e
+                schema_type = schema_name
+                break
+    return is_valid, error, schema_type
