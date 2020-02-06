@@ -3,11 +3,10 @@ import os
 import json
 import uuid
 import logging
-import enum
 from .vulcan2studio import transform_json_from_vulcan_to_studio
 from ...thread_base import Greenlet
 from ...common import SUPPORTED_IMAGE_INPUT_FORMAT, SUPPORTED_VIDEO_INPUT_FORMAT
-from ...json_schema import validate_json
+from ...json_schema import JSONSchemaType, validate_json
 from ...exceptions import DeepoOpenJsonError, DeepoUploadJsonError
 
 
@@ -121,11 +120,11 @@ class DatasetFiles(object):
                 is_valid_json, error, schema_type = validate_json(json_data)
                 if is_valid_json:
                     # If it's a Studio json, use it directly
-                    if schema_type == 'Studio':
+                    if schema_type == JSONSchemaType.STUDIO:
                         studio_json = json_data
                         LOGGER.warning("{} JSON {} validated".format(schema_type, upload_file))
                     # If it's a Vulcan json, transform it to Studio
-                    elif schema_type == 'Vulcan':
+                    elif schema_type == JSONSchemaType.VULCAN:
                         studio_json = transform_json_from_vulcan_to_studio(json_data)
                         LOGGER.warning("Vulcan JSON {} validated and transformed to Studio format".format(upload_file))
                 # If the JSON is not valid, print the error
