@@ -85,6 +85,13 @@ class CurrentMessages(object):
         with self.lock():
             self.nb_errors += nb_errors
 
+    def report_message(self):
+        self.report_messages(1)
+
+    def report_messages(self, nb_messages):
+        with self.lock():
+            self.nb_added_messages += nb_messages
+
     def forget_message(self, msg, count_as_error=True):
         try:
             with self.lock():
@@ -344,9 +351,9 @@ class MainLoop(object):
         # pbar total may be None for infinite streams
         total_inputs = float('inf') if self.pbar.total is None else self.pbar.total
 
-        nb_uncompleted = max(0, (self.current_messages.nb_added_messages
-                                - self.current_messages.nb_errors
-                                - self.current_messages.nb_successes))
+        nb_uncompleted = (self.current_messages.nb_added_messages
+                          - self.current_messages.nb_errors
+                          - self.current_messages.nb_successes)
         self.pbar.close()
         LOGGER.info('Summary: errors={} uncompleted={} successful={} total={}.'.format(self.current_messages.nb_errors,
                                                                                        nb_uncompleted,

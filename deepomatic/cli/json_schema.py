@@ -1,4 +1,4 @@
-from jsonschema import validate
+from jsonschema import validate, ValidationError
 
 
 # Define the vulcan json schema
@@ -45,7 +45,11 @@ VULCAN_JSON_SCHEMA = {
 # Define the studio json format
 STUDIO_JSON_SCHEMA = {
     "type": "object",
-    "required": ["tags", "images"],
+    "required": ["tags"],
+    "anyOf": [
+        {"required": ["images"]},
+        {"required": ["videos"]}
+    ],
     "properties": {
         "tags": {
             "type": "array",
@@ -79,13 +83,32 @@ STUDIO_JSON_SCHEMA = {
                                     "type": "object",
                                     "required": ["xmin", "xmax", "ymin", "ymax"],
                                     "properties": {
-                                        "xmin": {"type": "number"},
-                                        "xmax": {"type": "number"},
-                                        "ymin": {"type": "number"},
-                                        "ymax": {"type": "number"}
+                                        "xmin": {"type": "number", "minimum": 0, "maximum": 1},
+                                        "xmax": {"type": "number", "minimum": 0, "maximum": 1},
+                                        "ymin": {"type": "number", "minimum": 0, "maximum": 1},
+                                        "ymax": {"type": "number", "minimum": 0, "maximum": 1}
                                     }
                                 }
                             }
+                        }
+                    }
+                }
+            }
+        },
+        "videos": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "required": ["location"],
+                "properties": {
+                    "location": {"type": "string"},
+                    "data": {"type": "object"},
+                    "preprocessing": {
+                        "type": "object",
+                        "properties": {
+                            "fps": {"type": "number", "minimum": 1},
+                            "start_time": {"type": "string"},
+                            "end_time": {"type": "string"}
                         }
                     }
                 }
@@ -122,15 +145,17 @@ def validate_json(json_data):
     - error: ValidationError raised if not valid
     - schema_type: Studio or Vulcan, or None if both schema raise an error at the root of the JSON
     """
-    is_valid, error, schema_type = False, None, None
-    schema_dict = {'Studio':STUDIO_JSON_SCHEMA, 'Vulcan':VULCAN_JSON_SCHEMA}
+    is_valid = False
+    error = None
+    schema_type = None
+    schema_dict = {'Studio': STUDIO_JSON_SCHEMA, 'Vulcan': VULCAN_JSON_SCHEMA}
     for schema_name, json_schema in schema_dict.items():
         try:
             validate(instance=json_data, schema=json_schema)
             is_valid = True
             schema_type = schema_name
             break
-        except Exception as e:
+        except ValidationError as e:
             # If the error did not happen at the root, return the error and the current schema type
             if len(e.absolute_path) > 0:
                 error = e

@@ -3,6 +3,7 @@ import os
 import json
 import uuid
 import logging
+import enum
 from .vulcan2studio import transform_json_from_vulcan_to_studio
 from ...thread_base import Greenlet
 from ...common import SUPPORTED_IMAGE_INPUT_FORMAT, SUPPORTED_VIDEO_INPUT_FORMAT
@@ -32,6 +33,8 @@ class UploadImageGreenlet(Greenlet):
         meta = {}
         for file in batch:
             try:
+                self.current_messages.report_message()
+
                 # Update file
                 files.update({file['key']: open(file['path'], 'rb')})
 
