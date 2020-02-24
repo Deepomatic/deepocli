@@ -128,7 +128,7 @@ class DatasetFiles(object):
                         studio_json = transform_json_from_vulcan_to_studio(json_data)
                         LOGGER.warning("Vulcan JSON {} validated and transformed to Studio format".format(upload_file))
                 # If the JSON is not valid but its type is known, print the error
-                elif schema_type is not None:
+                elif schema_type is not None and error is not None:
                     LOGGER.warning("Error with {} JSON : {} in the instance {}".format(schema_type, error.message, list(error.path)))
                     raise DeepoUploadJsonError("Upload JSON file {} is not a proper {} JSON file".format(upload_file, schema_type))
                 # If the schema type is not known, print the error message
