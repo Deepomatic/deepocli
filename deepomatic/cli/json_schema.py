@@ -1,5 +1,6 @@
 from jsonschema import validate, ValidationError
 
+
 class JSONSchemaType:
     STUDIO = 'Studio'
     VULCAN = 'Vulcan'
@@ -151,7 +152,7 @@ def validate_json(json_data):
     is_valid = False
     error = None
     schema_type = None
-    schema_dict = {JSONSchemaType.STUDIO: JSONSchemaType.STUDIO_JSON_SCHEMA, 
+    schema_dict = {JSONSchemaType.STUDIO: JSONSchemaType.STUDIO_JSON_SCHEMA,
                    JSONSchemaType.VULCAN: JSONSchemaType.VULCAN_JSON_SCHEMA}
     for schema_name, json_schema in schema_dict.items():
         try:
