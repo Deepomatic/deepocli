@@ -162,7 +162,7 @@ def validate_json(json_data):
     error = None
     schema_type = None
     schema_dict = {JSONSchemaType.STUDIO: JSONSchemaType.STUDIO_JSON_SCHEMA, 
-                  JSONSchemaType.VULCAN: JSONSchemaType.VULCAN_JSON_SCHEMA}
+                   JSONSchemaType.VULCAN: JSONSchemaType.VULCAN_JSON_SCHEMA}
     for schema_name, json_schema in schema_dict.items():
         try:
             validate(instance=json_data, schema=json_schema)
@@ -170,9 +170,10 @@ def validate_json(json_data):
             schema_type = schema_name
             break
         except ValidationError as e:
-            # If the error did not happen at the root, return the error and the current schema type
+            # If the error did not happen at the root, return the error and the current schema type (if known)
+            error = e
+            # If the error did not happen at the root we know the schema type of the JSON
             if len(e.absolute_path) > 0:
-                error = e
                 schema_type = schema_name
                 break
     return is_valid, error, schema_type
