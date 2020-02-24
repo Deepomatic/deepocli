@@ -6,6 +6,7 @@ import logging
 import threading
 from tqdm import tqdm
 from deepomatic.api.http_helper import HTTPHelper
+from . import parser_helpers
 from .studio_helpers.file import DatasetFiles, UploadImageGreenlet
 from .studio_helpers.task import Task
 from ..common import TqdmToLogger, Queue, SUPPORTED_FILE_INPUT_FORMAT
@@ -116,3 +117,34 @@ def main(args):
     # the exit code is 0.
     if exit_event.is_set():
         sys.exit(1)
+
+
+def setup_cmd_line_subparser(studio_subparser):
+    help_msg = "Uploads images from the local machine to Deepomatic Studio."
+    desc_mgs = help_msg + " Typical usage is: deepo studio add_images -i img.png -d mydataset -o myorg"
+    add_images_parser = studio_subparser.add_parser('add_images', help=help_msg, description=desc_mgs)
+    add_images_parser.set_defaults(func=main, recursive=False)
+
+    # Define studio group for add_images
+    group = add_images_parser.add_argument_group('studio arguments')
+    group.add_argument('-d', '--dataset', required=True, help="Deepomatic Studio dataset name.", type=str)
+
+    input_group = parser_helpers.add_common_cmd_group(add_images_parser, 'input')
+    # Define input group for add_images
+    input_group.add_argument('-i', '--input', type=str, nargs='+', required=True,
+                             help="One or several input path, either an image or video file (*{}),"
+                             " a directory, or a Studio or Vulcan json (*.json).".format(
+                                 ', *'.join(SUPPORTED_FILE_INPUT_FORMAT)
+                             ))
+    input_group.add_argument('--json', dest='json_file', action='store_true',
+                             help='Look for JSON files instead of images.')
+    parser_helpers.add_recursive_argument(input_group)
+
+    add_images_parser.add_argument('--set_metadata_path', dest='set_metadata_path',
+                                   action='store_true',
+                                   help='Add the relative path as metadata.')
+
+    # TODO: put this in parent parser when infer commands are not in the root parser
+    # And remove all calls to add_verbose_argument
+    # https://stackoverflow.com/questions/7498595/python-argparse-add-argument-to-multiple-subparsers
+    parser_helpers.add_verbose_argument(add_images_parser)

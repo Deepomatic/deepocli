@@ -34,17 +34,17 @@ rpc, protobuf = import_rpc_package()
 
 # decorator that prevents class instanciation when deepomatic rpc is not available
 def requires_deepomatic_rpc(cls):
-    def override_new(old_new):
-        def __new__(cls, *args, **kwargs):
+    def override_init(old_init):
+        def __init__(self, *args, **kwargs):
             # checks that rpc is installed and up-to-date
             import_rpc_package(should_raise=True)
             try:
-                return old_new(cls, *args, **kwargs)
+                old_init(self, *args, **kwargs)
             except Exception:
-                return old_new(cls)
+                old_init(self)
 
-        return __new__
-    cls.__new__ = override_new(cls.__new__)
+        return __init__
+    cls.__init__ = override_init(cls.__init__)
     return cls
 
 

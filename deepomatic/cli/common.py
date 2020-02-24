@@ -3,10 +3,13 @@ import os
 import cv2
 import logging
 try:
-    from Queue import Empty, Full, Queue, LifoQueue
+    import Queue as queue
 except ImportError:
-    from queue import Empty, Full, Queue, LifoQueue  # noqa: F401
+    import queue as queue
 
+Full = queue.Full
+Queue = queue.Queue
+Empty = queue.Empty
 
 LOGGER = logging.getLogger(__name__)
 SUPPORTED_IMAGE_INPUT_FORMAT = ['.bmp', '.jpeg', '.jpg', '.jpe', '.png', '.tif', '.tiff']
@@ -37,10 +40,7 @@ class TqdmToLogger(io.StringIO):
 
 def clear_queue(queue):
     with queue.mutex:
-        if isinstance(queue, LifoQueue):
-            queue.queue = []
-        else:
-            queue.queue.clear()
+        queue.queue.clear()
 
 
 def write_frame_to_disk(frame, path):
