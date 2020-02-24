@@ -140,16 +140,6 @@ def is_valid_json_with_schema(json_data, json_schema):
         return False
 
 
-def is_valid_studio_json(json_data):
-    """Validate a JSON using the studio schema"""
-    return is_valid_json_with_schema(json_data, JSONSchemaType.STUDIO_JSON_SCHEMA)
-
-
-def is_valid_vulcan_json(json_data):
-    """Validate a JSON using the vulcan schema"""
-    return is_valid_json_with_schema(json_data, JSONSchemaType.VULCAN_JSON_SCHEMA)
-
-
 def validate_json(json_data):
     """
     Validate a JSON using the Studio and Vulcan schema

@@ -1,7 +1,7 @@
 import json
 import logging
 from .workflow_abstraction import AbstractWorkflow
-from ..json_schema import is_valid_studio_json, is_valid_vulcan_json
+from ..json_schema import validate_json, JSONSchemaType
 from ..cmds.studio_helpers.vulcan2studio import transform_json_from_studio_to_vulcan
 from ..exceptions import DeepoPredictionJsonError, DeepoOpenJsonError, SendInferenceError
 
@@ -32,11 +32,16 @@ class JsonRecognition(AbstractWorkflow):
             raise DeepoOpenJsonError("Prediction JSON file {} is not a valid JSON file".format(pred_file))
 
         # Check json validity
-        if is_valid_vulcan_json(vulcan_json_with_pred):
-            LOGGER.debug("Vulcan prediction JSON {} validated".format(pred_file))
-        elif is_valid_studio_json(vulcan_json_with_pred):
-            vulcan_json_with_pred = transform_json_from_studio_to_vulcan(vulcan_json_with_pred)
-            LOGGER.debug("Studio prediction JSON {} validated and transformed to Vulcan format".format(pred_file))
+        is_valid, error, schema_type = validate_json(vulcan_json_with_pred)
+        if is_valid:
+            if schema_type == JSONSchemaType.VULCAN:
+                LOGGER.debug("Vulcan prediction JSON {} validated".format(pred_file))
+            elif schema_type == JSONSchemaType.STUDIO:
+                vulcan_json_with_pred = transform_json_from_studio_to_vulcan(vulcan_json_with_pred)
+                LOGGER.debug("Studio prediction JSON {} validated and transformed to Vulcan format".format(pred_file))
+        elif error is not None:
+            LOGGER.warning("Error with {} JSON : {} in the instance {}".format(schema_type, error.message, list(error.path)))
+            raise DeepoPredictionJsonError("Upload JSON file {} is not a proper {} JSON file".format(pred_file, schema_type))
         else:
             raise DeepoPredictionJsonError("Prediction JSON file {} is neither a proper Studio or Vulcan JSON file".format(pred_file))
 
