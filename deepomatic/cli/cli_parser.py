@@ -2,7 +2,7 @@ import os
 import sys
 import logging
 import argparse
-from .cmds import infer, studio
+from .cmds import infer, studio, camera
 from .version import __version__, __title__
 
 
@@ -50,7 +50,7 @@ def argparser_init():
     desc_mgs = help_msg + " Typical usage is: deepo blur -i img.png -o pred.json draw.png -r 12345"
     inference_parsers['blur'] = subparsers.add_parser('blur', help=help_msg, description=desc_mgs)
 
-    # TODO: infer, draw, blur and noop should be in a common command (like studio)
+    # TODO: infer, draw, blur and noop should be in a common command (like studio and cameras)
     infer.setup_cmd_line_parsers(inference_parsers)
 
     # Initialize subparser: studio
@@ -59,6 +59,13 @@ def argparser_init():
     studio_subparser = studio_parser.add_subparsers(dest='studio_command', help='')
     studio_subparser.required = True
     studio.setup_cmd_line_subparser(studio_subparser)
+
+    # Initialize subparser: camera
+    help_msg = "Camera server related commands"
+    camera_parser = subparsers.add_parser('camera', help=help_msg, description=help_msg)
+    camera_subparser = camera_parser.add_subparsers(dest='camera_command', help='')
+    camera_subparser.required = True
+    camera.setup_cmd_line_subparser(camera_subparser)
 
     return argparser
 

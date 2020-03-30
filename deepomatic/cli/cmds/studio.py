@@ -25,8 +25,11 @@ DEFAULT_USER_AGENT_PREFIX = user_agent_prefix = '{}/{}'.format(
 
 
 class Client(object):
-    def __init__(self, api_key=None, user_agent_prefix=DEFAULT_USER_AGENT_PREFIX, pool_maxsize=GREENLET_NUMBER):
-        self.http_helper = HTTPHelper(api_key=api_key, host=API_HOST, user_agent_prefix=user_agent_prefix,
+    def __init__(self, api_key=None,
+                 user_agent_prefix=DEFAULT_USER_AGENT_PREFIX,
+                 pool_maxsize=GREENLET_NUMBER):
+        self.http_helper = HTTPHelper(api_key=api_key, host=API_HOST,
+                                      user_agent_prefix=user_agent_prefix,
                                       pool_maxsize=pool_maxsize, version=None)
         self.task = Task(self.http_helper)
 
