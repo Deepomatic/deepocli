@@ -7,6 +7,7 @@ class AppCommand(Command):
     """
 
     from .create import CreateCommand
+    from .update import UpdateCommand
     from .inspect import InspectCommand
     from .publish import PublishCommand
     from .validate import ValidateCommand
