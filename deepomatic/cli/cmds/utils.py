@@ -1,5 +1,5 @@
 import logging
-import pathlib
+import os
 
 logger = logging.getLogger(__name__)
 
@@ -35,8 +35,7 @@ class Command(object):
         print(type(self).__name__, args, kwargs)
 
 
-def valid_path(original_path):
-    path = pathlib.Path(original_path)
-    if not path.exists():
-        raise IOError("'{}' file does not exist".format(original_path))
-    return path
+def valid_path(file_path):
+    if not os.path.exists(file_path):
+        raise IOError("'{}' file does not exist".format(file_path))
+    return file_path

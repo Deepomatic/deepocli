@@ -9,8 +9,8 @@ class UpdateCommand(Command):
 
     def setup(self, subparsers):
         parser = super(UpdateCommand, self).setup(subparsers)
-        parser.add_argument('-a', '--app_id', required=True, type=str, help="")
+        parser.add_argument('-i', '--id', required=True, type=str, help="App id")
         return parser
 
-    def run(self, app_id, **kwargs):
-        PlatformManager().update_app(app_id)
+    def run(self, id, **kwargs):
+        PlatformManager().update_app(id)
