@@ -1,5 +1,4 @@
 import yaml
-from importlib import util  # Python 3.5+
 try:
     from builtins import FileExistsError
 except ImportError:
