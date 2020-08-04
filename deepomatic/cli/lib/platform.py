@@ -58,7 +58,7 @@ class PlatformManager(object):
 
         try:
             ret = self.client.post('/apps-workflow', data=data_app, files=files, content_type='multipart/mixed')
-            print("New app created with id: {}".format(ret['id']))
+            print("New app created with id: {}".format(ret['app_id']))
         except BadStatus:
             print("Failed to create the app: {}".format(ret))
 
