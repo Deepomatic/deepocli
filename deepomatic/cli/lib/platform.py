@@ -22,7 +22,7 @@ class PlatformManager(object):
 
         try:
             ret = self.client.post('/sites', data=data)
-            print("New site created with id: {}".format(id))
+            print("New site created with id: {}".format(ret['id']))
         except BadStatus:
             print("Failed to create the site: {}".format(ret))
 
