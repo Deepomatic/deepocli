@@ -23,6 +23,11 @@ os.chdir(os.path.normpath(os.path.join(os.path.abspath(__file__), os.pardir)))
 
 # Read requirements
 install_reqs = parse_requirements(os.path.join(here, 'requirements.txt'), session='hack')
+# for pip 20.2.1
+try:
+    requirements = [str(ir.req) for ir in install_reqs]
+except Exception:
+    requirements = [str(ir.requirement) for ir in install_reqs]
 
 namespaces = ['deepomatic']
 
@@ -41,7 +46,7 @@ setup(
     long_description=README,
     long_description_content_type='text/markdown',
     data_files=[('', ['requirements.txt'])],
-    install_requires=[str(ir.req) for ir in install_reqs],
+    install_requires=requirements,
     extras_require={'rpc': ['deepomatic-rpc>=0.8.0']},
     python_requires=">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*",
     classifiers=[
