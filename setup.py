@@ -23,11 +23,11 @@ os.chdir(os.path.normpath(os.path.join(os.path.abspath(__file__), os.pardir)))
 
 # Read requirements
 install_reqs = parse_requirements(os.path.join(here, 'requirements.txt'), session='hack')
-# for pip 20.2.1
 try:
-    requirements = [str(ir.req) for ir in install_reqs]
-except Exception:
     requirements = [str(ir.requirement) for ir in install_reqs]
+    
+except Exception:  # for pip < 20.1
+    requirements = [str(ir.req) for ir in install_reqs]
 
 namespaces = ['deepomatic']
 
