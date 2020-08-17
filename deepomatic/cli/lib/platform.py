@@ -18,7 +18,7 @@ class PlatformManager(object):
             'app_version_id': app_version_id
         }
         if description is not None:
-            data['description'] = description
+            data['desc'] = description
 
         try:
             ret = self.client.post('/sites', data=data)
@@ -55,7 +55,7 @@ class PlatformManager(object):
 
         data_app = {"name": name, "app_specs": app_specs}
         if description is not None:
-            data_app['description'] = description
+            data_app['desc'] = description
 
         try:
             ret = self.client.post('/apps-workflow', data=data_app, files=files, content_type='multipart/mixed')
@@ -73,7 +73,7 @@ class PlatformManager(object):
             'recognition_version_ids': version_ids
         }
         if description is not None:
-            data['description'] = description
+            data['desc'] = description
 
         try:
             ret = self.client.post('/app-versions', data=data)
