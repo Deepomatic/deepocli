@@ -12,13 +12,13 @@ class PlatformManager(object):
     def __init__(self, client_cls=HTTPHelper):
         self.client = client_cls()
 
-    def create_site(self, name, desc, app_version_id):
+    def create_site(self, name, description, app_version_id):
         data = {
             'name': name,
             'app_version_id': app_version_id
         }
-        if desc is not None:
-            data['description'] = desc
+        if description is not None:
+            data['description'] = description
 
         try:
             ret = self.client.post('/sites', data=data)
@@ -37,10 +37,15 @@ class PlatformManager(object):
         except BadStatus:
             print("Failed to update the site: {}".format(ret))
 
-    def create_app(self, name, desc, workflow_path, custom_nodes_path):
+    def create_app(self, name, description, workflow_path, custom_nodes_path):
 
+        files = {}
         with open(workflow_path, 'r') as f:
+            files['workflow_yaml'] = f
             workflow = yaml.safe_load(f)
+
+        if custom_nodes_path is not None:
+            files['custom_nodes_py'] = open(custom_nodes_path, 'r')
 
         # create using workflow server
         app_specs = [{
@@ -49,12 +54,8 @@ class PlatformManager(object):
         } for node in workflow['workflow']['steps'] if node["type"] == "Inference"]
 
         data_app = {"name": name, "app_specs": app_specs}
-        if desc is not None:
-            data_app['description'] = desc
-
-        files = {'workflow_yaml': open(workflow_path, 'r')}
-        if custom_nodes_path is not None:
-            files['custom_nodes_py'] = open(custom_nodes_path, 'r')
+        if description is not None:
+            data_app['description'] = description
 
         try:
             ret = self.client.post('/apps-workflow', data=data_app, files=files, content_type='multipart/mixed')
@@ -65,14 +66,14 @@ class PlatformManager(object):
     def update_app(self, app_id):
         NotImplementedError()
 
-    def create_app_versions(self, app_id, name, desc, version_ids):
+    def create_app_version(self, app_id, name, description, version_ids):
         data = {
             'app_id': app_id,
             'name': name,
             'recognition_version_ids': version_ids
         }
-        if desc is not None:
-            data['description'] = desc
+        if description is not None:
+            data['description'] = description
 
         try:
             ret = self.client.post('/app-versions', data=data)
@@ -80,7 +81,7 @@ class PlatformManager(object):
         except BadStatus:
             print("Failed to create the app_version: {}".format(ret))
 
-    def update_app_versions(self, app_version_id):
+    def update_app_version(self, app_version_id):
         NotImplementedError()
 
     def infer(self, input):
@@ -93,7 +94,6 @@ class PlatformManager(object):
         with open(workflow_path, 'r') as f:
             workflow = yaml.load(f, Loader=yaml.FullLoader)
 
-        # create using workflow server
         app_specs = [{
             "queue_name": "{}.forward".format(node['name']),
             "recognition_spec_id": node['args']['spec_id']
