@@ -2,11 +2,6 @@ import os
 import io
 from setuptools import find_packages, setup
 
-try:  # for pip >= 10
-    from pip._internal.req import parse_requirements
-except ImportError:  # for pip <= 9.0.3
-    from pip.req import parse_requirements
-
 
 here = os.path.abspath(os.path.dirname(__file__))
 
@@ -22,11 +17,8 @@ with io.open(os.path.join(here, 'README.md'), 'r', encoding='utf-8') as readme:
 os.chdir(os.path.normpath(os.path.join(os.path.abspath(__file__), os.pardir)))
 
 # Read requirements
-install_reqs = parse_requirements(os.path.join(here, 'requirements.txt'), session='hack')
-try:
-    requirements = [str(ir.req) for ir in install_reqs]
-except Exception:
-    requirements = [str(ir.requirement) for ir in install_reqs]
+with io.open(os.path.join(here, 'requirements.txt'), encoding='utf-8') as f:
+    requirements = f.readlines()
 
 namespaces = ['deepomatic']
 
