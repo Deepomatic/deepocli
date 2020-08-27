@@ -13,10 +13,6 @@ def call(command, args):
     return run([command] + args, stdout=PIPE, stderr=PIPE, universal_newlines=True)
 
 
-def build(stdout):
-    return stdout
-
-
 @contextmanager
 def app():
     args = f"platform app create -n test -d abc -w {WORKFLOW_PATH} -c {CUSTOM_NODES_PATH}"

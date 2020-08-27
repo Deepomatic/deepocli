@@ -13,7 +13,7 @@ def badstatus_catcher(func):
         try:
             return func(*args, **kwargs)
         except BadStatus as e:
-            print(f'Failed to run {func} {e}')
+            print(f'Failed to run {func.__name__} {e}')
     return func_wrapper
 
 
@@ -138,11 +138,8 @@ class PlatformManager(object):
         data_app = {"name": workflow['workflow']['name'], "app_specs": app_specs}
         files = {'workflow_yaml': open(workflow_path, 'r')}
 
-        try:
-            ret = self._client.post('/apps-workflow/', data=data_app, files=files, content_type='multipart/mixed')
-            print("New app created with id: {}".format(ret['id']))
-        except BadStatus as e:
-            print("Failed to create app: {}".format(e))
+        ret = self._client.post('/apps-workflow/', data=data_app, files=files, content_type='multipart/mixed')
+        print("New app created with id: {}".format(ret['id']))
 
     def train(self):
         raise NotImplementedError()
