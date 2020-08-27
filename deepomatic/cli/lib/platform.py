@@ -13,7 +13,8 @@ def badstatus_catcher(func):
         try:
             return func(*args, **kwargs)
         except BadStatus as e:
-            print(f'Failed to run {func.__name__} {e}')
+            name = func.__name__
+            print(f"Failed to run {name} : {e}")
     return func_wrapper
 
 
