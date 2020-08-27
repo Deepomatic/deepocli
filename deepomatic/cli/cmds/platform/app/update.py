@@ -10,7 +10,9 @@ class UpdateCommand(Command):
     def setup(self, subparsers):
         parser = super(UpdateCommand, self).setup(subparsers)
         parser.add_argument('-i', '--id', required=True, type=str, help="App id")
+        parser.add_argument('-n', '--name', type=str, help="App name")
+        parser.add_argument('-d', '--description', type=str, help="App description")
         return parser
 
-    def run(self, id, **kwargs):
-        PlatformManager().update_app(id)
+    def run(self, id, name, description, **kwargs):
+        PlatformManager().update_app(id, name, description)

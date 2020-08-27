@@ -1,85 +1,104 @@
-import os
-import shutil
-import tempfile
-
-from contextlib import contextmanager
 from subprocess import PIPE, run
+from contextlib import contextmanager
+from pathlib import Path
 
-from .workflow import CUSTOM_NODE_TEMPLATE, WORKFLOW_YAML_TEMPLATE
+ROOT = Path(__file__).resolve().parent
+WORKFLOW_PATH = ROOT / 'workflow.yaml'
+CUSTOM_NODES_PATH = ROOT / 'custom_nodes.py'
 
 
 def call(command, args):
-    return run([command, args], stdout=PIPE, stderr=PIPE, universal_newlines=True)
+
+    args = args.split()
+    return run([command] + args, stdout=PIPE, stderr=PIPE, universal_newlines=True)
 
 
 def build(stdout):
     return stdout
 
 
-def touch(path):
-    with open(path, 'a'):
-        os.utime(path, None)
-    return path
+@contextmanager
+def app():
+    args = f"platform app create -n test -d abc -w {WORKFLOW_PATH} -c {CUSTOM_NODES_PATH}"
+    result = call("deepo", args)
+    _, app_id = result.stdout.strip().split(':')
+
+    yield app_id
+
+    args = f"platform app delete --id {app_id}"
+    result = call("deepo", args)
 
 
 @contextmanager
-def setup():
-    tmp_dir = tempfile.mkdtemp()
-    workflow_path = touch(tmp_dir + "/workflow.yaml")
-    with open(workflow_path, "w+") as f:
-        f.write(WORKFLOW_YAML_TEMPLATE)
+def app_version():
+    with app() as app_id:
+        args = f"platform appversion create -n test_av -d abc -a {app_id} -r 41522 41522"
+        result = call("deepo", args)
+        _, app_version_id = result.stdout.strip().split(':')
 
-    custom_nodes_path = touch(tmp_dir + "/custom_nodes.py")
-    with open(custom_nodes_path, "w+") as f:
-        f.write(CUSTOM_NODE_TEMPLATE)
-
-    try:
-        yield tmp_dir
-    finally:
-        shutil.rmtree(tmp_dir)
+        yield app_version_id
+        args = f"platform appversion delete --id {app_version_id}"
+        result = call("deepo", args)
 
 
 class TestPlatform(object):
-    def test_all(self):
-        with setup() as tmp_dir:
+    command = "deepo"
 
-            # test_create_update_app
-            command = "deepo platform app create"
-            args = f"-n test -d abc -w f{tmp_dir}/workflow.yaml -c f{tmp_dir}/custom_nodes.py"
-            result = call(command, args)
+    def test_app(self):
+        args = f"platform app create -n test -d abc -w {WORKFLOW_PATH} -c {CUSTOM_NODES_PATH}"
+        result = call(self.command, args)
+        assert result.returncode == 0
+        message, app_id = result.stdout.strip().split(':')
+        assert message == 'New app created with id'
+
+        args = f"platform app update --id {app_id} -d ciao"
+        result = call(self.command, args)
+        assert result.returncode == 0
+        message = result.stdout.strip()
+        assert message == f'App{app_id} updated'
+
+        args = f"platform app delete --id {app_id}"
+        result = call(self.command, args)
+        assert result.returncode == 0
+        message = result.stdout.strip()
+        assert message == f'App{app_id} deleted'
+
+    def test_appversion(self):
+        with app() as app_id:
+            args = f"platform appversion create -n test_av -d abc -a {app_id} -r 41522 41522"
+            result = call(self.command, args)
             assert result.returncode == 0
-            json = build(result.stdout)
-            id = json['id']
+            message, app_version_id = result.stdout.strip().split(':')
+            assert message == 'New app version created with id'
 
-            command = "deepo platform app update"
-            args = f" --id {id}"
-            result = call(command, args)
+            args = f"platform appversion update --id {app_version_id} -d ciao"
+            result = call(self.command, args)
             assert result.returncode == 0
+            message = result.stdout.strip()
+            assert message == f'App version{app_version_id} updated'
 
-            # test_create_update_appversion
-            command = "deepo platform appversion create"
-            args = " -n test_av -d abc -a d3b357fd-d6a4-411c-bdc5-a39977424c03 -r 39663 38132 38125 39628 39708 39654"
-            result = call(command, args)
+            args = f"platform appversion delete --id {app_version_id}"
+            result = call(self.command, args)
             assert result.returncode == 0
+            message = result.stdout.strip()
+            assert message == f'App version{app_version_id} deleted'
 
-            id = "d3b357fd-d6a4-411c-bdc5-a39977424c03"
-
-            command = "deepo platform appversion update"
-            args = f" --id {id}"
-            result = call(command, args)
+    def test_site(self):
+        with app_version() as app_version_id:
+            args = f"platform site create -n test_si -d xyz -v {app_version_id}"
+            result = call(self.command, args)
             assert result.returncode == 0
+            message, site_id = result.stdout.strip().split(':')
+            assert message == 'New site created with id'
 
-            # test_site_update_appversion
-
-            app_version_id = "d3b357fd-d6a4-411c-bdc5-a39977424c03"
-            command = "deepo platform site create"
-            args = f" -n test_av -d abc -v {app_version_id}"
-            result = call(command, args)
+            args = f"platform site update --id {site_id} --app_version_id {app_version_id}"
+            result = call(self.command, args)
             assert result.returncode == 0
+            message = result.stdout.strip()
+            assert message == f'Site{site_id} updated'
 
-            id = "d3b357fd-d6a4-411c-bdc5-a39977424c03"
-
-            command = "deepo platform site update"
-            args = f" --id {id} --app_version_id {app_version_id}"
-            result = call(command, args)
+            args = f"platform site delete --id {site_id}"
+            result = call(self.command, args)
             assert result.returncode == 0
+            message = result.stdout.strip()
+            assert message == f'Site{site_id} deleted'

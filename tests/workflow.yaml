@@ -1,14 +1,3 @@
-CUSTOM_NODE_TEMPLATE = """
-from deepomatic.workflows.nodes import CustomNode
-class MyNode(CustomNode):
-    def __init__(self, config, node_name, input_nodes, concepts):
-        super(MyNode, self).__init__(config, node_name, input_nodes)
-    def process(self, context, regions):
-        return regions
-"""
-
-
-WORKFLOW_YAML_TEMPLATE = """
 version: 1.1
 workflow_name: test
 
@@ -50,4 +39,3 @@ workflow:
       args:
         entry: test_image
         concept_name: b
-"""
