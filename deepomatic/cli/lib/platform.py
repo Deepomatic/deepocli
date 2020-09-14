@@ -14,7 +14,7 @@ def badstatus_catcher(func):
             return func(*args, **kwargs)
         except BadStatus as e:
             name = func.__name__
-            print(f"Failed to run {name} : {e}")
+            print("Failed to run {} : {}".format(name, e))
     return func_wrapper
 
 
@@ -46,7 +46,7 @@ class PlatformManager(object):
     @badstatus_catcher
     def delete_site(self, site_id):
         self.client.delete('/sites/{}'.format(site_id))
-        print(f"Site {site_id} deleted")
+        print("Site {} deleted".format(site_id))
 
     @badstatus_catcher
     def create_app(self, name, description, workflow_path, custom_nodes_path):
@@ -87,7 +87,7 @@ class PlatformManager(object):
     @badstatus_catcher
     def delete_app(self, app_id):
         self.client.delete('/apps/{}'.format(app_id))
-        print(f"App {app_id} deleted")
+        print("App {} deleted".format(app_id))
 
     @badstatus_catcher
     def create_app_version(self, app_id, name, description, version_ids):
@@ -113,12 +113,12 @@ class PlatformManager(object):
             data['desc'] = description
 
         ret = self.client.patch('/app-versions/{}'.format(app_version_id), data=data)
-        print(f"App version {ret['id']} updated")
+        print("App version {} updated".format(ret['id']))
 
     @badstatus_catcher
     def delete_app_version(self, app_version_id):
         self.client.delete('/app-versions/{}'.format(app_version_id))
-        print(f"App version {app_version_id} deleted")
+        print("App version {} deleted".format(app_version_id))
 
     def infer(self, input):
         raise NotImplementedError()
