@@ -85,5 +85,6 @@ def run(args):
     logging.basicConfig(level=log_level, format=log_format)
 
     result = args.func(vars(args))
-    print(result)
+    if result:
+        print(result)
     return result
