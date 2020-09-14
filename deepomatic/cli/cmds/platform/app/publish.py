@@ -13,5 +13,5 @@ class PublishCommand(Command):
         return parser
 
     def run(self, workflow_path, **kwargs):
-        print(PlatformManager().publish_workflow(workflow_path))
+        return PlatformManager().publish_workflow(workflow_path)
         # TODO: feedback

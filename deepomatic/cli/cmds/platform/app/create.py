@@ -16,4 +16,4 @@ class CreateCommand(Command):
         return parser
 
     def run(self, name, description, workflow, custom_nodes, **kwargs):
-        PlatformManager().create_app(name, description, workflow, custom_nodes)
+        return PlatformManager().create_app(name, description, workflow, custom_nodes)

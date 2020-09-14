@@ -1,4 +1,6 @@
 import yaml
+import logging
+
 try:
     from builtins import FileExistsError
 except ImportError:
@@ -8,13 +10,16 @@ from deepomatic.api.exceptions import BadStatus
 from deepomatic.api.http_helper import HTTPHelper
 
 
+LOGGER = logging.getLogger(__name__)
+
+
 def badstatus_catcher(func):
     def func_wrapper(*args, **kwargs):
         try:
             return func(*args, **kwargs)
         except BadStatus as e:
             name = func.__name__
-            print("Failed to run {} : {}".format(name, e))
+            LOGGER.error("Failed to run {} : {}".format(name, e))
     return func_wrapper
 
 
@@ -32,7 +37,7 @@ class PlatformManager(object):
             data['desc'] = description
 
         ret = self.client.post('/sites', data=data)
-        print("New site created with id: {}".format(ret['id']))
+        return "New site created with id: {}".format(ret['id'])
 
     @badstatus_catcher
     def update_site(self, site_id, app_version_id):
@@ -41,12 +46,12 @@ class PlatformManager(object):
         }
 
         ret = self.client.patch('/sites/{}'.format(site_id), data=data)
-        print("Site {} updated".format(ret['id']))
+        return "Site {} updated".format(ret['id'])
 
     @badstatus_catcher
     def delete_site(self, site_id):
         self.client.delete('/sites/{}'.format(site_id))
-        print("Site {} deleted".format(site_id))
+        return "Site {} deleted".format(site_id)
 
     @badstatus_catcher
     def create_app(self, name, description, workflow_path, custom_nodes_path):
@@ -69,7 +74,7 @@ class PlatformManager(object):
             files['custom_nodes_py'] = open(custom_nodes_path, 'r')
 
         ret = self.client.post('/apps-workflow', data=data_app, files=files, content_type='multipart/mixed')
-        print("New app created with id: {}".format(ret['app_id']))
+        return "New app created with id: {}".format(ret['app_id'])
 
     @badstatus_catcher
     def update_app(self, app_id, name, description):
@@ -82,12 +87,12 @@ class PlatformManager(object):
             data['desc'] = description
 
         ret = self.client.patch('/apps/{}'.format(app_id), data=data)
-        print("App {} updated".format(ret['id']))
+        return "App {} updated".format(ret['id'])
 
     @badstatus_catcher
     def delete_app(self, app_id):
         self.client.delete('/apps/{}'.format(app_id))
-        print("App {} deleted".format(app_id))
+        return "App {} deleted".format(app_id)
 
     @badstatus_catcher
     def create_app_version(self, app_id, name, description, version_ids):
@@ -100,7 +105,7 @@ class PlatformManager(object):
             data['desc'] = description
 
         ret = self.client.post('/app-versions', data=data)
-        print("New app version created with id: {}".format(ret['id']))
+        return "New app version created with id: {}".format(ret['id'])
 
     @badstatus_catcher
     def update_app_version(self, app_version_id, name, description):
@@ -113,12 +118,12 @@ class PlatformManager(object):
             data['desc'] = description
 
         ret = self.client.patch('/app-versions/{}'.format(app_version_id), data=data)
-        print("App version {} updated".format(ret['id']))
+        return "App version {} updated".format(ret['id'])
 
     @badstatus_catcher
     def delete_app_version(self, app_version_id):
         self.client.delete('/app-versions/{}'.format(app_version_id))
-        print("App version {} deleted".format(app_version_id))
+        return "App version {} deleted".format(app_version_id)
 
     def infer(self, input):
         raise NotImplementedError()
@@ -140,7 +145,7 @@ class PlatformManager(object):
         files = {'workflow_yaml': open(workflow_path, 'r')}
 
         ret = self._client.post('/apps-workflow/', data=data_app, files=files, content_type='multipart/mixed')
-        print("New app created with id: {}".format(ret['id']))
+        return "New app created with id: {}".format(ret['id'])
 
     def train(self):
         raise NotImplementedError()
@@ -150,4 +155,7 @@ class PlatformManager(object):
 
     def validate(self):
         # TODO: implement
-        return True
+        if True:
+            return 'Your workflow is valid'
+        else:
+            return 'Your workflow is invalid'

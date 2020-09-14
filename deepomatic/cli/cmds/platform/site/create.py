@@ -15,4 +15,4 @@ class CreateCommand(Command):
         return parser
 
     def run(self, name, description, app_version_id, **kwargs):
-        PlatformManager().create_site(name, description, app_version_id)
+        return PlatformManager().create_site(name, description, app_version_id)

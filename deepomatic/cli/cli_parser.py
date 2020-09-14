@@ -84,4 +84,6 @@ def run(args):
         log_format = '[%(levelname)s %(asctime)s] %(message)s'
     logging.basicConfig(level=log_level, format=log_format)
 
-    return args.func(vars(args))
+    result = args.func(vars(args))
+    print(result)
+    return result

@@ -13,4 +13,4 @@ class InspectCommand(Command):
         return parser
 
     def run(self, workflow_path, **kwargs):
-        PlatformManager.inspect(workflow_path)
+        return PlatformManager.inspect(workflow_path)

@@ -13,4 +13,4 @@ class InferCommand(Command):
         return parser
 
     def run(self, input, **kwargs):
-        PlatformManager().infer(input)
+        return PlatformManager().infer(input)

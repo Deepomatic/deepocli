@@ -14,4 +14,4 @@ class UpdateCommand(Command):
         return parser
 
     def run(self, id, app_version_id, **kwargs):
-        PlatformManager().update_site(id, app_version_id)
+        return PlatformManager().update_site(id, app_version_id)

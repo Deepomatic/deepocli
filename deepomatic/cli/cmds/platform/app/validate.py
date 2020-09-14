@@ -9,7 +9,4 @@ class ValidateCommand(Command):
 
     def run(self, path=".", **kwargs):
         # TODO: feedback
-        if PlatformManager().validate(path):
-            print('Your workflow is valid')
-        else:
-            print('Your workflow is invalid')
+        return PlatformManager().validate(path)

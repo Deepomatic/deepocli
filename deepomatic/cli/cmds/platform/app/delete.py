@@ -13,4 +13,4 @@ class DeleteCommand(Command):
         return parser
 
     def run(self, id, **kwargs):
-        PlatformManager().delete_app(id)
+        return PlatformManager().delete_app(id)

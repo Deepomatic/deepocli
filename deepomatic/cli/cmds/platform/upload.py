@@ -8,4 +8,4 @@ class UploadCommand(Command):
     """
 
     def run(self):
-        PlatformManager().upload()
+        return PlatformManager().upload()

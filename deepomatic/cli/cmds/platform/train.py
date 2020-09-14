@@ -8,4 +8,4 @@ class TrainCommand(Command):
     """
 
     def run(self):
-        PlatformManager().train()
+        return PlatformManager().train()
