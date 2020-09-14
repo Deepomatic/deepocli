@@ -1,11 +1,11 @@
+import os.path
 from deepomatic.cli.cli_parser import run
 
 from contextlib import contextmanager
-from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent
-WORKFLOW_PATH = ROOT / 'workflow.yaml'
-CUSTOM_NODES_PATH = ROOT / 'custom_nodes.py'
+ROOT = os.path.dirname(os.path.abspath(__file__))
+WORKFLOW_PATH = ROOT + '/workflow.yaml'
+CUSTOM_NODES_PATH = ROOT + '/custom_nodes.py'
 
 
 def call(args):
