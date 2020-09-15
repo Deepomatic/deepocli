@@ -25,7 +25,7 @@ def call_deepo(args):
     except AttributeError:
         # For python 2.7
         res = subprocess.check_output(command, universal_newlines=True, env=deploy_env)
-        return res.strip
+        return res.strip()
 
 
 @contextmanager
