@@ -7,17 +7,25 @@ WORKFLOW_PATH = ROOT + '/workflow.yaml'
 CUSTOM_NODES_PATH = ROOT + '/custom_nodes.py'
 
 # Using specific api key to run this test
-api_key = os.getenv('DEEPOMATIC_DEPLOY_API_KEY')
+api_key = os.environ['DEEPOMATIC_DEPLOY_API_KEY']
+api_url = os.environ['DEEPOMATIC_DEPLOY_API_URL']
 deploy_env = os.environ.copy()
 deploy_env['DEEPOMATIC_API_KEY'] = api_key
+deploy_env['DEEPOMATIC_API_URL'] = api_url
 
 
 def call_deepo(args):
     args = args.split()
     command = ['deepo'] + args
-    res = subprocess.run(command, stdout=subprocess.PIPE, env=deploy_env, universal_newlines=True)
-    assert res.returncode == 0
-    return res.stdout.strip()
+    try:
+        res = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, env=deploy_env)
+        assert res.returncode == 0
+        assert res.stderr == ''
+        return res.stdout.strip()
+    except AttributeError:
+        # For python 2.7
+        res = subprocess.check_output(command, universal_newlines=True, env=deploy_env)
+        return res.strip
 
 
 @contextmanager
@@ -35,7 +43,7 @@ def app():
 @contextmanager
 def app_version():
     with app() as app_id:
-        args = "platform appversion create -n test_av -d abc -a {} -r 41522 41522".format(app_id)
+        args = "platform appversion create -n test_av -d abc -a {} -r 61307 61306".format(app_id)
         result = call_deepo(args)
         _, app_version_id = result.split(':')
 
@@ -65,7 +73,7 @@ class TestPlatform(object):
 
     def test_appversion(self):
         with app() as app_id:
-            args = "platform appversion create -n test_av -d abc -a {} -r 41522 41522".format(app_id)
+            args = "platform appversion create -n test_av -d abc -a {} -r 61307 61306".format(app_id)
             result = call_deepo(args)
             message, app_version_id = result.split(':')
             assert message == 'New app version created with id'

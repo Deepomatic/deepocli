@@ -19,7 +19,7 @@ workflow:
       inputs:
         - test_image
       args:
-        model_id: 51863
+        model_id: 80158
         concepts:
           - a
 
@@ -28,7 +28,7 @@ workflow:
       inputs:
         - test_image
       args:
-        model_id: 51863
+        model_id: 80157
         concepts:
           - b
 
