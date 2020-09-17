@@ -20,6 +20,7 @@ def badstatus_catcher(func):
         except BadStatus as e:
             name = func.__name__
             LOGGER.error("Failed to run {} : {}".format(name, e))
+            raise e
     return func_wrapper
 
 
@@ -142,9 +143,11 @@ class PlatformManager(object):
         } for node in workflow['workflow']['nodes'] if node["type"] == "Recognition"]
 
         data_app = {"name": workflow['workflow']['name'], "app_specs": app_specs}
-        files = {'workflow_yaml': open(workflow_path, 'r')}
 
-        ret = self._client.post('/apps-workflow/', data=data_app, files=files, content_type='multipart/mixed')
+        with open(workflow_path, 'r') as f:
+            workflow = yaml.safe_load(f)
+            files = {'workflow_yaml': f}
+            ret = self._client.post('/apps-workflow/', data=data_app, files=files, content_type='multipart/mixed')
         return "New app created with id: {}".format(ret['id'])
 
     def train(self):

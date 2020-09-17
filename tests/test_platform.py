@@ -62,13 +62,11 @@ class TestPlatform(object):
         assert message == 'New app created with id'
 
         args = "platform app update --id {} -d ciao".format(app_id)
-        result = call_deepo(args)
-        message = result.strip()
+        message = call_deepo(args)
         assert message == 'App{} updated'.format(app_id)
 
         args = "platform app delete --id {}".format(app_id)
-        result = call_deepo(args)
-        message = result.strip()
+        message = call_deepo(args)
         assert message == 'App{} deleted'.format(app_id)
 
     def test_appversion(self):
@@ -79,13 +77,11 @@ class TestPlatform(object):
             assert message == 'New app version created with id'
 
             args = "platform appversion update --id {} -d ciao".format(app_version_id)
-            result = call_deepo(args)
-            message = result.strip()
+            message = call_deepo(args)
             assert message == 'App version{} updated'.format(app_version_id)
 
             args = "platform appversion delete --id {}".format(app_version_id)
-            result = call_deepo(args)
-            message = result.strip()
+            message = call_deepo(args)
             assert message == 'App version{} deleted'.format(app_version_id)
 
     def test_site(self):
@@ -96,11 +92,9 @@ class TestPlatform(object):
             assert message == 'New site created with id'
 
             args = "platform site update --id {} --app_version_id {}".format(site_id, app_version_id)
-            result = call_deepo(args)
-            message = result.strip()
+            message = call_deepo(args)
             assert message == 'Site{} updated'.format(site_id)
 
             args = "platform site delete --id {}".format(site_id)
-            result = call_deepo(args)
-            message = result.strip()
+            message = call_deepo(args)
             assert message == 'Site{} deleted'.format(site_id)
