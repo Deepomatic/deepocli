@@ -57,9 +57,11 @@ class PlatformManager(object):
         with open(workflow_path, 'r') as w:
             files = {'workflow_yaml': w}
             if custom_nodes_path is not None:
-                files['custom_nodes_py'] = open(custom_nodes_path, 'r')
-
-            ret = self.client.post('/apps-workflow', data=data_app, files=files, content_type='multipart/mixed')
+                with open(custom_nodes_path, 'r') as c:
+                    files['custom_nodes_py'] = c
+                    ret = self.client.post('/apps-workflow', data=data_app, files=files, content_type='multipart/mixed')
+            else:
+                ret = self.client.post('/apps-workflow', data=data_app, files=files, content_type='multipart/mixed')
             return "New app created with id: {}".format(ret['app_id'])
 
     def update_app(self, app_id, name, description):
@@ -111,23 +113,6 @@ class PlatformManager(object):
 
     def inspect(self, workflow_path):
         raise NotImplementedError()
-
-    def publish_workflow(self, workflow_path):
-        with open(workflow_path, 'r') as f:
-            workflow = yaml.load(f, Loader=yaml.FullLoader)
-
-        app_specs = [{
-            "queue_name": "{}.forward".format(node['name']),
-            "recognition_spec_id": node['args']['spec_id']
-        } for node in workflow['workflow']['nodes'] if node["type"] == "Recognition"]
-
-        data_app = {"name": workflow['workflow']['name'], "app_specs": app_specs}
-
-        with open(workflow_path, 'r') as f:
-            workflow = yaml.safe_load(f)
-            files = {'workflow_yaml': f}
-            ret = self._client.post('/apps-workflow/', data=data_app, files=files, content_type='multipart/mixed')
-        return "New app created with id: {}".format(ret['id'])
 
     def train(self):
         raise NotImplementedError()
