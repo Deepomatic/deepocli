@@ -6,29 +6,16 @@ try:
 except ImportError:
     FileExistsError = OSError
 
-from deepomatic.api.exceptions import BadStatus
 from deepomatic.api.http_helper import HTTPHelper
 
 
 LOGGER = logging.getLogger(__name__)
 
 
-def badstatus_catcher(func):
-    def func_wrapper(*args, **kwargs):
-        try:
-            return func(*args, **kwargs)
-        except BadStatus as e:
-            name = func.__name__
-            LOGGER.error("Failed to run {} : {}".format(name, e))
-            raise e
-    return func_wrapper
-
-
 class PlatformManager(object):
     def __init__(self, client_cls=HTTPHelper):
         self.client = client_cls()
 
-    @badstatus_catcher
     def create_site(self, name, description, app_version_id):
         data = {
             'name': name,
@@ -40,7 +27,6 @@ class PlatformManager(object):
         ret = self.client.post('/sites', data=data)
         return "New site created with id: {}".format(ret['id'])
 
-    @badstatus_catcher
     def update_site(self, site_id, app_version_id):
         data = {
             'app_version_id': app_version_id
@@ -49,12 +35,10 @@ class PlatformManager(object):
         ret = self.client.patch('/sites/{}'.format(site_id), data=data)
         return "Site {} updated".format(ret['id'])
 
-    @badstatus_catcher
     def delete_site(self, site_id):
         self.client.delete('/sites/{}'.format(site_id))
         return "Site {} deleted".format(site_id)
 
-    @badstatus_catcher
     def create_app(self, name, description, workflow_path, custom_nodes_path):
 
         with open(workflow_path, 'r') as f:
@@ -70,14 +54,14 @@ class PlatformManager(object):
         if description is not None:
             data_app['desc'] = description
 
-        files = {'workflow_yaml': open(workflow_path, 'r')}
-        if custom_nodes_path is not None:
-            files['custom_nodes_py'] = open(custom_nodes_path, 'r')
+        with open(workflow_path, 'r') as w:
+            files = {'workflow_yaml': w}
+            if custom_nodes_path is not None:
+                files['custom_nodes_py'] = open(custom_nodes_path, 'r')
 
-        ret = self.client.post('/apps-workflow', data=data_app, files=files, content_type='multipart/mixed')
-        return "New app created with id: {}".format(ret['app_id'])
+            ret = self.client.post('/apps-workflow', data=data_app, files=files, content_type='multipart/mixed')
+            return "New app created with id: {}".format(ret['app_id'])
 
-    @badstatus_catcher
     def update_app(self, app_id, name, description):
         data = {}
 
@@ -90,12 +74,10 @@ class PlatformManager(object):
         ret = self.client.patch('/apps/{}'.format(app_id), data=data)
         return "App {} updated".format(ret['id'])
 
-    @badstatus_catcher
     def delete_app(self, app_id):
         self.client.delete('/apps/{}'.format(app_id))
         return "App {} deleted".format(app_id)
 
-    @badstatus_catcher
     def create_app_version(self, app_id, name, description, version_ids):
         data = {
             'app_id': app_id,
@@ -108,7 +90,6 @@ class PlatformManager(object):
         ret = self.client.post('/app-versions', data=data)
         return "New app version created with id: {}".format(ret['id'])
 
-    @badstatus_catcher
     def update_app_version(self, app_version_id, name, description):
         data = {}
 
@@ -121,7 +102,6 @@ class PlatformManager(object):
         ret = self.client.patch('/app-versions/{}'.format(app_version_id), data=data)
         return "App version {} updated".format(ret['id'])
 
-    @badstatus_catcher
     def delete_app_version(self, app_version_id):
         self.client.delete('/app-versions/{}'.format(app_version_id))
         return "App version {} deleted".format(app_version_id)
@@ -132,7 +112,6 @@ class PlatformManager(object):
     def inspect(self, workflow_path):
         raise NotImplementedError()
 
-    @badstatus_catcher
     def publish_workflow(self, workflow_path):
         with open(workflow_path, 'r') as f:
             workflow = yaml.load(f, Loader=yaml.FullLoader)
@@ -155,10 +134,3 @@ class PlatformManager(object):
 
     def upload(self):
         raise NotImplementedError()
-
-    def validate(self):
-        # TODO: implement
-        if True:
-            return 'Your workflow is valid'
-        else:
-            return 'Your workflow is invalid'

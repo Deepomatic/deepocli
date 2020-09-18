@@ -11,5 +11,4 @@ class AppCommand(Command):
     from .update import UpdateCommand
     from .inspect import InspectCommand
     from .publish import PublishCommand
-    from .validate import ValidateCommand
     from .infer import InferCommand

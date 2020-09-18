@@ -1,5 +1,6 @@
 import logging
 import os
+import re
 
 logger = logging.getLogger(__name__)
 
@@ -11,7 +12,9 @@ class Command(object):
     """
 
     def __init__(self):
-        self.name = self.__class__.__name__.lower().replace("command", "")
+        # The name of a command is the Command class name lowercase and - joined in case of camel case
+        camel_case_name = self.__class__.__name__.replace("Command", "")
+        self.name = re.sub(r'(?<!^)(?=[A-Z])', '-', camel_case_name).lower()
         self.help, _, self.description = self.__class__.__doc__.strip().partition('\n')
 
     def setup(self, subparsers):
