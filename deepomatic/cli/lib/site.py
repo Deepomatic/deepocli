@@ -6,6 +6,8 @@ import subprocess
 
 from git import Repo
 from deepomatic.api.http_helper import HTTPHelper
+from .platform import get_site_deploy_manifest
+
 
 DEEPOMATIC_SITE_PATH = os.path.join(os.path.expanduser('~'), '.deepomatic', 'sites')
 
@@ -40,15 +42,6 @@ class SiteManager(object):
     def get(self, site_id):
         return self._client.get('/sites/{}'.format(site_id))
 
-    def get_docker_compose(self, site_id):
-        headers = self._client.setup_headers(content_type='application/yaml')
-        response = self._client.send_request(
-            self._client.session.get,
-            '{}/sites/{}/docker-compose'.format(self._client.resource_prefix, site_id),
-            headers=headers)
-
-        return response.content.decode()
-
     def create(self, name, app_version_id, description=''):
         raise NotImplementedError('Please use the web interface')
 
@@ -63,7 +56,8 @@ class SiteManager(object):
 
     def install(self, site_id):
         site = self.get(site_id)
-        docker_compose = self.get_docker_compose(site_id)
+        docker_compose = get_site_deploy_manifest(self._client, site_id,
+                                                  'docker-compose', '')
         try:
             # create branch
             self._repo.git.checkout(site_id, orphan=True)

@@ -12,6 +12,13 @@ from deepomatic.api.http_helper import HTTPHelper
 LOGGER = logging.getLogger(__name__)
 
 
+def get_site_deploy_manifest(client, site_id, manifest_format, target):
+    if target:
+        target = '?target=' + target
+    uri = '/sites/{}/{}{}'.format(site_id, manifest_format, target)
+    return client.get(uri).decode()
+
+
 class PlatformManager(object):
     def __init__(self, client_cls=HTTPHelper):
         self.client = client_cls()
@@ -38,6 +45,9 @@ class PlatformManager(object):
     def delete_site(self, site_id):
         self.client.delete('/sites/{}'.format(site_id))
         return "Site {} deleted".format(site_id)
+
+    def get_site_deploy_manifest(self, site_id, manifest_format, target):
+        return get_site_deploy_manifest(self.client, site_id, manifest_format, target)
 
     def create_app(self, name, description, workflow_path, custom_nodes_path):
 
@@ -107,6 +117,14 @@ class PlatformManager(object):
     def delete_app_version(self, app_version_id):
         self.client.delete('/app-versions/{}'.format(app_version_id))
         return "App version {} deleted".format(app_version_id)
+
+    def create_service(self, **data):
+        ret = self.client.post('/services', data=data)
+        return "New service created with id: {}".format(ret['id'])
+
+    def delete_service(self, service_id):
+        self.client.delete('/services/{}'.format(service_id))
+        return "Service {} deleted".format(service_id)
 
     def infer(self, input):
         raise NotImplementedError()

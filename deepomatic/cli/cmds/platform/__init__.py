@@ -8,4 +8,5 @@ class PlatformCommand(Command):
 
     from .app import AppCommand
     from .app_version import AppVersionCommand
+    from .service import ServiceCommand
     from .site import SiteCommand
