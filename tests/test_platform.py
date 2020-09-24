@@ -44,6 +44,7 @@ def app_version():
         args = "platform app-version delete --id {}".format(app_version_id)
         result = call_deepo(args)
 
+
 @contextmanager
 def site():
     with app_version() as (app_version_id, app_id):
