@@ -121,7 +121,7 @@ class TestPlatform(object):
 
             client = Client(api_key=deploy_api_key, host=deploy_api_url)
             client.http_helper.post('/accounts/me/read-only-keys',
-                                    data={'name': 'SITE_0-{}-testdeepocli'.format(site_id)})
+                                    data={'name': 'SITE_0-{}-test-deepocli'.format(site_id)})
             args = "platform site docker-compose -i {}".format(site_id)
             message = call_deepo(args)
             assert message.startswith('version: "2.4"')
