@@ -95,8 +95,16 @@ class MockApi(object):
         self.session = self
         self.resource_prefix = ''
 
+    def get_site_id_from_path(self, path):
+        path = [p for p in path.split('/') if p != '']
+        assert path[0] == 'sites'
+        return path[1], path[2:]
+
     def get(self, path):
-        return self.sites.get(path.split('/')[-1])
+        site_id, extra_path = self.get_site_id_from_path(path)
+        if extra_path and extra_path[0] == 'docker-compose':
+            return b'docker-compose'
+        return self.sites.get(site_id)
 
     def post(self, path, data):
         site = generate_site(**data)
@@ -104,27 +112,14 @@ class MockApi(object):
         return site
 
     def delete(self, path):
-        del self.sites[path.split('/')[-1]]
+        site_id, extra_path = self.get_site_id_from_path(path)
+        del self.sites[site_id]
 
     def upgrade(self, site_id, app_id):
         self.sites[site_id]['app']['id'] = app_id
 
     def setup_headers(self, content_type):
         pass
-
-    def send_request(self, f, path, headers):
-        class Response(object):
-            class Content(object):
-                def __init__(self, content):
-                    self.content = content
-
-                def decode(self):
-                    return self.content
-
-            def __init__(self, content):
-                self.content = Response.Content(content)
-
-        return Response('docker-compose')  # TODO: real docker-compose ?
 
 
 @contextmanager

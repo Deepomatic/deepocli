@@ -54,10 +54,13 @@ class SiteManager(object):
     def delete(self, site_id):
         raise NotImplementedError('Please use the web interface')
 
+    def get_docker_compose(self, site_id):
+        return get_site_deploy_manifest(self._client, site_id,
+                                        'docker-compose', '')
+
     def install(self, site_id):
         site = self.get(site_id)
-        docker_compose = get_site_deploy_manifest(self._client, site_id,
-                                                  'docker-compose', '')
+        docker_compose = self.get_docker_compose(site_id)
         try:
             # create branch
             self._repo.git.checkout(site_id, orphan=True)
