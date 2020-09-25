@@ -2,7 +2,8 @@ opencv-python==3.4.3.18
 tqdm==4.31.1
 requests>=2.19.0,<3  # will not work below in python3
 text-unidecode==1.2
-gevent==1.4.0
+greenlet==0.4.17
+gevent==20.9.0
 jsonschema==3.0.1
 deepomatic-api==0.9.1
 PyYAML>=3.12

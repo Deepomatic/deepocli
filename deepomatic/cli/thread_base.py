@@ -317,13 +317,13 @@ class MainLoop(object):
 
     @contextmanager
     def disable_exit_signals(self):
-        gevent.signal(signal.SIGINT, lambda: signal.SIG_IGN)
-        gevent.signal(signal.SIGTERM, lambda: signal.SIG_IGN)
+        gevent.signal_handler(signal.SIGINT, lambda: signal.SIG_IGN)
+        gevent.signal_handler(signal.SIGTERM, lambda: signal.SIG_IGN)
         try:
             yield
         finally:
-            gevent.signal(signal.SIGINT, self.stop)
-            gevent.signal(signal.SIGTERM, self.stop)
+            gevent.signal_handler(signal.SIGINT, self.stop)
+            gevent.signal_handler(signal.SIGTERM, self.stop)
 
     def stop(self):
         with self.disable_exit_signals():
@@ -366,8 +366,8 @@ class MainLoop(object):
         for pool in self.pools:
             pool.start()
 
-        gevent.signal(gevent.signal.SIGINT, self.stop)
-        gevent.signal(gevent.signal.SIGTERM, self.stop)
+        gevent.signal_handler(gevent.signal.SIGINT, self.stop)
+        gevent.signal_handler(gevent.signal.SIGTERM, self.stop)
 
         for pool in self.pools:
             # Either pools stop by themself
@@ -375,8 +375,8 @@ class MainLoop(object):
             pool.wait_until_nothing_to_process()
 
         if not self.exit_event.is_set():
-            gevent.signal(gevent.signal.SIGINT, lambda: signal.SIG_IGN)
-            gevent.signal(gevent.signal.SIGTERM, lambda: signal.SIG_IGN)
+            gevent.signal_handler(gevent.signal.SIGINT, lambda: signal.SIG_IGN)
+            gevent.signal_handler(gevent.signal.SIGTERM, lambda: signal.SIG_IGN)
             # Makes sure threads finish properly so that
             # we can make sure the workflow is not used and can be closed
             for pool in self.pools:
