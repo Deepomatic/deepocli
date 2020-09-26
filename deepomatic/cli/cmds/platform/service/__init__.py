@@ -3,7 +3,7 @@ from ...utils import Command
 
 class ServiceCommand(Command):
     """
-        App version related commands
+        Service related commands
     """
 
     from .create import CreateCommand
