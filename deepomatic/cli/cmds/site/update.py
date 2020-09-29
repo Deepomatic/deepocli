@@ -1,5 +1,5 @@
-from ...utils import Command
-from ..utils import PlatformManager
+from ..utils import Command
+from ...lib.site import SiteManager
 
 
 class UpdateCommand(Command):
@@ -14,4 +14,4 @@ class UpdateCommand(Command):
         return parser
 
     def run(self, id, app_version_id, **kwargs):
-        return PlatformManager().update_site(id, app_version_id)
+        return SiteManager().update(id, app_version_id)

@@ -1,5 +1,5 @@
-from ...utils import Command
-from ..utils import PlatformManager
+from ..utils import Command
+from ...lib.site import SiteManager
 
 
 class DeleteCommand(Command):
@@ -13,4 +13,4 @@ class DeleteCommand(Command):
         return parser
 
     def run(self, id, **kwargs):
-        return PlatformManager().delete_site(id)
+        return SiteManager().delete(id)

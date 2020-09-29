@@ -12,42 +12,9 @@ from deepomatic.api.http_helper import HTTPHelper
 LOGGER = logging.getLogger(__name__)
 
 
-def get_site_deploy_manifest(client, site_id, manifest_format, target):
-    if target:
-        target = '?target=' + target
-    uri = '/sites/{}/{}{}'.format(site_id, manifest_format, target)
-    return client.get(uri).decode()
-
-
 class PlatformManager(object):
     def __init__(self, client_cls=HTTPHelper):
         self.client = client_cls()
-
-    def create_site(self, name, description, app_version_id):
-        data = {
-            'name': name,
-            'app_version_id': app_version_id
-        }
-        if description is not None:
-            data['desc'] = description
-
-        ret = self.client.post('/sites', data=data)
-        return "New site created with id: {}".format(ret['id'])
-
-    def update_site(self, site_id, app_version_id):
-        data = {
-            'app_version_id': app_version_id
-        }
-
-        ret = self.client.patch('/sites/{}'.format(site_id), data=data)
-        return "Site {} updated".format(ret['id'])
-
-    def delete_site(self, site_id):
-        self.client.delete('/sites/{}'.format(site_id))
-        return "Site {} deleted".format(site_id)
-
-    def get_site_deploy_manifest(self, site_id, manifest_format, target):
-        return get_site_deploy_manifest(self.client, site_id, manifest_format, target)
 
     def create_app(self, name, description, workflow_path, custom_nodes_path):
 

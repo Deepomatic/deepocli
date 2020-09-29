@@ -6,7 +6,6 @@ import subprocess
 
 from git import Repo
 from deepomatic.api.http_helper import HTTPHelper
-from .platform import get_site_deploy_manifest
 
 
 DEEPOMATIC_SITE_PATH = os.path.join(os.path.expanduser('~'), '.deepomatic', 'sites')
@@ -42,8 +41,28 @@ class SiteManager(object):
     def get(self, site_id):
         return self._client.get('/sites/{}'.format(site_id))
 
-    def create(self, name, app_version_id, description=''):
-        raise NotImplementedError('Please use the web interface')
+    def create(self, name, description, app_version_id):
+        data = {
+            'name': name,
+            'app_version_id': app_version_id
+        }
+        if description is not None:
+            data['desc'] = description
+
+        ret = self._client.post('/sites', data=data)
+        return "New site created with id: {}".format(ret['id'])
+
+    def update(self, site_id, app_version_id):
+        data = {
+            'app_version_id': app_version_id
+        }
+
+        ret = self._client.patch('/sites/{}'.format(site_id), data=data)
+        return "Site {} updated".format(ret['id'])
+
+    def delete(self, site_id):
+        self._client.delete('/sites/{}'.format(site_id))
+        return "Site {} deleted".format(site_id)
 
     def current(self):
         return str(self._repo.head.reference)
@@ -51,16 +70,13 @@ class SiteManager(object):
     def current_app(self):
         return self._repo.head.commit.message
 
-    def delete(self, site_id):
-        raise NotImplementedError('Please use the web interface')
-
-    def get_docker_compose(self, site_id):
-        return get_site_deploy_manifest(self._client, site_id,
-                                        'docker-compose', '')
+    def get_deployment_manifest(self, site_id, target):
+        uri = '/sites/{}/deployment-manifest?target={}'.format(site_id, target)
+        return self._client.get(uri).decode()
 
     def install(self, site_id):
         site = self.get(site_id)
-        docker_compose = self.get_docker_compose(site_id)
+        docker_compose = self.get_deployment_manifest(site_id, 'docker-compose')
         try:
             # create branch
             self._repo.git.checkout(site_id, orphan=True)
@@ -120,7 +136,7 @@ class SiteManager(object):
         if (self._repo.head.commit.message == site['app']['id']):
             return
 
-        docker_compose = self.get_docker_compose(site_id)
+        docker_compose = self.get_deployment_manifest(site_id, 'docker-compose')
 
         docker_compose_path = os.path.join(self._repo.working_tree_dir, 'docker-compose.yml')
         with open(docker_compose_path, 'w') as f:

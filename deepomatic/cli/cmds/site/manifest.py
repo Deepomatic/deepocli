@@ -1,17 +1,17 @@
-from ...utils import Command
-from ..utils import PlatformManager
+from ..utils import Command
+from ...lib.site import SiteManager
 
 
-class KubernetesCommand(Command):
+class ManifestCommand(Command):
     """
-        Get a kubernetes deploy manifest
+        Get a deployment manifest
     """
 
     def setup(self, subparsers):
-        parser = super(KubernetesCommand, self).setup(subparsers)
+        parser = super(ManifestCommand, self).setup(subparsers)
         parser.add_argument('-i', '--id', required=True, type=str, help="Site id")
         parser.add_argument('-t', '--target', required=True, type=str, help="Kubernetes target")
         return parser
 
     def run(self, id, target, **kwargs):
-        return PlatformManager().get_site_deploy_manifest(id, 'kubernetes', target)
+        return SiteManager().get_deployment_manifest(id, target)

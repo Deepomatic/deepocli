@@ -1,5 +1,5 @@
-from ...utils import Command
-from ..utils import PlatformManager
+from ..utils import Command
+from ...lib.site import SiteManager
 
 
 class CreateCommand(Command):
@@ -15,4 +15,4 @@ class CreateCommand(Command):
         return parser
 
     def run(self, name, description, app_version_id, **kwargs):
-        return PlatformManager().create_site(name, description, app_version_id)
+        return SiteManager().create(name, description, app_version_id)

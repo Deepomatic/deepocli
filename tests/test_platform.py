@@ -45,20 +45,7 @@ def app_version():
         result = call_deepo(args)
 
 
-@contextmanager
-def site():
-    with app_version() as (app_version_id, app_id):
-        args = "platform site create -n test_si -d xyz -v {}".format(app_version_id)
-        result = call_deepo(args)
-        _, site_id = result.split(':')
-
-        yield site_id.strip(), app_version_id, app_id
-        call_deepo("platform site delete --id {}".format(site_id))
-
-
 class TestPlatform(object):
-    command = "deepo"
-
     def test_app(self):
         args = "platform app create -n test -d abc -w {} -c {}".format(WORKFLOW_PATH, CUSTOM_NODES_PATH)
         result = call_deepo(args)
@@ -88,20 +75,6 @@ class TestPlatform(object):
             message = call_deepo(args)
             assert message == 'App version{} deleted'.format(app_version_id)
 
-    def test_site(self):
-        with app_version() as (app_version_id, app_id):
-            args = "platform site create -n test_si -d xyz -v {}".format(app_version_id)
-            result = call_deepo(args)
-            message, site_id = result.split(':')
-            assert message == 'New site created with id'
-
-            args = "platform site update --id {} --app_version_id {}".format(site_id, app_version_id)
-            message = call_deepo(args)
-            assert message == 'Site{} updated'.format(site_id)
-
-            args = "platform site delete --id {}".format(site_id)
-            message = call_deepo(args)
-            assert message == 'Site{} deleted'.format(site_id)
 
     def test_service(self):
         with app() as app_id:
@@ -113,30 +86,3 @@ class TestPlatform(object):
             args = "platform service delete --id {}".format(service_id)
             message = call_deepo(args)
             assert message == 'Service{} deleted'.format(service_id)
-
-    def test_site_deploy_manifest(self):
-        with site() as (site_id, app_version_id, app_id):
-            # create services
-            for service in ['worker-nn', 'workflow-server', 'customer-api']:
-                call_deepo("platform service create -a {} -n {}".format(app_id, service))
-
-            client = Client(api_key=deploy_api_key, host=deploy_api_url)
-            client.http_helper.post('/accounts/me/read-only-keys',
-                                    data={'name': 'SITE_0-{}-test-deepocli'.format(site_id)})
-            args = "platform site docker-compose -i {}".format(site_id)
-            message = call_deepo(args)
-            assert message.startswith('version: "2.4"')
-            assert 'services:' in message
-            assert 'neural-worker:' in message
-            assert 'workflow-server:' in message
-            assert 'customer-api:' in message
-
-            args = "platform site kubernetes -i {} -t gke".format(site_id)
-            message = call_deepo(args)
-            assert message.startswith('apiVersion: apps/v1')
-            assert 'kind: StatefulSet' in message
-            assert 'containers:' in message
-            assert '- name: neural-worker' in message
-            assert '- name: workflow-server' in message
-            assert '- name: customer-api' in message
-            assert 'kind: Ingress' in message

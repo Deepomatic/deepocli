@@ -7,15 +7,20 @@ class SiteCommand(Command):
         You can choose from the following commands to manage your local sites
     """
 
+    # Offline
     from .use import UseCommand
     from .list import ListCommand
     from .load import LoadCommand
     from .save import SaveCommand
-    from .upgrade import UpgradeCommand
-    from .install import InstallCommand
     from .uninstall import UninstallCommand
-
     from .rollback import RollbackCommand
     from .show import ShowCommand
-
     from .current import CurrentCommand
+
+    # Using the API
+    from .install import InstallCommand
+    from .upgrade import UpgradeCommand
+    from .create import CreateCommand
+    from .update import UpdateCommand
+    from .delete import DeleteCommand
+    from .manifest import ManifestCommand
