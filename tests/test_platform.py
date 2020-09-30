@@ -1,6 +1,5 @@
 import os.path
 from deepomatic.cli.cli_parser import run
-from deepomatic.api.client import Client
 from contextlib import contextmanager
 from utils import modified_environ
 
@@ -74,7 +73,6 @@ class TestPlatform(object):
             args = "platform app-version delete --id {}".format(app_version_id)
             message = call_deepo(args)
             assert message == 'App version{} deleted'.format(app_version_id)
-
 
     def test_service(self):
         with app() as app_id:
