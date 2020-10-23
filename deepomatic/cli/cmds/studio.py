@@ -71,6 +71,7 @@ def main(args):
 
     # Retrieve arguments
     dataset_name = args.get('dataset')
+    org_slug = args.get('org')
 
     paths = args.get('input', [])
     json_file = args.get('json_file', False)
@@ -86,7 +87,7 @@ def main(args):
     queue = Queue()
 
     dataset_files = DatasetFiles(clt.http_helper, queue)
-    total_files = dataset_files.post_files(dataset_name, files)
+    total_files = dataset_files.post_files(org_slug, dataset_name, files)
 
     exit_event = threading.Event()
 
@@ -128,6 +129,7 @@ def setup_cmd_line_subparser(studio_subparser):
     # Define studio group for add_images
     group = add_images_parser.add_argument_group('studio arguments')
     group.add_argument('-d', '--dataset', required=True, help="Deepomatic Studio dataset name.", type=str)
+    group.add_argument('-o', '--org', required=True, help="Deepomatic Studio org slug.", type=str)
 
     input_group = parser_helpers.add_common_cmd_group(add_images_parser, 'input')
     # Define input group for add_images
