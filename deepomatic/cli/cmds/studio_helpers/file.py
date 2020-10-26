@@ -157,7 +157,7 @@ class DatasetFiles(object):
         # Retrieve endpoint
         try:
             request = 'orgs/{}/projects/{}/'.format(org_slug, dataset_name)
-            ret = self._helper.get(request)
+            self._helper.get(request)
         except RuntimeError:
             raise RuntimeError("Can't find the dataset {}".format(dataset_name))
         return self.fill_queue(files, dataset_name)
