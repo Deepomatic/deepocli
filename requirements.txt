@@ -1,4 +1,4 @@
-opencv-python==3.4.3.18
+opencv-python>=3.4.3.18,<3.5
 tqdm==4.31.1
 requests>=2.19.0,<3  # will not work below in python3
 text-unidecode==1.2
