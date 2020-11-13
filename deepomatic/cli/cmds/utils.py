@@ -19,7 +19,6 @@ class Command(object):
 
     def setup(self, subparsers):
         parser = subparsers.add_parser(self.name, help=self.help, description=self.description)
-        parser.set_defaults(func=lambda args: self.run(**args))
 
         subcommands = [command for command in [getattr(self.__class__, attr) for attr in dir(
             self.__class__)] if isinstance(command, type) and issubclass(command, Command)]
@@ -28,6 +27,9 @@ class Command(object):
             subparser.required = True
             for subcommand in subcommands:
                 subcommand().setup(subparser)
+        else:
+            parser.set_defaults(func=lambda args: self.run(**args))
+
         # add verbose
         parser.add_argument('--verbose', dest='verbose', action='store_true',
                             help='Increase output verbosity.')
@@ -35,7 +37,7 @@ class Command(object):
         return parser
 
     def run(self, *args, **kwargs):
-        print(type(self).__name__, args, kwargs)
+        pass
 
 
 def valid_path(file_path):
