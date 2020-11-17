@@ -22,6 +22,12 @@ If you need rpc support, prefer:
 pip install deepomatic-cli[rpc]
 ```
 
+# Development
+
+```bash
+dmake shell deepocli
+```
+
 # Bugs
 
 Please send bug reports to support@deepomatic.com
