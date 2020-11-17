@@ -41,19 +41,19 @@ services:
       commands:
         - deploy/deepomatic-cli/run_tests.sh
       junit_report:
-        - junit-py2.7.xml
-        - junit-py3.5.xml
-        - junit-py3.6.xml
-        - junit-py3.7.xml
-        - junit-py3.8.xml
-        - junit-py3.9.xml
+        - junit-py/2.7.xml
+        - junit-py/3.5.xml
+        - junit-py/3.6.xml
+        - junit-py/3.7.xml
+        - junit-py/3.8.xml
+        - junit-py/3.9.xml
       cobertura_report:
-        - coverage-py2.7.xml
-        - coverage-py3.5.xml
-        - coverage-py3.6.xml
-        - coverage-py3.7.xml
-        - coverage-py3.8.xml
-        - coverage-py3.9.xml
+        - coverage-py/2.7.xml
+        - coverage-py/3.5.xml
+        - coverage-py/3.6.xml
+        - coverage-py/3.7.xml
+        - coverage-py/3.8.xml
+        - coverage-py/3.9.xml
       html_report:
-        directory: cover-py3.6
+        directory: cover-py/3.6
         title: deepomatic-cli-python HTML coverage report

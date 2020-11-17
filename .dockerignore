@@ -1,6 +1,6 @@
-junit*.xml
-coverage*.xml
-cover-py*
+junit-py
+coverage-py
+cover-py
 dist*
 build*
 venv*

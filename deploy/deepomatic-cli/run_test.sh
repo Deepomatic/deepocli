@@ -38,8 +38,8 @@ pip install $dist_dirname/deepomatic_cli-*.whl \
     --ignore-installed --upgrade
 # unit tests
 main_pyversion="${PYENV_VERSION%.*}"
-python -m pytest --junit-xml=junit-py${main_pyversion}.xml --cov=deepomatic/ \
-       --cov-report=xml:coverage-py${main_pyversion}.xml \
-       --cov-report html:cover-py${main_pyversion} --color=yes -vv tests
+python -m pytest --junit-xml=junit-py/${main_pyversion}.xml --cov=deepomatic/ \
+       --cov-report=xml:coverage-py/${main_pyversion}.xml \
+       --cov-report html:cover-py/${main_pyversion} --color=yes -vv tests
 
 trap cleanup EXIT
