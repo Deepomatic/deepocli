@@ -15,8 +15,8 @@ class Frame(object):
         self.buf_bytes = None
 
     def __str__(self):
-        return '<Frame name={} filename={} frame_number={} video_frame_index={}>'.format(
-            self.name, self.filename, self.frame_number, self.video_frame_index)
+        return '<Frame name={} filename={} frame_number={} video_frame_index={} inference_async_result={}>'.format(
+            self.name, self.filename, self.frame_number, self.video_frame_index, self.inference_async_result)
 
 
 class CurrentFrames(CurrentMessages):

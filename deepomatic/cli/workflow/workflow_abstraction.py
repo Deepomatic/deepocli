@@ -6,6 +6,9 @@ class AbstractWorkflow(object):
         def get_predictions(self):
             raise NotImplementedError()
 
+        def __str__(self):
+            return '<{}>'.format(self.__class_.__qualname__)
+
     def __init__(self, display_id):
         self._display_id = display_id
 
