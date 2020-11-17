@@ -1,22 +1,17 @@
 import os.path
 from deepomatic.cli.cli_parser import run
 from contextlib import contextmanager
-from utils import modified_environ
+
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 WORKFLOW_PATH = ROOT + '/workflow.yaml'
 CUSTOM_NODES_PATH = ROOT + '/custom_nodes.py'
 
-# Using specific api key to run this test
-deploy_api_key = os.environ['DEEPOMATIC_DEPLOY_API_KEY']
-deploy_api_url = os.environ['DEEPOMATIC_DEPLOY_API_URL']
-
 
 def call_deepo(args):
     args = args.split()
-    with modified_environ(DEEPOMATIC_API_KEY=deploy_api_key, DEEPOMATIC_API_URL=deploy_api_url):
-        res = run(args)
-        return res.strip()
+    res = run(args)
+    return res.strip()
 
 
 @contextmanager
@@ -35,7 +30,7 @@ def app():
 @contextmanager
 def app_version():
     with app() as app_id:
-        args = "platform app-version create -n test_av -d abc -a {} -r 61307 61306".format(app_id)
+        args = "platform app-version create -n test_av -d abc -a {} -r 44363 44364".format(app_id)
         result = call_deepo(args)
         _, app_version_id = result.split(':')
 
@@ -61,7 +56,7 @@ class TestPlatform(object):
 
     def test_appversion(self):
         with app() as app_id:
-            args = "platform app-version create -n test_av -d abc -a {} -r 61307 61306".format(app_id)
+            args = "platform app-version create -n test_av -d abc -a {} -r 44363 44364".format(app_id)
             result = call_deepo(args)
             message, app_version_id = result.split(':')
             assert message == 'New app version created with id'

@@ -1,0 +1,59 @@
+dmake_version: 0.1
+app_name: deepomatic-rpc
+
+env:
+  default:
+    source: ${DEEPOMATIC_CONFIG_DIR}/dev.sh
+    variables:
+      # set the variables as per $(pyenv init -)
+      LANG: "C.UTF-8"
+      LC_ALL: "C.UTF-8"
+      PATH: "/opt/pyenv/shims:/opt/pyenv/bin:$PATH"
+      PYENV_ROOT: "/opt/pyenv"
+      PYENV_SHELL: "bash"
+
+      DEEPOMATIC_API_URL: $DEEPOCLI_DEEPOMATIC_API_URL
+      DEEPOMATIC_API_KEY: $DEEPOCLI_DEEPOMATIC_API_KEY
+
+docker:
+  base_image:
+    name: deepocli-base-python
+    root_image: ubuntu:18.04
+    copy_files:
+      - deploy/deepomatic-cli/requirements.dev.txt
+      - deploy/deepomatic-cli/python-versions.txt
+      - deepomatic
+      - requirements.txt
+      - README.md
+      - setup.py
+    install_scripts:
+      - deploy/deepomatic-cli/install.sh
+
+services:
+  - service_name: deepocli
+    config:
+      docker_image:
+        build:
+          context: .
+          dockerfile: deploy/deepomatic-cli/Dockerfile
+          target: deepocli
+    tests:
+      commands:
+        - deploy/deepomatic-cli/run_tests.sh
+      junit_report:
+        - junit-py2.7.xml
+        - junit-py3.5.xml
+        - junit-py3.6.xml
+        - junit-py3.7.xml
+        - junit-py3.8.xml
+        - junit-py3.9.xml
+      cobertura_report:
+        - coverage-py2.7.xml
+        - coverage-py3.5.xml
+        - coverage-py3.6.xml
+        - coverage-py3.7.xml
+        - coverage-py3.8.xml
+        - coverage-py3.9.xml
+      html_report:
+        directory: cover-py3.6
+        title: deepomatic-cli-python HTML coverage report

@@ -3,8 +3,7 @@ from uuid import uuid4
 from deepomatic.cli.lib.site import SiteManager
 from deepomatic.api.client import Client
 from contextlib import contextmanager
-from test_platform import (app_version, call_deepo,
-                           deploy_api_key, deploy_api_url)
+from test_platform import app_version, call_deepo
 import tempfile
 import shutil
 
@@ -249,7 +248,7 @@ class TestSite(object):
             for service in ['worker-nn', 'workflow-server', 'customer-api']:
                 call_deepo("platform service create -a {} -n {}".format(app_id, service))
 
-            client = Client(api_key=deploy_api_key, host=deploy_api_url)
+            client = Client()
             client.http_helper.post('/accounts/me/read-only-keys',
                                     data={'name': 'SITE_0-{}-test-deepocli'.format(site_id)})
             args = "site manifest -i {} -t docker-compose".format(site_id)

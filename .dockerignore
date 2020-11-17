@@ -1,0 +1,5 @@
+junit*.xml
+coverage*.xml
+cover-py*
+dist
+JenkinsFile

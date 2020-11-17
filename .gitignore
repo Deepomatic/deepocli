@@ -20,3 +20,6 @@ Pipfile.lock
 
 # tests
 .coverage
+junit*.xml
+coverage*.xml
+cover-py*
