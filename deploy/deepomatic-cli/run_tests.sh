@@ -10,4 +10,4 @@ pyenv global  | parallel -j $concurrency --halt now,fail=1 --lb --tagstring '\03
 
 
 # TODO: download for mac and windows
-# Jenkinsfile
+# put cover files in directories

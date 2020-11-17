@@ -1,5 +1,8 @@
 junit*.xml
 coverage*.xml
 cover-py*
-dist
-JenkinsFile
+dist*
+build*
+venv*
+Jenkinsfile
+.sonarcloud.properties
