@@ -51,17 +51,18 @@ pytest --junit-xml=junit-py/${main_pyversion}.xml --cov=deepomatic/ \
        --cov-report=xml:coverage-py/${main_pyversion}.xml \
        --cov-report html:cover-py/${main_pyversion} --color=yes -vv tests
 
-# Check that opencv can be found for all those platforms
 if [ "$main_pyversion" == '2.7' ]; then
-    operator='<='
-else
-    operator='>'
+    # The checks below will not work in 2.7 but it's ok
+    # we will drop the support quite soon
+    exit 0;
 fi
 
-opencv=$(grep opencv-python requirements.txt | grep "$operator '2.7'")
+# Check that opencv can be found for all those platforms
+opencv=$(grep opencv-python requirements.txt | grep "> '2.7'")
 platforms="
 macosx_10_9_intel
 macosx_10_9_x86_64
+macosx_10_10_intel
 macosx_10_10_x86_64
 macosx_10_11_x86_64
 macosx_10_12_x86_64
@@ -72,5 +73,7 @@ win32
 win_amd64
 "
 for platform in $platforms; do
-    pip download --platform $platform --python-version=$main_pyversion --no-deps "$opencv" -d /tmp
+    pip download --platform $platform \
+        --python-version=$main_pyversion \
+        --no-deps "$opencv" -d /tmp
 done
