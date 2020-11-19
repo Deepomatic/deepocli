@@ -8,6 +8,8 @@ export PYENV_ROOT="/opt/pyenv"
 export PYENV_SHELL="bash"
 export CURRENT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
+# install the minimum dependencies to build and use python
+# some modules might not work like `curses` but we don't need them
 apt-get update && apt-get install -y --no-install-recommends \
                           build-essential \
                           ca-certificates \
@@ -18,7 +20,7 @@ apt-get update && apt-get install -y --no-install-recommends \
                           libffi-dev \
                           libreadline-dev \
                           libsqlite3-dev \
-                          libssl1.0-dev \
+                          libssl-dev \
                           liblzma-dev \
                           zlib1g-dev \
                           libglib2.0-0 \
