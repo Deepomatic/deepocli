@@ -13,22 +13,15 @@ apt-get update && apt-get install -y --no-install-recommends \
                           ca-certificates \
                           curl \
                           git \
+                          wget \
                           libbz2-dev \
                           libffi-dev \
-                          libncurses5-dev \
-                          libncursesw5-dev \
                           libreadline-dev \
                           libsqlite3-dev \
                           libssl1.0-dev \
                           liblzma-dev \
-                          llvm \
-                          make \
-                          netbase \
-                          pkg-config \
-                          tk-dev \
-                          wget \
-                          xz-utils \
                           zlib1g-dev \
+                          libglib2.0-0 \
                           libgl1-mesa-glx
 
 # Install pyenv
