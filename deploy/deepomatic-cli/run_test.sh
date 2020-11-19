@@ -49,7 +49,8 @@ pip install $dist_dirname/deepomatic_cli-*.whl \
 main_pyversion="${PYENV_VERSION%.*}"
 pytest --junit-xml=junit-py/${main_pyversion}.xml --cov=deepomatic/ \
        --cov-report=xml:coverage-py/${main_pyversion}.xml \
-       --cov-report html:cover-py/${main_pyversion} --color=yes -vv tests
+       --cov-report html:cover-py/${main_pyversion} --color=yes \
+       -vv --ignore=tests/test_studio.py tests
 
 if [ "$main_pyversion" == '2.7' ]; then
     # The checks below will not work in 2.7 but it's ok
