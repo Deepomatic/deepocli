@@ -23,10 +23,8 @@ apt-get update && apt-get install -y --no-install-recommends \
                           libssl-dev \
                           liblzma-dev \
                           zlib1g-dev \
-                          libglib2.0-0 \
                           libgl1-mesa-glx \
-                          libsm6 \
-                          libxrender-dev
+                          tk-dev
 
 # Install pyenv
 git clone -b "v1.2.21" --single-branch --depth 1 https://github.com/pyenv/pyenv.git $PYENV_ROOT
