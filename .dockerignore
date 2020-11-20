@@ -21,3 +21,4 @@ deploy/deepomatic-cli/Dockerfile
 **/.gitignore
 .dockerignore
 .sonarcloud.properties
+CONTRIBUTING.md
