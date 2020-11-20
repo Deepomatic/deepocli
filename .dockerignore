@@ -9,5 +9,15 @@ cover-py
 dist*
 build*
 venv*
+
+**/*.pyc
+**/__pycache__/
+**/*~
+**/.#*
+
+.git
 Jenkinsfile
+deploy/deepomatic-cli/Dockerfile
+**/.gitignore
+.dockerignore
 .sonarcloud.properties
