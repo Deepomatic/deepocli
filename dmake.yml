@@ -6,8 +6,8 @@ env:
     source: ${DEEPOMATIC_CONFIG_DIR}/dev.sh
     variables:
       # set the variables as per $(pyenv init -)
-      LANG: "C.UTF-8"
-      LC_ALL: "C.UTF-8"
+      LC_ALL: "en_US.UTF-8"
+      LANG: "en_US.UTF-8"
       PATH: "/opt/pyenv/shims:/opt/pyenv/bin:$PATH"
       PYENV_ROOT: "/opt/pyenv"
       PYENV_SHELL: "bash"

@@ -13,6 +13,7 @@ export CURRENT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && 
 apt-get update && apt-get install -y --no-install-recommends \
                           build-essential \
                           ca-certificates \
+                          locales \
                           curl \
                           git \
                           wget \
@@ -26,6 +27,11 @@ apt-get update && apt-get install -y --no-install-recommends \
                           zlib1g-dev \
                           libgl1-mesa-glx \
                           tk-dev
+
+# Generate locales
+locale-gen en_US.UTF-8
+export LC_ALL=en_US.UTF-8
+export LANG=en_US.UTF-8
 
 # Install pyenv
 git clone -b "v1.2.21" --single-branch --depth 1 https://github.com/pyenv/pyenv.git $PYENV_ROOT

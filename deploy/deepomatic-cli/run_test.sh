@@ -32,7 +32,7 @@ source $venv_dirname/bin/activate
 pip install -r ${CURRENT_DIR}/requirements.dev.txt
 
 # linter
-flake8 --statistics --verbose deepomatic tests
+flake8 --statistics --verbose
 
 mkdir -p $build_dirname
 # install deepocli
@@ -50,7 +50,7 @@ main_pyversion="${PYENV_VERSION%.*}"
 pytest --junit-xml=junit-py/${main_pyversion}.xml --cov=deepomatic/ \
        --cov-report=xml:coverage-py/${main_pyversion}.xml \
        --cov-report html:cover-py/${main_pyversion} --color=yes \
-       -vv --ignore=tests/test_studio.py tests
+       -vv
 
 if [ "$main_pyversion" == '2.7' ]; then
     # The checks below will not work in 2.7 but it's ok

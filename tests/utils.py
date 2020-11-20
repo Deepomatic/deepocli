@@ -139,26 +139,26 @@ def init_files_setup():
 
     # Download image and video files
     single_img_pth = download(tmpdir,
-                              'https://s3-eu-west-1.amazonaws.com/deepo-tests/vulcain/images/test.jpg',
+                              'https://storage.googleapis.com/dp-public/tests-deepocli/img.jpg',
                               'single_img.jpg')
     single_img_corrupted_pth = download(tmpdir,
-                                        'https://s3-eu-west-1.amazonaws.com/deepo-tests/vulcain/images/test_corrupted.jpg',
+                                        'https://storage.googleapis.com/dp-public/tests-deepocli/corrupted.jpg',
                                         'single_img_corrupted.jpg')
-    video_pth = download(tmpdir, 'https://s3-eu-west-1.amazonaws.com/deepo-tests/vulcain/videos/test.mp4', 'video.mp4')
-    img_pth = download(tmpdir, 'https://s3-eu-west-1.amazonaws.com/deepo-tests/vulcain/images/test.jpg', 'img_dir/img1.jpg')
-    download(tmpdir, 'https://s3-eu-west-1.amazonaws.com/deepo-tests/vulcain/images/test.jpg', 'img_dir/img2.jpg')
-    download(tmpdir, 'https://s3-eu-west-1.amazonaws.com/deepo-tests/vulcain/images/test.jpg', 'img_dir/subdir/img3.jpg')
+    video_pth = download(tmpdir, 'https://storage.googleapis.com/dp-public/tests-deepocli/video.mp4', 'video.mp4')
+    img_pth = download(tmpdir, 'https://storage.googleapis.com/dp-public/tests-deepocli/img.jpg', 'img_dir/img1.jpg')
+    download(tmpdir, 'https://storage.googleapis.com/dp-public/tests-deepocli/img.jpg', 'img_dir/img2.jpg')
+    download(tmpdir, 'https://storage.googleapis.com/dp-public/tests-deepocli/img.jpg', 'img_dir/subdir/img3.jpg')
 
     # Download JSON files
     vulcan_json_pth = download(tmpdir,
-                               'https://s3-eu-west-1.amazonaws.com/deepo-tests/vulcain/json/vulcan.json',
+                               'https://storage.googleapis.com/dp-public/tests-deepocli/vulcan.json',
                                'vulcan.json')
     studio_json_pth = download(tmpdir,
-                               'https://s3-eu-west-1.amazonaws.com/deepo-tests/vulcain/json/studio.json',
+                               'https://storage.googleapis.com/dp-public/tests-deepocli/studio.json',
                                'studio.json')
     offline_pred_pth = download(tmpdir,
-                                'https://s3-eu-west-1.amazonaws.com/deepo-tests/vulcain/json/offline_pred2.json',
-                                'offline_pred.json')
+                                'https://storage.googleapis.com/dp-public/tests-deepocli/offline_predictions.json',
+                                'offline_predictions.json')
     img_dir_pth = os.path.dirname(img_pth)
 
     # Update json for path to match
@@ -178,7 +178,7 @@ def init_files_setup():
 
 
 def run_cmd(cmds, inp, outputs, *args, **kwargs):
-    reco_opts = [] if 'noop' in cmds else ['-r', 'fashion-v4']
+    reco_opts = [] if 'noop' in cmds else ['-r', '44411']
     extra_opts = kwargs.pop('extra_opts', [])
     absolute_outputs = []
     with create_tmp_dir() as tmpdir:
