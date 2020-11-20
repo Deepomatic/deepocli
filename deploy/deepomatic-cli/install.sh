@@ -16,6 +16,7 @@ apt-get update && apt-get install -y --no-install-recommends \
                           curl \
                           git \
                           wget \
+                          parallel \
                           libbz2-dev \
                           libffi-dev \
                           libreadline-dev \
@@ -44,15 +45,5 @@ pip install -e .
 
 find $PYENV_ROOT/versions -type d '(' -name '__pycache__' -o -name 'test' -o -name 'tests' ')' -exec rm -rf '{}' +
 find $PYENV_ROOT/versions -type f '(' -name '*.pyo' -o -name '*.exe' ')' -exec rm -f '{}' +
-
-# Install parallel for concurrent testing
-cd /tmp
-wget https://ftp.gnu.org/gnu/parallel/parallel-20201022.tar.bz2 -O parallel.tar.bz2
-tar xvf parallel.tar.bz2
-cd parallel-*
-./configure --prefix=/usr
-make install
-# Ignore exit code (seem to return != 0 even when valid)
-echo 'will cite' | parallel --citation || true
 
 rm -rf /var/lib/apt/lists/* /tmp/* || :
