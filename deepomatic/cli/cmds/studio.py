@@ -69,8 +69,8 @@ def main(args):
     # Initialize deepomatic client
     clt = Client()
 
-    # Retrieve arguments
-    dataset_name = args.get('dataset')
+    # Retrieve arguments (must be the same as the parser)
+    project_name = args.get('project')
     org_slug = args.get('org')
 
     paths = args.get('input', [])
@@ -87,7 +87,7 @@ def main(args):
     queue = Queue()
 
     dataset_files = DatasetFiles(clt.http_helper, queue)
-    total_files = dataset_files.post_files(org_slug, dataset_name, files)
+    total_files = dataset_files.post_files(org_slug, project_name, files)
 
     exit_event = threading.Event()
 
@@ -122,13 +122,14 @@ def main(args):
 
 def setup_cmd_line_subparser(studio_subparser):
     help_msg = "Uploads images from the local machine to Deepomatic Studio."
-    desc_mgs = help_msg + " Typical usage is: deepo studio add_images -i img.png -d mydataset -o myorg"
+    desc_mgs = help_msg + " Typical usage is: deepo studio add_images -i img.png -p myproject -o myorg\n" \
+                        + " Note: the argument --dataset was changed to --project"
     add_images_parser = studio_subparser.add_parser('add_images', help=help_msg, description=desc_mgs)
     add_images_parser.set_defaults(func=main, recursive=False)
 
     # Define studio group for add_images
     group = add_images_parser.add_argument_group('studio arguments')
-    group.add_argument('-d', '--dataset', required=True, help="Deepomatic Studio dataset name.", type=str)
+    group.add_argument('-p', '--project', required=True, help="Deepomatic Studio project name.", type=str)
     group.add_argument('-o', '--org', required=True, help="Deepomatic Studio org slug.", type=str)
 
     input_group = parser_helpers.add_common_cmd_group(add_images_parser, 'input')

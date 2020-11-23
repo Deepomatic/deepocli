@@ -6,13 +6,13 @@ from utils import init_files_setup
 
 # Retrieve INPUTS
 INPUTS = init_files_setup()
-TEST_DATASET = 'deepocli-feedback-test-detection'
+TEST_PROJECT = 'deepocli-feedback-test-detection'
 TEST_ORG = 'travis-deepocli'
 
 
 def run_add_images(test_input, extra_opts=None):
     extra_opts = extra_opts or []
-    run(['studio', 'add_images', '-o', TEST_ORG, '-d', TEST_DATASET, '-i', test_input] + extra_opts)
+    run(['studio', 'add_images', '-o', TEST_ORG, '-p', TEST_PROJECT, '-i', test_input] + extra_opts)
 
 
 # ------- Studio Upload Tests----------------------------------------------------------------------------------------- #
