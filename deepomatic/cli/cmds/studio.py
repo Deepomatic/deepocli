@@ -122,14 +122,14 @@ def main(args):
 
 def setup_cmd_line_subparser(studio_subparser):
     help_msg = "Uploads images from the local machine to Deepomatic Studio."
-    desc_mgs = help_msg + " Typical usage is: deepo studio add_images -i img.png -p myproject -o myorg\n" \
-                        + " Note: the argument --dataset was changed to --project"
+    desc_mgs = help_msg + " Typical usage is: deepo studio add_images -i img.png -p myproject -o myorg"
     add_images_parser = studio_subparser.add_parser('add_images', help=help_msg, description=desc_mgs)
     add_images_parser.set_defaults(func=main, recursive=False)
 
     # Define studio group for add_images
     group = add_images_parser.add_argument_group('studio arguments')
-    group.add_argument('-p', '--project', required=True, help="Deepomatic Studio project name.", type=str)
+    help_msg = "Deepomatic Studio project name. Note: the argument --dataset was changed to --project"
+    group.add_argument('-p', '--project', required=True, help=help_msg, type=str)
     group.add_argument('-o', '--org', required=True, help="Deepomatic Studio org slug.", type=str)
 
     input_group = parser_helpers.add_common_cmd_group(add_images_parser, 'input')
