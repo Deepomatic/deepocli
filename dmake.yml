@@ -22,10 +22,8 @@ docker:
     copy_files:
       - deploy/deepomatic-cli/requirements.dev.txt
       - deploy/deepomatic-cli/python-versions.txt
-      - deepomatic
       - requirements.txt
       - README.md
-      - setup.py
     install_scripts:
       - deploy/deepomatic-cli/install.sh
 
