@@ -17,7 +17,7 @@ env:
 
 docker:
   base_image:
-    name: deepocli-base-python
+    name: deepomatic/deepocli
     root_image: ubuntu:20.04
     copy_files:
       - deploy/deepomatic-cli/requirements.dev.txt
@@ -37,6 +37,8 @@ services:
           context: .
           dockerfile: deploy/deepomatic-cli/Dockerfile
           target: deepocli
+    dev:
+      entrypoint: deploy/deepomatic-cli/entrypoint.sh
     tests:
       commands:
         - deploy/deepomatic-cli/run_tests.sh
