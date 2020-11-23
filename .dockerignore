@@ -9,6 +9,7 @@ cover-py
 dist*
 build*
 venv*
+.coverage*
 
 **/*.pyc
 **/__pycache__/

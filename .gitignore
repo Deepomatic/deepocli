@@ -24,7 +24,7 @@ Pipfile
 Pipfile.lock
 
 # tests
-.coverage
+.coverage*
 junit-py
 coverage-py
 cover-py

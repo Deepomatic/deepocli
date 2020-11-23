@@ -11,16 +11,20 @@ if [ -z "$PYENV_VERSION" ]; then
     exit 1;
 fi
 
+# Used by coveragepy
+# avoid using the same file for parallel builds
+export COVERAGE_FILE=".coverage.$PYENV_VERSION"
+
 venv_dirname="venv-$PYENV_VERSION"
 dist_dirname="dist-$PYENV_VERSION"
 build_dirname="build-$PYENV_VERSION"
 
 function cleanup {
     deactivate
-    rm -rf $dist_dirname $build_dirname $venv_dirname
+    rm -rf $dist_dirname $build_dirname $venv_dirname $COVERAGE_FILE
 }
 
-rm -rf $dist_dirname $build_dirname $venv_dirname
+rm -rf $dist_dirname $build_dirname $venv_dirname $COVERAGE_FILE
 
 # create isolated virtualenv
 virtualenv $venv_dirname
@@ -44,6 +48,8 @@ python setup.py \
 pip install $dist_dirname/deepomatic_cli-*.whl \
       --no-cache-dir --force-reinstall \
       --ignore-installed --upgrade
+
+
 
 # unit tests
 main_pyversion="${PYENV_VERSION%.*}"
