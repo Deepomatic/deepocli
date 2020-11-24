@@ -137,27 +137,24 @@ def init_files_setup():
     # Make temporary directory for file storage
     tmpdir = tempfile.mkdtemp()
 
+    base_test_url = 'https://storage.googleapis.com/tests-resources.internal.deepomatic.com/deepocli/'
+
     # Download image and video files
     single_img_pth = download(tmpdir,
-                              'https://storage.googleapis.com/dp-public/tests-deepocli/img.jpg',
+                              base_test_url + 'img.jpg',
                               'single_img.jpg')
     single_img_corrupted_pth = download(tmpdir,
-                                        'https://storage.googleapis.com/dp-public/tests-deepocli/corrupted.jpg',
+                                        base_test_url + 'corrupted.jpg',
                                         'single_img_corrupted.jpg')
-    video_pth = download(tmpdir, 'https://storage.googleapis.com/dp-public/tests-deepocli/video.mp4', 'video.mp4')
-    img_pth = download(tmpdir, 'https://storage.googleapis.com/dp-public/tests-deepocli/img.jpg', 'img_dir/img1.jpg')
-    download(tmpdir, 'https://storage.googleapis.com/dp-public/tests-deepocli/img.jpg', 'img_dir/img2.jpg')
-    download(tmpdir, 'https://storage.googleapis.com/dp-public/tests-deepocli/img.jpg', 'img_dir/subdir/img3.jpg')
+    video_pth = download(tmpdir, base_test_url + 'video.mp4', 'video.mp4')
+    img_pth = download(tmpdir, base_test_url + 'img.jpg', 'img_dir/img1.jpg')
+    download(tmpdir, base_test_url + 'img.jpg', 'img_dir/img2.jpg')
+    download(tmpdir, base_test_url + 'img.jpg', 'img_dir/subdir/img3.jpg')
 
     # Download JSON files
-    vulcan_json_pth = download(tmpdir,
-                               'https://storage.googleapis.com/dp-public/tests-deepocli/vulcan.json',
-                               'vulcan.json')
-    studio_json_pth = download(tmpdir,
-                               'https://storage.googleapis.com/dp-public/tests-deepocli/studio.json',
-                               'studio.json')
-    offline_pred_pth = download(tmpdir,
-                                'https://storage.googleapis.com/dp-public/tests-deepocli/offline_predictions.json',
+    vulcan_json_pth = download(tmpdir, base_test_url + 'vulcan.json', 'vulcan.json')
+    studio_json_pth = download(tmpdir, base_test_url + 'studio.json', 'studio.json')
+    offline_pred_pth = download(tmpdir, base_test_url + 'offline_predictions.json',
                                 'offline_predictions.json')
     img_dir_pth = os.path.dirname(img_pth)
 
