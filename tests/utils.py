@@ -137,7 +137,7 @@ def init_files_setup():
     # Make temporary directory for file storage
     tmpdir = tempfile.mkdtemp()
 
-    base_test_url = 'https://storage.googleapis.com/tests-resources.internal.deepomatic.com/deepocli/'
+    base_test_url = 'https://tests-resources.internal.deepomatic.com/deepocli/'
 
     # Download image and video files
     single_img_pth = download(tmpdir,
