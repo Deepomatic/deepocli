@@ -1,4 +1,5 @@
 import logging
+import argparse
 import os
 import re
 
@@ -42,3 +43,22 @@ def valid_path(file_path):
     if not os.path.exists(file_path):
         raise IOError("'{}' file does not exist".format(file_path))
     return file_path
+
+
+class BuildDict(argparse.Action):
+    """
+    This class is used in argparse. It will transform a chain of name:values into a dict.
+    """
+    def __init__(self, option_strings, dest, nargs=None, **kwargs):
+        self._nargs = nargs
+        super(BuildDict, self).__init__(option_strings, dest, nargs=nargs, **kwargs)
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        dic = {}
+        for kv in values:
+            vals = kv.split(":")
+            assert len(vals) == 2
+            name = vals[0]
+            value = vals[1]
+            dic[name] = value
+        setattr(namespace, self.dest, dic)

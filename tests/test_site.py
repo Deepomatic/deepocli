@@ -7,6 +7,9 @@ from test_platform import app_version, call_deepo
 import tempfile
 import shutil
 
+customer_api_url = os.environ["DEEPOCLI_CUSTOMER_API_API_URL"]
+customer_api_key = os.environ["DEEPOCLI_CUSTOMER_API_API_KEY"]
+
 
 def generate_site(name, app_version_id, desc):
     site_id = str(uuid4())
@@ -268,3 +271,18 @@ class TestSite(object):
             assert '- name: workflow-server' in message
             assert '- name: customer-api' in message
             assert 'kind: Ingress' in message
+
+    def test_intervention(self):
+        args = "site intervention create -n ciao --api_url {} -m hello:2".format(customer_api_url)
+        result = call_deepo(args, api_key=customer_api_key)
+        intervention_id = result
+        assert len(intervention_id) == 36
+
+        args = "site intervention status -i {} --api_url {}".format(intervention_id, customer_api_url)
+        result = call_deepo(args, api_key=customer_api_key)
+        assert set(result.keys()) == set(['id', 'name', 'config_id', 'questions', 'answers', 'site_id',
+                                          'app_version_id', 'start_date', 'end_date', 'update_date',
+                                          'review_date', 'tags', 'assigned_user_id', 'enabled', 'metadata'])
+        args = "site intervention delete -i {} --api_url {}".format(intervention_id, customer_api_url)
+        result = call_deepo(args, api_key=customer_api_key)
+        assert result == 'Intervention deleted'

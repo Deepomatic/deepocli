@@ -1,6 +1,7 @@
 import os.path
 from deepomatic.cli.cli_parser import run
 from contextlib import contextmanager
+from utils import modified_environ
 
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
@@ -8,10 +9,17 @@ WORKFLOW_PATH = ROOT + '/workflow.yaml'
 CUSTOM_NODES_PATH = ROOT + '/custom_nodes.py'
 
 
-def call_deepo(args):
+def call_deepo(args, api_key=None):
     args = args.split()
-    res = run(args)
-    return res.strip()
+    if api_key:
+        with modified_environ(DEEPOMATIC_API_KEY=api_key):
+            res = run(args)
+    else:
+        res = run(args)
+    try:
+        return res.strip()
+    except Exception:
+        return res
 
 
 @contextmanager
