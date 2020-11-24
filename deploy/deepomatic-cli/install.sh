@@ -2,7 +2,6 @@
 
 set -xe
 export DEBIAN_FRONTEND="noninteractive"
-export PYENV_ROOT="/opt/pyenv"
 export PATH="/opt/pyenv/shims:/opt/pyenv/bin:$PATH"
 export PYENV_ROOT="/opt/pyenv"
 export PYENV_SHELL="bash"
@@ -48,6 +47,9 @@ unset PYENV_VERSION
 pyenv global $python_versions
 pip install -r deploy/deepomatic-cli/requirements.dev.txt
 pip install -r requirements.txt
+
+# Allow pip install in entrypoint when DMAKE_UID != 0
+chmod -R go=u $PYENV_ROOT
 
 find $PYENV_ROOT/versions -type d '(' -name '__pycache__' -o -name 'test' -o -name 'tests' ')' -exec rm -rf '{}' +
 find $PYENV_ROOT/versions -type f '(' -name '*.pyo' -o -name '*.exe' ')' -exec rm -f '{}' +
