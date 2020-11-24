@@ -4,4 +4,4 @@ set -xe
 
 pip install -e .
 
-$@
+exec "$@"
