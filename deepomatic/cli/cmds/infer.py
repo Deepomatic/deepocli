@@ -339,6 +339,8 @@ def setup_cmd_line_parsers(inference_parsers):
                            " If higher than the original video FPS, all frames will be analysed only once having"
                            " the same effect as not using this parameter. If lower than the original video FPS,"
                            " some frames will be discarded to simulate an input of the given FPS.", default=None)
+        group.add_argument('--no_fps_estimation', dest='measure_fps', action='store_false', help="For stream inputs only, "
+                            "estimates the real framerate by measuring the time between each frame.")
         group.add_argument('--skip_frame', type=int, help="Number of frame to skip between two frames from the input."
                            " It can be combined with input_fps", default=0)
         parser_helpers.add_recursive_argument(group)

@@ -1,4 +1,5 @@
 import os
+import time
 import cv2
 import json
 import logging
@@ -324,6 +325,34 @@ class StreamInputData(VideoInputData):
     def __init__(self, descriptor, **kwargs):
         super(StreamInputData, self).__init__(descriptor, **kwargs)
         self._name = 'stream_%s_%s' % ('%05d', self._reco)
+        self._last_read = None
+        self._measure_fps = kwargs.get('measure_fps')
+        if self._measure_fps:
+            # overwrite the parent attribute, because it will be dynamically measured
+            self._video_fps = 0
+
+    def _grab_next(self):
+        ret = super(StreamInputData, self)._grab_next()
+        if self._measure_fps:
+            self._update_video_fps()
+        return ret
+
+    def _read_next(self):
+        ret = super(StreamInputData, self)._read_next()
+        if self._measure_fps:
+            self._update_video_fps()
+        return ret
+
+    def _update_video_fps(self):
+        last = self._last_read
+        now = time.time()
+        self._last_read = now
+        if last is not None:
+            dt = now - last
+            self._last_read = now
+            alpha = 0 if self._video_fps == 0 else 0.95
+            self._video_fps = (1 - alpha) / dt + alpha * self._video_fps
+            LOGGER.debug('measured fps: %f' % self._video_fps)
 
     def get_frame_count(self):
         return -1

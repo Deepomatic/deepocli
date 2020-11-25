@@ -59,6 +59,7 @@ def argparser_init():
     studio_parser = subparsers.add_parser('studio', help=help_msg, description=help_msg)
     studio_subparser = studio_parser.add_subparsers(dest='studio_command', help='')
     studio_subparser.required = True
+
     studio.setup_cmd_line_subparser(studio_subparser)
 
     return argparser, subparsers
