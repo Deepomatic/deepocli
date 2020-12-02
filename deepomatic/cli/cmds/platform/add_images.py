@@ -4,14 +4,14 @@ from deepomatic.cli.cmds.utils import Command
 from deepomatic.cli.cmds.platform.utils import AddImageManager
 
 
-class AddImageCommand(Command):
+class AddImagesCommand(Command):
     """
         Upload simple images to Deepomatic Platform.
         Typical usage is: deepo platform add_images -i img.png -p myproject -o myorg
     """
 
     def setup(self, subparsers):
-        parser = super(AddImageCommand, self).setup(subparsers)
+        parser = super(AddImagesCommand, self).setup(subparsers)
 
         # Define studio group for add_images
         group = parser.add_argument_group('studio arguments')
@@ -35,5 +35,5 @@ class AddImageCommand(Command):
                             help='Add the relative path as metadata.')
         return parser
 
-    def run(self, kwargs):
+    def run(self, **kwargs):
         return AddImageManager().upload(kwargs)

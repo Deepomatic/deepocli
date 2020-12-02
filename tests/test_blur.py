@@ -10,7 +10,7 @@ INPUTS = init_files_setup()
 
 
 def run_blur(*args, **kwargs):
-    run_cmd(['blur'], *args, **kwargs)
+    run_cmd(['platform', 'model', 'blur'], *args, **kwargs)
 
 
 # ------- Image Input Tests ------------------------------------------------------------------------------------------ #

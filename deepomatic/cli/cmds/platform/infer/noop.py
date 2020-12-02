@@ -14,5 +14,5 @@ class NoopCommand(Command):
         setup_cmd_line_parsers("noop", parser)
         return parser
 
-    def run(self, kwargs):
+    def run(self, **kwargs):
         return InferManager().input_loop(kwargs)

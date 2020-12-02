@@ -27,5 +27,5 @@ class DrawCommand(Command):
 
         return parser
 
-    def run(self, kwargs):
+    def run(self, **kwargs):
         return InferManager().input_loop(kwargs, DrawImagePostprocessing(**kwargs))

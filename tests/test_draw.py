@@ -10,7 +10,7 @@ INPUTS = init_files_setup()
 
 
 def run_draw(*args, **kwargs):
-    run_cmd(['draw'], *args, **kwargs)
+    run_cmd(['platform', 'model', 'draw'], *args, **kwargs)
 
 
 # ------- Image Input Tests ------------------------------------------------------------------------------------------ #

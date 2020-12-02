@@ -14,5 +14,5 @@ class InferCommand(Command):
         setup_cmd_line_parsers("infer", parser)
         return parser
 
-    def run(self, kwargs):
+    def run(self, **kwargs):
         return InferManager().input_loop(kwargs)

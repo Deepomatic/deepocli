@@ -12,7 +12,7 @@ TEST_ORG = 'travis-deepocli'
 
 def run_add_images(test_input, extra_opts=None):
     extra_opts = extra_opts or []
-    run(['studio', 'add_images', '-o', TEST_ORG, '-p', TEST_PROJECT, '-i', test_input] + extra_opts)
+    run(['platform', 'add-images', '-o', TEST_ORG, '-p', TEST_PROJECT, '-i', test_input] + extra_opts)
 
 
 # ------- Studio Upload Tests----------------------------------------------------------------------------------------- #

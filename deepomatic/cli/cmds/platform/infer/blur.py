@@ -20,5 +20,5 @@ class BlurCommand(Command):
         group.add_argument('-B', '--blur_strength', help="Blur strength, defaults to 10.", default=10)
         return parser
 
-    def run(self, kwargs):
+    def run(self, **kwargs):
         return InferManager().input_loop(kwargs, BlurImagePostprocessing(**kwargs))

@@ -10,7 +10,7 @@ INPUTS = init_files_setup()
 
 
 def run_infer(*args, **kwargs):
-    run_cmd(['infer'], *args, **kwargs)
+    run_cmd(['platform', 'model', 'infer'], *args, **kwargs)
 
 
 # ------- Image Input Tests ------------------------------------------------------------------------------------------ #

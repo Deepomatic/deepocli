@@ -10,7 +10,7 @@ INPUTS = init_files_setup()
 
 
 def run_noop(*args, **kwargs):
-    run_cmd(['noop'], *args, **kwargs)
+    run_cmd(['platform', 'model', 'noop'], *args, **kwargs)
 
 
 # ------- Image Input Tests ------------------------------------------------------------------------------------------ #
