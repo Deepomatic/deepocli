@@ -9,4 +9,4 @@ class PlatformCommand(Command):
     from .app import AppCommand
     from .app_version import AppVersionCommand
     from .service import ServiceCommand
-    from .infer import InferCommand
+    from .infer import ModelCommand

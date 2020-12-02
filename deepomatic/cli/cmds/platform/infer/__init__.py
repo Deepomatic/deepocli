@@ -1,9 +1,9 @@
 from ...utils import Command
 
 
-class InferCommand(Command):
+class ModelCommand(Command):
     """
-        AHJAHJHAJHA
+        Model related commands.
     """
 
     from .noop import NoopCommand

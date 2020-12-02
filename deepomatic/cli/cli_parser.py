@@ -2,7 +2,7 @@ import os
 import sys
 import logging
 import argparse
-from .cmds import AVAILABLE_COMMANDS, infer, studio
+from .cmds import AVAILABLE_COMMANDS, studio
 from .version import __version__, __title__
 
 
@@ -27,32 +27,6 @@ def argparser_init():
 
     subparsers = argparser.add_subparsers(dest='command', help='')
     subparsers.required = True
-
-    inference_parsers = {}
-    # Initialize subparser: infer
-    help_msg = "Computes prediction on a file or directory and outputs results as a JSON file."
-    desc_mgs = help_msg + " Typical usage is: deepo infer -i img.png -o pred.json -r 12345"
-    inference_parsers['infer'] = subparsers.add_parser('infer', help=help_msg, description=desc_mgs)
-
-    # Initialize subparser: noop
-    help_msg = "Does nothing but reading the input and outputting it in the specified format, without predictions."
-    desc_mgs = help_msg + " Typical usage is: deepo noop -i 0 -o window"
-    inference_parsers['noop'] = subparsers.add_parser('noop', help=help_msg, description=desc_mgs)
-
-    # Initialize subparser: draw
-    help_msg = ("Generates new images and videos with predictions results drawn on them."
-                " Computes prediction if JSON has not yet been generated.")
-    desc_mgs = help_msg + " Typical usage is: deepo draw -i img.png -o pred.json draw.png -r 12345"
-    inference_parsers['draw'] = subparsers.add_parser('draw', help=help_msg, description=desc_mgs)
-
-    # Initialize subparser: blur
-    help_msg = ("Generates new images and videos with predictions results blurred on them."
-                " Computes prediction if JSON has not yet been generated.")
-    desc_mgs = help_msg + " Typical usage is: deepo blur -i img.png -o pred.json draw.png -r 12345"
-    inference_parsers['blur'] = subparsers.add_parser('blur', help=help_msg, description=desc_mgs)
-
-    # TODO: infer, draw, blur and noop should be in a common command (like studio)
-    infer.setup_cmd_line_parsers(inference_parsers)
 
     # Initialize subparser: studio
     help_msg = "Deepomatic Studio related commands"
