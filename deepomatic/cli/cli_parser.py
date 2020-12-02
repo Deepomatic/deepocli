@@ -2,7 +2,7 @@ import os
 import sys
 import logging
 import argparse
-from .cmds import AVAILABLE_COMMANDS, studio
+from .cmds import AVAILABLE_COMMANDS
 from .version import __version__, __title__
 
 
@@ -27,14 +27,6 @@ def argparser_init():
 
     subparsers = argparser.add_subparsers(dest='command', help='')
     subparsers.required = True
-
-    # Initialize subparser: studio
-    help_msg = "Deepomatic Studio related commands"
-    studio_parser = subparsers.add_parser('studio', help=help_msg, description=help_msg)
-    studio_subparser = studio_parser.add_subparsers(dest='studio_command', help='')
-    studio_subparser.required = True
-    studio.setup_cmd_line_subparser(studio_subparser)
-
     return argparser, subparsers
 
 

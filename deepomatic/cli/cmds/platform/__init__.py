@@ -10,3 +10,4 @@ class PlatformCommand(Command):
     from .app_version import AppVersionCommand
     from .service import ServiceCommand
     from .infer import ModelCommand
+    from .add_images import AddImageCommand
