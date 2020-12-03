@@ -9,5 +9,5 @@ class PlatformCommand(Command):
     from .app import AppCommand
     from .app_version import AppVersionCommand
     from .service import ServiceCommand
-    from .infer import ModelCommand
+    from .model import ModelCommand
     from .add_images import AddImagesCommand
