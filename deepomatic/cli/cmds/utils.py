@@ -124,9 +124,22 @@ def setup_model_cmd_line_parser(mode, cmd, inference_parsers):
         group.add_argument('-r', '--recognition_id', help="Neural network recognition version ID.")
         group.add_argument('-t', '--threshold', type=float, help="Threshold above which a prediction is considered valid.", default=None)
 
-    if mode == "site":
-        # Define onprem group for infer draw blur
-        if cmd in ['infer', 'draw', 'blur']:
-            group = inference_parsers.add_argument_group('on-premises arguments')
-            group.add_argument('-u', '--amqp_url', help="AMQP url for on-premises deployments.")
-            group.add_argument('-k', '--routing_key', help="Recognition routing key for on-premises deployments.")
+    # Define onprem group for infer draw blur
+    if mode == "site" and cmd in ['infer', 'draw', 'blur']:
+        group = inference_parsers.add_argument_group('on-premises arguments')
+        group.add_argument('-u', '--amqp_url', help="AMQP url for on-premises deployments.")
+        group.add_argument('-k', '--routing_key', help="Recognition routing key for on-premises deployments.")
+
+    if cmd == "draw":
+        # Define draw specific options
+        group = inference_parsers.add_argument_group('drawing arguments')
+        score_group = group.add_mutually_exclusive_group()
+        score_group.add_argument('-S', '--draw_scores', dest='draw_scores', help="Overlay the prediction scores. Default behavior.",
+                                 action="store_true")
+        score_group.add_argument('--no_draw_scores', dest='draw_scores', help="Do not overlay the prediction scores.", action="store_false")
+        score_group.set_defaults(draw_scores=True)
+        label_group = group.add_mutually_exclusive_group()
+        label_group.add_argument('-L', '--draw_labels', dest='draw_labels', help="Overlay the prediction labels. Default behavior.",
+                                 action="store_true")
+        label_group.add_argument('--no_draw_labels', dest='draw_labels', help="Do not overlay the prediction labels.", action="store_false")
+        label_group.set_defaults(draw_labels=True)
