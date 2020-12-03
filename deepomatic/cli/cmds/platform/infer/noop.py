@@ -1,6 +1,6 @@
 from deepomatic.cli.cmds.utils import Command
 from ..utils import InferManager
-from deepomatic.cli.cmds.utils import setup_cmd_line_parsers
+from deepomatic.cli.cmds.utils import setup_model_cmd_line_parser
 
 
 class NoopCommand(Command):
@@ -11,7 +11,7 @@ class NoopCommand(Command):
 
     def setup(self, subparsers):
         parser = super(NoopCommand, self).setup(subparsers)
-        setup_cmd_line_parsers("noop", parser)
+        setup_model_cmd_line_parser("noop", parser)
         return parser
 
     def run(self, **kwargs):

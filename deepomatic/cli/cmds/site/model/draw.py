@@ -1,6 +1,6 @@
 from deepomatic.cli.cmds.utils import Command
 from deepomatic.cli.lib.inference import InferManager, DrawImagePostprocessing
-from deepomatic.cli.cmds.utils import setup_cmd_line_parsers
+from deepomatic.cli.cmds.utils import setup_model_cmd_line_parser
 
 
 class DrawCommand(Command):
@@ -11,7 +11,7 @@ class DrawCommand(Command):
 
     def setup(self, subparsers):
         parser = super(DrawCommand, self).setup(subparsers)
-        setup_cmd_line_parsers("draw", parser)
+        setup_model_cmd_line_parser("draw", parser)
         # Define draw specific options
         group = parser.add_argument_group('drawing arguments')
         score_group = group.add_mutually_exclusive_group()

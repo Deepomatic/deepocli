@@ -1,6 +1,6 @@
 from deepomatic.cli.cmds.utils import Command
 from deepomatic.cli.lib.inference import InferManager, BlurImagePostprocessing
-from deepomatic.cli.cmds.utils import setup_cmd_line_parsers
+from deepomatic.cli.cmds.utils import setup_model_cmd_line_parser
 
 
 class BlurCommand(Command):
@@ -12,7 +12,7 @@ class BlurCommand(Command):
     def setup(self, subparsers):
         parser = super(BlurCommand, self).setup(subparsers)
 
-        setup_cmd_line_parsers("blur", parser)
+        setup_model_cmd_line_parser("blur", parser)
         # Define blur specific options
         group = parser.add_argument_group('blurring arguments')
         group.add_argument('-M', '--blur_method', help="Blur method to apply, either 'pixel', 'gaussian' or 'black', defaults to 'pixel'.",

@@ -1,6 +1,6 @@
 from deepomatic.cli.cmds.utils import Command
 from deepomatic.cli.lib.inference import InferManager
-from deepomatic.cli.cmds.utils import setup_cmd_line_parsers
+from deepomatic.cli.cmds.utils import setup_model_cmd_line_parser
 
 
 class InferCommand(Command):
@@ -11,7 +11,7 @@ class InferCommand(Command):
 
     def setup(self, subparsers):
         parser = super(InferCommand, self).setup(subparsers)
-        setup_cmd_line_parsers("infer", parser)
+        setup_model_cmd_line_parser("infer", parser)
         return parser
 
     def run(self, **kwargs):

@@ -69,7 +69,7 @@ class BuildDict(argparse.Action):
         setattr(namespace, self.dest, dic)
 
 
-def setup_cmd_line_parsers(cmd, inference_parsers):
+def setup_model_cmd_line_parser(cmd, inference_parsers):
     # Define input group for infer draw blur noop
     if cmd in ['infer', 'draw', 'blur', 'noop']:
         # Define argument groups for easier reading
