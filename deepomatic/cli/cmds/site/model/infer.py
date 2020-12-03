@@ -6,7 +6,7 @@ from deepomatic.cli.cmds.utils import setup_model_cmd_line_parser
 class InferCommand(Command):
     """
         Computes prediction on a file or directory and outputs results as a JSON file.
-        Typical usage is: deepo infer -i img.png -o pred.json -r 12345
+        Typical usage is: deepo site model infer -i img.png -o pred.json -r 12345
     """
 
     def setup(self, subparsers):

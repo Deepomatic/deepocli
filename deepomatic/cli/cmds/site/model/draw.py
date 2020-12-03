@@ -6,7 +6,7 @@ from deepomatic.cli.cmds.utils import setup_model_cmd_line_parser
 class DrawCommand(Command):
     """
         Generates new images and videos with predictions results drawn on them. Computes prediction if JSON has not yet been generated.
-        Typical usage is: deepo draw -i img.png -o pred.json draw.png -r 12345
+        Typical usage is: deepo site model draw -i img.png -o pred.json draw.png -r 12345
     """
 
     def setup(self, subparsers):
