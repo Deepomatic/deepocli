@@ -40,6 +40,3 @@ class SystemManager(object):
             print(success_icon, '\t', '\033[1m' + command_message + '\033[0m', success_message)
         except OSError:
             print(error_icon, '\t', '\033[1m' + command_message + '\033[0m', error_message)
-
-    def setup(self):
-        raise NotImplementedError()

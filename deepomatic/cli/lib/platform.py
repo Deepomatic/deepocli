@@ -92,15 +92,3 @@ class PlatformManager(object):
     def delete_service(self, service_id):
         self.client.delete('/services/{}'.format(service_id))
         return "Service {} deleted".format(service_id)
-
-    def infer(self, input):
-        raise NotImplementedError()
-
-    def inspect(self, workflow_path):
-        raise NotImplementedError()
-
-    def train(self):
-        raise NotImplementedError()
-
-    def upload(self):
-        raise NotImplementedError()

@@ -1,5 +1,5 @@
 from deepomatic.cli.cmds.utils import Command
-from ..utils import InferManager
+from deepomatic.cli.lib.inference import InferManager
 from deepomatic.cli.cmds.utils import setup_cmd_line_parsers
 
 

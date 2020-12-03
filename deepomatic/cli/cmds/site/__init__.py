@@ -26,3 +26,4 @@ class SiteCommand(Command):
     from .manifest import ManifestCommand
 
     from .intervention import InterventionCommand
+    from .model import ModelCommand
