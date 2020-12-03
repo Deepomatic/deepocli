@@ -69,7 +69,8 @@ class BuildDict(argparse.Action):
         setattr(namespace, self.dest, dic)
 
 
-def setup_model_cmd_line_parser(cmd, inference_parsers):
+def setup_model_cmd_line_parser(mode, cmd, inference_parsers):
+    assert mode in ['site', 'platform']
     # Define input group for infer draw blur noop
     if cmd in ['infer', 'draw', 'blur', 'noop']:
         # Define argument groups for easier reading
@@ -123,8 +124,9 @@ def setup_model_cmd_line_parser(cmd, inference_parsers):
         group.add_argument('-r', '--recognition_id', help="Neural network recognition version ID.")
         group.add_argument('-t', '--threshold', type=float, help="Threshold above which a prediction is considered valid.", default=None)
 
-    # Define onprem group for infer draw blur
-    if cmd in ['infer', 'draw', 'blur']:
-        group = inference_parsers.add_argument_group('on-premises arguments')
-        group.add_argument('-u', '--amqp_url', help="AMQP url for on-premises deployments.")
-        group.add_argument('-k', '--routing_key', help="Recognition routing key for on-premises deployments.")
+    if mode == "site":
+        # Define onprem group for infer draw blur
+        if cmd in ['infer', 'draw', 'blur']:
+            group = inference_parsers.add_argument_group('on-premises arguments')
+            group.add_argument('-u', '--amqp_url', help="AMQP url for on-premises deployments.")
+            group.add_argument('-k', '--routing_key', help="Recognition routing key for on-premises deployments.")

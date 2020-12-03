@@ -11,7 +11,7 @@ class InferCommand(Command):
 
     def setup(self, subparsers):
         parser = super(InferCommand, self).setup(subparsers)
-        setup_model_cmd_line_parser("infer", parser)
+        setup_model_cmd_line_parser("platform", "infer", parser)
         return parser
 
     def run(self, **kwargs):
