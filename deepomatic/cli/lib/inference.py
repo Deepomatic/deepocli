@@ -211,12 +211,12 @@ class ResultInferenceGreenlet(Greenlet):
 
             frame.predictions = predictions
             return frame
-        except ResultInferenceError as e:
-            self.current_messages.forget_frame(frame)
-            LOGGER.error('Error getting predictions for frame {}: {}'.format(frame, e))
         except ResultInferenceTimeout as e:
             self.current_messages.forget_frame(frame)
             LOGGER.error("Couldn't get predictions in {} seconds. Ignoring frame {}.".format(e.timeout, frame))
+        except ResultInferenceError as e:
+            self.current_messages.forget_frame(frame)
+            LOGGER.error('Error getting predictions for frame {}: {}'.format(frame, e))
         return None
 
 

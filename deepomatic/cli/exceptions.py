@@ -67,7 +67,7 @@ class ResultInferenceError(InferenceError):
     pass
 
 
-class ResultInferenceTimeout(InferenceError):
+class ResultInferenceTimeout(ResultInferenceError):
     def __init__(self, timeout=None):
         self.timeout = timeout
         error = 'timeout reached'
