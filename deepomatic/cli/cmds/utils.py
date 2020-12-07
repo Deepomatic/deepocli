@@ -71,6 +71,8 @@ class BuildDict(argparse.Action):
 
 def setup_model_cmd_line_parser(mode, cmd, inference_parsers):
     assert mode in ['site', 'platform']
+    assert cmd in ['infer', 'draw', 'blur', 'noop']
+
     # Define input group for infer draw blur noop
     if cmd in ['infer', 'draw', 'blur', 'noop']:
         # Define argument groups for easier reading
@@ -143,3 +145,10 @@ def setup_model_cmd_line_parser(mode, cmd, inference_parsers):
                                  action="store_true")
         label_group.add_argument('--no_draw_labels', dest='draw_labels', help="Do not overlay the prediction labels.", action="store_false")
         label_group.set_defaults(draw_labels=True)
+
+    if cmd == "blur":
+        # Define blur specific options
+        group = inference_parsers.add_argument_group('blurring arguments')
+        group.add_argument('-M', '--blur_method', help="Blur method to apply, either 'pixel', 'gaussian' or 'black', defaults to 'pixel'.",
+                           default='pixel', choices=['pixel', 'gaussian', 'black'])
+        group.add_argument('-B', '--blur_strength', help="Blur strength, defaults to 10.", default=10)
