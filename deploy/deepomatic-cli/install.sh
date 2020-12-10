@@ -23,8 +23,7 @@ apt-get update && apt-get install -y --no-install-recommends \
                           libsqlite3-dev \
                           libssl-dev \
                           liblzma-dev \
-                          zlib1g-dev \
-                          tk-dev
+                          zlib1g-dev
 
 # Generate locales
 locale-gen en_US.UTF-8
