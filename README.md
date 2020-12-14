@@ -28,7 +28,7 @@ pip install deepomatic-cli[rpc]
 
 Depending on your pip version, it might rebuild it from source. We recommend upgrading pip to 20.x.
 
-> Window output doesn't work. I get a cv2.error.
+## Window output doesn't work. I get a `cv2.error`.
 
 Deepocli ships with `opencv-python-headless` as most of the features don't need a GUI.
 This also avoid to require libGL to be installed.
