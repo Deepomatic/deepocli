@@ -26,7 +26,7 @@ pip install deepomatic-cli[rpc]
 
 ## `opencv-python` (-headless) installation takes forever
 
-Depending on your pip version, it might rebuild it from source. We recommend upgrading pip to >= 19.3.
+Depending on your pip version, it might rebuild it from source. We require upgrading pip to >= 19.3.
 
 ## Window output doesn't work. I get a `cv2.error`.
 
