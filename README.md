@@ -24,7 +24,7 @@ pip install deepomatic-cli[rpc]
 
 # FAQ
 
-> OpenCV build takes forever
+## `opencv-python` installation takes forever
 
 Depending on your pip version, it might rebuild it from source. We recommend upgrading pip to 20.x.
 
