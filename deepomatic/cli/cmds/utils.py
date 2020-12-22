@@ -87,7 +87,7 @@ def setup_model_cmd_line_parser(mode, cmd, inference_parsers):
         group = parser_helpers.add_common_cmd_group(inference_parsers, 'input')
         group.add_argument('-i', '--input', required=True,
                            help="Input path, either an image (*{}), a video (*{}), a directory, a stream (*{}),"
-                           " or a Studio json (*.json). If the given path is a directory,"
+                           " or a Studio format (*.txt). If the given path is a directory,"
                            " it will recursively run inference on all the supported files"
                            " in this directory if the -R option is used.".format(', *'.join(SUPPORTED_IMAGE_INPUT_FORMAT),
                                                                                  ', *'.join(SUPPORTED_VIDEO_INPUT_FORMAT),

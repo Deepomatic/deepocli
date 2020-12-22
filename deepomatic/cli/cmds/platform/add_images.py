@@ -1,4 +1,4 @@
-from deepomatic.cli.common import SUPPORTED_FILE_INPUT_FORMAT
+from deepomatic.cli.common import SUPPORTED_IMAGE_INPUT_FORMAT
 from deepomatic.cli.cmds import parser_helpers
 from deepomatic.cli.cmds.utils import Command
 from deepomatic.cli.cmds.platform.utils import AddImageManager
@@ -22,12 +22,12 @@ class AddImagesCommand(Command):
         input_group = parser_helpers.add_common_cmd_group(parser, 'input')
         # Define input group for add_images
         input_group.add_argument('-i', '--input', type=str, nargs='+', required=True,
-                                 help="One or several input path, either an image or video file (*{}),"
-                                 " a directory, or a Studio or Vulcan json (*.json).".format(
-                                     ', *'.join(SUPPORTED_FILE_INPUT_FORMAT)
+                                 help="One or several input path, either an image file (*{}),"
+                                 " a directory, or a Studio txt (*.txt).".format(
+                                     ', *'.join(SUPPORTED_IMAGE_INPUT_FORMAT)
                                  ))
-        input_group.add_argument('--json', dest='json_file', action='store_true',
-                                 help='Look for JSON files instead of images.')
+        input_group.add_argument('--txt', dest='txt_file', action='store_true',
+                                 help='Look for txt files instead of images.')
         parser_helpers.add_recursive_argument(input_group)
 
         parser.add_argument('--set_metadata_path', dest='set_metadata_path',
