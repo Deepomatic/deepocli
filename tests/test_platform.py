@@ -79,7 +79,7 @@ class TestPlatform(object):
 
     def test_service(self):
         with app() as app_id:
-            args = "platform service create -a {} -n worker-nn -w worker-nn".format(app_id)
+            args = "platform service create -a {} -n worker-nn".format(app_id)
             result = call_deepo(args)
             message, service_id = result.split(':')
             assert message == 'New service created with id'

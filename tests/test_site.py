@@ -1,7 +1,7 @@
 import os
 from uuid import uuid4
 from deepomatic.cli.lib.site import SiteManager
-from deepomatic.api.client import Client
+
 from contextlib import contextmanager
 from test_platform import app_version, call_deepo
 import tempfile
@@ -247,13 +247,9 @@ class TestSite(object):
 
     def test_site_deployment_manifest(self):
         with site() as (site_id, app_version_id, app_id):
-            # create services
-            for service in ['worker-nn', 'workflow-server', 'customer-api']:
-                call_deepo("platform service create -a {} -n {}".format(app_id, service))
+            # add customer api
+            call_deepo("platform service create -a {} -n customer-api".format(app_id))
 
-            client = Client()
-            client.http_helper.post('/accounts/me/read-only-keys',
-                                    data={'name': 'SITE_0-{}-test-deepocli'.format(site_id)})
             args = "site manifest -i {} -t docker-compose".format(site_id)
             message = call_deepo(args)
             assert message.startswith('version: "2.4"')
