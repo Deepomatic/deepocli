@@ -34,7 +34,7 @@ class Client(HTTPHelper):
         self.verify_ssl = verify_ssl
         self.host = host
 
-    def _setup_credentials(self):
+    def _setup_credentials(self, app_id, api_key):
         # No credentials
         pass
 

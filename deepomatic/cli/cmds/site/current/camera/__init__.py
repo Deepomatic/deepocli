@@ -1,8 +1,6 @@
 from ....utils import Command
 from deepomatic.cli.lib.camera import get_camera_ctrl
 
-manager = get_camera_ctrl()
-
 
 class _CameraCommand(Command):
     """
@@ -38,15 +36,15 @@ class CameraCommand(Command):
             return parser
 
         def run(self, name, address, fps, tcp, udp, **kwargs):
-            print(manager.add(name, address))  # TODO: tcp/udp, fps
+            print(get_camera_ctrl().add(name, address))  # TODO: tcp/udp, fps
 
-    class RemoveCommand(_CameraCommand):
+    class DeleteCommand(_CameraCommand):
         """
             Remove a camera
         """
 
         def run(self, name, **kwargs):
-            print(manager.delete(name))
+            print(get_camera_ctrl().delete(name))
 
     class StartCommand(_CameraCommand):
         """
@@ -54,7 +52,7 @@ class CameraCommand(Command):
         """
 
         def run(self, name, **kwargs):
-            print(manager.start(name))
+            print(get_camera_ctrl().start(name))
 
     class StopCommand(_CameraCommand):
         """
@@ -62,15 +60,7 @@ class CameraCommand(Command):
         """
 
         def run(self, name, **kwargs):
-            print(manager.stop(name))
-
-    class StatusCommand(_CameraCommand):
-        """
-            Get a camera's status
-        """
-
-        def run(self, name, **kwargs):
-            print(manager.status(name))
+            print(get_camera_ctrl().stop(name))
 
     class ListCommand(Command):
         """
@@ -78,4 +68,4 @@ class CameraCommand(Command):
         """
 
         def run(self, **kwargs):
-            print(manager.list())
+            print(get_camera_ctrl().list())

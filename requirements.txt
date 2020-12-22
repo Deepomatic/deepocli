@@ -6,6 +6,6 @@ text-unidecode==1.2
 greenlet==0.4.17
 gevent==20.9.0
 jsonschema==3.0.1
-deepomatic-api==0.9.1
+deepomatic-api==0.9.3
 PyYAML>=3.12
 GitPython==2.1.15
