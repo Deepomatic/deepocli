@@ -246,27 +246,28 @@ class TestSite(object):
             assert message == 'Site{} deleted'.format(site_id)
 
     def test_site_deployment_manifest(self):
-        with site() as (site_id, app_version_id, app_id):
-            # add customer api
-            call_deepo("platform service create -a {} -n customer-api".format(app_id))
+        for service in ['customer-api', 'camera-server']:
+            with site() as (site_id, app_version_id, app_id):
+                # add extra service
+                call_deepo("platform service create -a {} -n {}".format(app_id, service))
 
-            args = "site manifest -i {} -t docker-compose".format(site_id)
-            message = call_deepo(args)
-            assert message.startswith('version: "2.4"')
-            assert 'services:' in message
-            assert 'neural-worker:' in message
-            assert 'workflow-server:' in message
-            assert 'customer-api:' in message
+                args = "site manifest -i {} -t docker-compose".format(site_id)
+                message = call_deepo(args)
+                assert message.startswith('version: "2.4"')
+                assert 'services:' in message
+                assert 'neural-worker:' in message
+                assert 'workflow-server:' in message
+                assert '{}:'.format(service) in message
 
-            args = "site manifest -i {} -t gke".format(site_id)
-            message = call_deepo(args)
-            assert message.startswith('apiVersion: apps/v1')
-            assert 'kind: StatefulSet' in message
-            assert 'containers:' in message
-            assert '- name: neural-worker' in message
-            assert '- name: workflow-server' in message
-            assert '- name: customer-api' in message
-            assert 'kind: Ingress' in message
+                args = "site manifest -i {} -t gke".format(site_id)
+                message = call_deepo(args)
+                assert message.startswith('apiVersion: apps/v1')
+                assert 'kind: StatefulSet' in message
+                assert 'containers:' in message
+                assert '- name: neural-worker' in message
+                assert '- name: workflow-server' in message
+                assert '- name: {}'.format(service) in message
+                assert 'kind: Ingress' in message
 
     def test_intervention(self):
         args = "site intervention create -n ciao --api_url {} -m hello:2".format(customer_api_url)

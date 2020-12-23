@@ -78,12 +78,13 @@ class TestPlatform(object):
             assert message == 'App version{} deleted'.format(app_version_id)
 
     def test_service(self):
-        with app() as app_id:
-            args = "platform service create -a {} -n customer-api".format(app_id)
-            result = call_deepo(args)
-            message, service_id = result.split(':')
-            assert message == 'New service created with id'
+        for service in ['customer-api', 'camera-server']:
+            with app() as app_id:
+                args = "platform service create -a {} -n {}".format(app_id, service)
+                result = call_deepo(args)
+                message, service_id = result.split(':')
+                assert message == 'New service created with id'
 
-            args = "platform service delete --id {}".format(service_id)
-            message = call_deepo(args)
-            assert message == 'Service{} deleted'.format(service_id)
+                args = "platform service delete --id {}".format(service_id)
+                message = call_deepo(args)
+                assert message == 'Service{} deleted'.format(service_id)
