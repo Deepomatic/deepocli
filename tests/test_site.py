@@ -267,7 +267,8 @@ class TestSite(object):
                 assert '- name: neural-worker' in message
                 assert '- name: workflow-server' in message
                 assert '- name: {}'.format(service) in message
-                assert 'kind: Ingress' in message
+                if service == 'customer-api':
+                    assert 'kind: Ingress' in message
 
     def test_intervention(self):
         args = "site intervention create -n ciao --api_url {} -m hello:2".format(customer_api_url)
