@@ -1,3 +1,4 @@
+import json
 import logging
 import argparse
 import os
@@ -46,8 +47,15 @@ class Command(object):
 
 def valid_path(file_path):
     if not os.path.exists(file_path):
-        raise IOError("'{}' file does not exist".format(file_path))
+        raise argparse.ArgumentTypeError("'{}' file does not exist".format(file_path))
     return file_path
+
+
+def valid_json(data):
+    try:
+        return json.loads(data)
+    except Exception:
+        raise argparse.ArgumentTypeError("'{}' is not a valid JSON".format(data))
 
 
 class BuildDict(argparse.Action):

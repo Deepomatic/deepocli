@@ -1,3 +1,6 @@
+import pytest
+import yaml
+import json
 import os.path
 from deepomatic.cli.cli_parser import run
 from contextlib import contextmanager
@@ -61,6 +64,31 @@ class TestPlatform(object):
         args = "platform app delete --id {}".format(app_id)
         message = call_deepo(args)
         assert message == 'App{} deleted'.format(app_id)
+
+    def test_app_without_workflow(self):
+
+        args = "platform app create -n test -d abc"
+        with pytest.raises(ValueError):
+            # mandatory app specs
+            result = call_deepo(args)
+
+        with open(WORKFLOW_PATH, 'r') as f:
+            workflow = yaml.safe_load(f)
+
+        app_specs = [{
+            "queue_name": "{}.forward".format(node['name']),
+            "recognition_spec_id": node['args']['model_id']
+        } for node in workflow['workflow']['steps'] if node["type"] == "Inference"]
+
+        args = "platform app create -n test -d abc -s {}".format(json.dumps(app_specs, indent=None, separators=(',', ':')))
+        result = call_deepo(args)
+        message, app_id = result.split(':')
+        assert message == 'New app created with id'
+
+        args += ' -w ' + WORKFLOW_PATH
+        with pytest.raises(ValueError):
+            # workflow yaml and specs are exclusive
+            result = call_deepo(args)
 
     def test_appversion(self):
         with app() as app_id:
