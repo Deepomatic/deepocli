@@ -1,4 +1,3 @@
-import argparse
 from ...utils import Command, valid_path, valid_json
 from ..utils import PlatformManager
 
