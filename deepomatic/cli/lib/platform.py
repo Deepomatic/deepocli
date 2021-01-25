@@ -23,7 +23,7 @@ class PlatformManager(object):
 
         if workflow_path:
             if app_specs is not None:
-                raise ValueError('Specs are deduced from workflow yaml, no need to specify it.')
+                raise ValueError('Specs are deduced from workflow yaml, no need to specify them.')
             ret = self.create_workflow_app(name, description, workflow_path, custom_nodes_path)
             app_id = ret['app_id']
         else:
