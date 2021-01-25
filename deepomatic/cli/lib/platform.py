@@ -19,7 +19,7 @@ class PlatformManager(object):
     def create_app(self, name, description, workflow_path, custom_nodes_path, app_specs):
 
         if custom_nodes_path and not workflow_path:
-            raise ValueError('Custom nodes requires a workflow yaml.')
+            raise ValueError('Custom nodes require a workflow yaml.')
 
         if workflow_path:
             if app_specs is not None:
