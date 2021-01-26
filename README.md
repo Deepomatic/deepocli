@@ -22,6 +22,22 @@ If you need rpc support, prefer:
 pip install deepomatic-cli[rpc]
 ```
 
+## Autocompletion
+
+To activate the autocompletion the easiest way is to add the following line to your shell config file:
+
+```bash
+eval "$(register-python-argcomplete deepo)"
+```
+
+For example if you use bash:
+
+```bash
+printf '# activate deepomatic-cli autocomplate\neval "$(register-python-argcomplete deepo)"\n' >> ~/.bashrc
+```
+
+For a more information, checkout the documentation of [argcomplete](https://github.com/kislyuk/argcomplete)
+
 # FAQ
 
 ## `opencv-python` (-headless) installation takes forever

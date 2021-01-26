@@ -31,7 +31,7 @@ class Command(object):
         subcommands = [command for command in [getattr(self.__class__, attr) for attr in dir(
             self.__class__)] if isinstance(command, type) and issubclass(command, Command)]
         if subcommands:
-            subparser = parser.add_subparsers(dest='{} command'.format(self.name), help='')
+            subparser = parser.add_subparsers(dest='{}_command'.format(self.name), help='')
             subparser.required = True
             for subcommand in subcommands:
                 subcommand().setup(subparser)
@@ -131,14 +131,20 @@ def setup_model_cmd_line_parser(mode, cmd, inference_parsers):
     # Define model group for infer draw blur
     if cmd in ['infer', 'draw', 'blur']:
         group = inference_parsers.add_argument_group('model arguments')
-        group.add_argument('-r', '--recognition_id', help="Neural network recognition version ID.")
-        group.add_argument('-t', '--threshold', type=float, help="Threshold above which a prediction is considered valid.", default=None)
+        reco_required = (mode == 'platform')
+        group.add_argument('-r', '--recognition_id', required=reco_required,
+                           help="Neural network recognition version ID.")
+        group.add_argument('-t', '--threshold', type=float,
+                           help="Threshold above which a prediction is considered valid.",
+                           default=None)
 
     # Define onprem group for infer draw blur
     if mode == "site" and cmd in ['infer', 'draw', 'blur']:
         group = inference_parsers.add_argument_group('on-premises arguments')
-        group.add_argument('-u', '--amqp_url', help="AMQP url for on-premises deployments.")
-        group.add_argument('-k', '--routing_key', help="Recognition routing key for on-premises deployments.")
+        group.add_argument('-u', '--amqp_url', required=True,
+                           help="AMQP url for on-premises deployments.")
+        group.add_argument('-k', '--routing_key', required=True,
+                           help="Recognition routing key for on-premises deployments.")
 
     if cmd == "draw":
         # Define draw specific options

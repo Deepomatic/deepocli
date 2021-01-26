@@ -2,6 +2,7 @@ import os
 import sys
 import logging
 import argparse
+import argcomplete
 from .cmds import AVAILABLE_COMMANDS
 from .version import __version__, __title__
 
@@ -38,6 +39,7 @@ def run(args):
         command.setup(subparsers)
 
     subparsers.required = True
+    argcomplete.autocomplete(argparser)
 
     args = argparser.parse_args(args)
 
