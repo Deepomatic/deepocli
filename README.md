@@ -33,7 +33,7 @@ eval "$(register-python-argcomplete deepo)"
 For example if you use bash:
 
 ```bash
-printf '# activate deepomatic-cli autocomplate\neval "$(register-python-argcomplete deepo)"\n' >> ~/.bashrc
+printf '\n# activate deepomatic-cli autocomplate\neval "$(register-python-argcomplete deepo)"\n\n' >> ~/.bashrc
 ```
 
 For a more information, checkout the documentation of [argcomplete](https://github.com/kislyuk/argcomplete)
