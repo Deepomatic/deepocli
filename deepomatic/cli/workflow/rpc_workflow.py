@@ -77,7 +77,7 @@ class RpcRecognition(AbstractWorkflow):
                 raise ResultInferenceTimeout(timeout)
 
         def __str__(self):
-            return '<{} correlation_id={}>'.format(self.__class_.__qualname__, self._correlation_id)
+            return '<{} correlation_id={}>'.format(self.__class__.__qualname__, self._correlation_id)
 
     def __init__(self, recognition_version_id, amqp_url, routing_key, recognition_cmd_kwargs=None):
         super(RpcRecognition, self).__init__('recognition_{}'.format(recognition_version_id))

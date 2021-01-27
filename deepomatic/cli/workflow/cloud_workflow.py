@@ -34,7 +34,7 @@ class CloudRecognition(AbstractWorkflow):
                 raise ResultInferenceTimeout(timeout)
 
         def __str__(self):
-            return '<{} task_id={}>'.format(self.__class_.__qualname__, self._task.pk)
+            return '<{} task_id={}>'.format(self.__class__.__qualname__, self._task.pk)
 
     def close(self):
         self._client.http_helper.session.close()
