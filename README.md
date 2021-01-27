@@ -36,6 +36,8 @@ For example if you use bash:
 printf '\n# activate deepomatic-cli autocomplete\neval "$(register-python-argcomplete deepo)"\n\n' >> ~/.bashrc
 ```
 
+(If it slows down your shell startup too much, you can pre-generate the completion into a static file then sourced in your `.bashrc`: that doesn't change when deepo-cli is updated (except when updating `argcomplete` itself).)
+
 For a more information, checkout the documentation of [argcomplete](https://github.com/kislyuk/argcomplete)
 
 # FAQ
