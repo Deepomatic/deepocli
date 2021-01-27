@@ -33,7 +33,11 @@ eval "$(register-python-argcomplete deepo)"
 For example if you use bash:
 
 ```bash
-printf '\n# activate deepomatic-cli autocomplete\neval "$(register-python-argcomplete deepo)"\n\n' >> ~/.bashrc
+cat <<"EOF" >> ~/.bashrc
+
+# activate deepomatic-cli autocomplete
+eval "$(register-python-argcomplete deepo)"
+EOF
 ```
 
 (If it slows down your shell startup too much, you can pre-generate the completion into a static file then sourced in your `.bashrc`: that doesn't change when deepo-cli is updated (except when updating `argcomplete` itself).)
