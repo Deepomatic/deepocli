@@ -1,3 +1,4 @@
+# PYTHON_ARGCOMPLETE_OK
 import sys
 from .cli_parser import run
 
