@@ -26,12 +26,8 @@ def test_2e2_directory_upload():
     run_add_images(INPUTS['DIRECTORY'])
 
 
-def test_2e2_vulcan_json_upload():
-    run_add_images(INPUTS['VULCAN_JSON'], extra_opts=['--json'])
-
-
 def test_2e2_studio_json_upload():
-    run_add_images(INPUTS['STUDIO_JSON'], extra_opts=['--json'])
+    run_add_images(INPUTS['STUDIO_JSON'], extra_opts=['--txt'])
 
 
 # ------- Special Options Tests -------------------------------------------------------------------------------------- #
