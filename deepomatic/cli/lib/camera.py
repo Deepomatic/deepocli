@@ -1,7 +1,7 @@
 import os
 import logging
 from contextlib import contextmanager
-from deepomatic.api.http_helper import HTTPHelper
+#from deepomatic.api.http_helper import HTTPHelper
 from ..version import __title__, __version__
 
 
@@ -17,7 +17,7 @@ CLIENT = None
 ###############################################################################
 
 
-class Client(HTTPHelper):
+class Client():
     def __init__(self, **kwargs):
         super(Client, self).__init__(user_agent_prefix=DEFAULT_USER_AGENT_PREFIX,
                                      version=None, **kwargs)

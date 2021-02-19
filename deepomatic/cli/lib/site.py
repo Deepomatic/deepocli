@@ -1,13 +1,11 @@
 import errno
-import requests
 import json
 import os
 import os.path
 import shutil
 import subprocess
 
-from git import Repo
-from deepomatic.api.http_helper import HTTPHelper
+#from deepomatic.api.http_helper import HTTPHelper
 
 
 DEEPOMATIC_SITE_PATH = os.path.join(os.path.expanduser('~'), '.deepomatic', 'sites')
@@ -35,7 +33,11 @@ def makedirs(folder, *args, **kwargs):
 
 
 class SiteManager(object):
-    def __init__(self, path=DEEPOMATIC_SITE_PATH, client_cls=HTTPHelper):
+    def __init__(self, path=DEEPOMATIC_SITE_PATH):
+        # lazy import for faster cli
+        import requests
+        from git import Repo
+
         makedirs(path)
         self._repo = Repo.init(path)
         self._client = client_cls()

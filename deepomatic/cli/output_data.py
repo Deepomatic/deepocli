@@ -3,7 +3,6 @@
 import os
 import sys
 import json
-import cv2
 import logging
 import traceback
 from .thread_base import Thread

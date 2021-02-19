@@ -1,4 +1,4 @@
-from jsonschema import validate, ValidationError
+#from jsonschema import validate, ValidationError
 
 
 class JSONSchemaType:

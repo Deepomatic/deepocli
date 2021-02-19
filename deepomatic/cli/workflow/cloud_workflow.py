@@ -4,11 +4,11 @@ from ..exceptions import (SendInferenceError,
                           ResultInferenceError,
                           ResultInferenceTimeout)
 from .. import exceptions
-import deepomatic.api.client
-import deepomatic.api.inputs
+#import deepomatic.api.client
+#import deepomatic.api.inputs
 from ..version import __title__, __version__
-from tenacity import stop_never
-from deepomatic.api.exceptions import TaskError, TaskTimeout, BadStatus, DeepomaticException
+#from tenacity import stop_never
+#from deepomatic.api.exceptions import TaskError, TaskTimeout, BadStatus, DeepomaticException
 
 LOGGER = logging.getLogger(__name__)
 

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import os
 import json
-import uuid
+#import uuid
 import logging
 from .vulcan2studio import transform_json_from_vulcan_to_studio
 from ...thread_base import Greenlet

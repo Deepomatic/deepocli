@@ -1,9 +1,8 @@
 import sys
-import cv2
 import logging
 import threading
 from text_unidecode import unidecode
-from tqdm import tqdm
+#from tqdm import tqdm
 
 from deepomatic.cli.common import Queue, TqdmToLogger
 from deepomatic.cli.exceptions import (DeepoCLICredentialsError,

@@ -4,8 +4,8 @@ import os
 import sys
 import logging
 import threading
-from tqdm import tqdm
-from deepomatic.api.http_helper import HTTPHelper
+#from tqdm import tqdm
+#from deepomatic.api.http_helper import HTTPHelper
 from deepomatic.cli.cmds.studio_helpers.file import DatasetFiles, UploadImageGreenlet
 from deepomatic.cli.cmds.studio_helpers.task import Task
 from deepomatic.cli.common import TqdmToLogger, Queue, SUPPORTED_FILE_INPUT_FORMAT

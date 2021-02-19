@@ -1,4 +1,4 @@
-import yaml
+#import yaml
 import logging
 
 try:
@@ -6,14 +6,14 @@ try:
 except ImportError:
     FileExistsError = OSError
 
-from deepomatic.api.http_helper import HTTPHelper
+#from deepomatic.api.http_helper import HTTPHelper
 
 
 LOGGER = logging.getLogger(__name__)
 
 
 class PlatformManager(object):
-    def __init__(self, client_cls=HTTPHelper):
+    def __init__(self):
         self.client = client_cls()
 
     def create_app(self, name, description, workflow_path, custom_nodes_path, app_specs):

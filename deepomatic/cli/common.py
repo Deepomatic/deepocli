@@ -1,6 +1,5 @@
 import io
 import os
-import cv2
 import logging
 try:
     import Queue as queue
@@ -48,6 +47,9 @@ def write_frame_to_disk(frame, path):
         if os.path.isfile(path):
             LOGGER.warning('File {} already exists. Skipping it.'.format(path))
         else:
+            # lazy import for faster cli
+            import cv2
+
             LOGGER.debug('Writing file {} to disk'.format(path))
             cv2.imwrite(path, frame.output_image)
     else:

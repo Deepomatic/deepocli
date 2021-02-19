@@ -1,13 +1,13 @@
 import logging
 import traceback
 import heapq
-import gevent
+#import gevent
 import signal
 from contextlib import contextmanager
-from gevent.threadpool import ThreadPool
+#from gevent.threadpool import ThreadPool
 from threading import Lock
 from .common import clear_queue, Full, Empty
-from deepomatic.api.exceptions import BadStatus
+#from deepomatic.api.exceptions import BadStatus
 from .exceptions import DeepoCLIException
 
 
