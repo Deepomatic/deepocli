@@ -120,7 +120,7 @@ def setup_model_cmd_line_parser(mode, cmd, inference_parsers):
     if cmd in ['draw', 'blur']:
         subparser = inference_parsers
         subparser.add_argument('--from_file', type=str, dest='pred_from_file',
-                               help="Uses prediction from a Vulcan")
+                               help="Uses prediction from a Vulcan JSON")
 
     # Define model group for infer draw blur
     if cmd in ['infer', 'draw', 'blur']:
