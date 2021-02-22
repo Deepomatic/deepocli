@@ -25,6 +25,8 @@ def get_input(descriptor, kwargs):
             elif VideoInputData.is_valid(descriptor):
                 LOGGER.debug('Video input data detected for {}'.format(descriptor))
                 return VideoInputData(descriptor, **kwargs)
+            else:
+                raise DeepoInputError('Unsupported input file type')
         # Input directory containing images, videos, or json
         elif os.path.isdir(descriptor):
             LOGGER.debug('Directory input data detected for {}'.format(descriptor))

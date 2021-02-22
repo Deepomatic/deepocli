@@ -38,7 +38,7 @@ class UploadImageGreenlet(Greenlet):
                 # Update corresponding metadata
                 file_meta = file.get('meta', {})
                 file_metadata = file_meta.get('metadata', '{}')
-                if type(file_metadata) == str:
+                if type(file_metadata) is str:
                     file_metadata = json.loads(file_metadata)
                 if self._set_metadata_path:
                     file_metadata.update({'image_path': file['path']})
@@ -119,6 +119,8 @@ class DatasetFiles(object):
                                     continue
                                 batch = self.fill_flush_batch(url, batch, file_path, meta=line)
                                 total_files += 1
+                            else:
+                                LOGGER.error("Line {} invalid \"{}\". Skipping it".format(line_number, line))
                         else:
                             LOGGER.error("Line {} invalid \"{}\". Skipping it".format(line_number, line))
             else:
