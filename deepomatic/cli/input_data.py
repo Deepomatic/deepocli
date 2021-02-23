@@ -1,13 +1,11 @@
 import os
 import cv2
-import json
 import logging
 
 from .common import (SUPPORTED_IMAGE_INPUT_FORMAT, SUPPORTED_PROTOCOLS_INPUT,
                      SUPPORTED_VIDEO_INPUT_FORMAT, clear_queue)
 from .exceptions import DeepoFPSError, DeepoInputError, DeepoVideoOpenError
 from .frame import Frame
-from .json_schema import validate_json, JSONSchemaType
 from .thread_base import Thread
 
 
@@ -27,10 +25,6 @@ def get_input(descriptor, kwargs):
             elif VideoInputData.is_valid(descriptor):
                 LOGGER.debug('Video input data detected for {}'.format(descriptor))
                 return VideoInputData(descriptor, **kwargs)
-            # Studio json containing images location
-            elif StudioJsonInputData.is_valid(descriptor):
-                LOGGER.debug('Images/videos studio json input data detected for {}'.format(descriptor))
-                return StudioJsonInputData(descriptor, **kwargs)
             else:
                 raise DeepoInputError('Unsupported input file type')
         # Input directory containing images, videos, or json
@@ -287,9 +281,6 @@ class DirectoryInputData(InputData):
                 elif VideoInputData.is_valid(path):
                     LOGGER.debug('Video input data detected for {}'.format(path))
                     self._inputs.append(VideoInputData(path, **kwargs))
-                elif StudioJsonInputData.is_valid(path):
-                    LOGGER.debug('JSON input data detected for {}'.format(path))
-                    self._inputs.append(StudioJsonInputData(path, **kwargs))
                 elif self._recursive and self.is_valid(path):
                     LOGGER.debug('Directory input data detected for {}'.format(path))
                     self._inputs.append(DirectoryInputData(path, **kwargs))
@@ -347,66 +338,3 @@ class DeviceInputData(VideoInputData):
 
     def is_infinite(self):
         return True
-
-
-class StudioJsonInputData(InputData):
-
-    @classmethod
-    def is_valid(cls, descriptor):
-        try:
-            with open(descriptor) as json_file:
-                studio_json = json.load(json_file)
-            is_valid, error, schema_type = validate_json(studio_json)
-            is_valid_studio_json = True if is_valid and schema_type == JSONSchemaType.STUDIO else False
-            return is_valid_studio_json
-        except Exception:
-            return False
-
-    def __init__(self, descriptor, **kwargs):
-        super(StudioJsonInputData, self).__init__(descriptor, **kwargs)
-
-        # Check json validity then load it
-        if self.is_valid(descriptor):
-            with open(descriptor) as json_file:
-                studio_json = json.load(json_file)
-
-        # Go through all locations and check input validity
-        self._inputs = []
-        for studio_img in studio_json['images']:
-            img_location = studio_img['location']
-            # If the file does not exist, ignore it
-            if not os.path.isfile(img_location):
-                LOGGER.warning("Could not find file {} referenced in JSON {}, skipping it".format(img_location, descriptor))
-            # If the file is an image, add it
-            elif ImageInputData.is_valid(img_location):
-                LOGGER.debug("Found image file {} referenced in JSON {}".format(img_location, descriptor))
-                self._inputs.append(ImageInputData(img_location, **kwargs))
-            # If the file is a video, add it
-            elif VideoInputData.is_valid(img_location):
-                LOGGER.debug("Found video file {} referenced in JSON {}".format(img_location, descriptor))
-                self._inputs.append(VideoInputData(img_location, **kwargs))
-            # If the video is neither image or video, ignore it
-            else:
-                LOGGER.warning("File {} referenced in JSON {}"
-                               " is neither a proper image or video, skipping it".format(img_location, descriptor))
-
-    def _gen(self):
-        for source in self._inputs:
-            for frame in source:
-                yield frame
-
-    def __iter__(self):
-        self.gen = self._gen()
-        return self
-
-    def __next__(self):
-        return next(self.gen)
-
-    def get_frame_count(self):
-        return sum([_input.get_frame_count() for _input in self._inputs])
-
-    def get_fps(self):
-        return 1
-
-    def is_infinite(self):
-        return False

@@ -49,15 +49,14 @@ def get_all_files_with_ext(path, supported_ext, recursive=True):
     return all_files
 
 
-def get_all_files(paths, find_json=False, recursive=True):
-    """Retrieves all files from paths, either images or json if specified."""
+def get_all_files(paths, find_txt=False, recursive=True):
+    """Retrieves all files from paths, either images or txt if specified."""
     # Make sure path is a list
     paths = [paths] if not isinstance(paths, list) else paths
 
     # Go through all paths and find corresponding files
-    file_ext = ['.json'] if find_json else SUPPORTED_FILE_INPUT_FORMAT
+    file_ext = ['.txt'] if find_txt else SUPPORTED_FILE_INPUT_FORMAT
     files = []
-
     for path in paths:
         files += get_all_files_with_ext(path, file_ext, recursive)
 
@@ -75,13 +74,13 @@ class AddImageManager(object):
         org_slug = args.get('org')
 
         paths = args.get('input', [])
-        json_file = args.get('json_file', False)
+        txt_file = args.get('txt_file', False)
         recursive = args.get('recursive', False)
         set_metadata_path = args.get('set_metadata_path', False)
 
         # Scan to find all files
         files = get_all_files(
-            paths=paths, find_json=json_file, recursive=recursive)
+            paths=paths, find_txt=txt_file, recursive=recursive)
 
         # TODO: add a maxsize to avoid taking too much memories
         # This implies reading twice to get the total_files

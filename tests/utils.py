@@ -100,6 +100,15 @@ def load_json_from_file(json_pth):
     return json_data
 
 
+def load_studio_from_file(txt_path):
+    """Load data from studio txt file"""
+    ret = []
+    with open(txt_path, 'r') as txt_file:
+        for line in txt_file:
+            ret.append(json.loads(line))
+    return ret
+
+
 def save_json_to_file(json_data, json_pth):
     """Save data to a json"""
     with open(json_pth, 'w') as json_file:
@@ -108,11 +117,6 @@ def save_json_to_file(json_data, json_pth):
 
 def patch_json_for_tests(image_path, studio_json, vulcan_json):
     """Update the image path in test files"""
-    # Patch studio JSON
-    json_data = load_json_from_file(studio_json)
-    json_data['images'][0]['location'] = image_path
-    save_json_to_file(json_data, studio_json)
-
     # Patch vulcan JSON
     json_data = load_json_from_file(vulcan_json)
     json_data[0]['location'] = image_path
@@ -153,7 +157,7 @@ def init_files_setup():
 
     # Download JSON files
     vulcan_json_pth = download(tmpdir, base_test_url + 'vulcan.json', 'vulcan.json')
-    studio_json_pth = download(tmpdir, base_test_url + 'studio.json', 'studio.json')
+    studio_json_pth = download(tmpdir, base_test_url + 'studio-views.txt', 'studio-views.txt')
     offline_pred_pth = download(tmpdir, base_test_url + 'offline_predictions.json',
                                 'offline_predictions.json')
     img_dir_pth = os.path.dirname(img_pth)

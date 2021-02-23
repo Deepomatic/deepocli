@@ -91,32 +91,6 @@ def test_e2e_directory_draw(outputs, expected):
     run_draw(INPUTS['DIRECTORY'], outputs, **expected)
 
 
-# ------- Json Input Tests ------------------------------------------------------------------------------------------- #
-
-
-@pytest.mark.parametrize(
-    'outputs,expected',
-    [
-        ([OUTPUTS['IMAGE']], {'expect_nb_image': 1}),
-        ([OUTPUTS['VIDEO']], {'expect_nb_video': 1}),
-        ([OUTPUTS['STD']], {}),
-        ([OUTPUTS['INT_WILDCARD_JSON']], {'expect_nb_json': 1}),
-        ([OUTPUTS['STR_WILDCARD_JSON']], {'expect_nb_json': 1}),
-        ([OUTPUTS['NO_WILDCARD_JSON']], {'expect_nb_json': 1}),
-        ([OUTPUTS['DIR']], {'expect_nb_subdir': 1, 'expect_subir': {OUTPUTS['DIR']: {'expect_nb_image': 1}}}),
-        (OUTPUTS['ALL'], {
-            'expect_nb_json': 3,
-            'expect_nb_image': 1,
-            'expect_nb_video': 1,
-            'expect_nb_subdir': 1,
-            'expect_subir': {OUTPUTS['DIR']: {'expect_nb_image': 1}}
-        })
-    ]
-)
-def test_e2e_json_draw(outputs, expected):
-    run_draw(INPUTS['STUDIO_JSON'], outputs, **expected)
-
-
 # ------- Special Options Tests -------------------------------------------------------------------------------------- #
 
 
@@ -160,10 +134,6 @@ def test_e2e_image_draw_image_scores_and_labels():
 
 def test_e2e_image_draw_image_no_scores_and_no_labels():
     run_draw(INPUTS['IMAGE'], [OUTPUTS['IMAGE']], expect_nb_image=1, extra_opts=['--no_draw_scores', '--no_draw_labels'])
-
-
-def test_e2e_image_draw_json_studio():
-    run_draw(INPUTS['IMAGE'], [OUTPUTS['NO_WILDCARD_JSON']], expect_nb_json=1, studio_format=True, extra_opts=['--studio_format'])
 
 
 def test_e2e_image_draw_from_file():
