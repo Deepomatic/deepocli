@@ -228,5 +228,3 @@ def validate_json(json_data):
                 schema_type = schema_name
                 break
     return is_valid, error, schema_type
-
-
