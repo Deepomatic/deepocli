@@ -155,7 +155,8 @@ def init_files_setup():
     download(tmpdir, base_test_url + 'img.jpg', 'img_dir/img2.jpg')
     download(tmpdir, base_test_url + 'img.jpg', 'img_dir/subdir/img3.jpg')
 
-    unsupported_file = open(tmpdir + '/unsupported_data.abc', 'w')
+    img_pth2 = download(tmpdir, base_test_url + 'img.jpg', 'img_dir2/img2.jpg')
+    unsupported_file = open(tmpdir + '/img_dir2/unsupported_data.abc', 'w')
     unsupported_file.close()
 
     # Download JSON files
@@ -164,6 +165,7 @@ def init_files_setup():
     offline_pred_pth = download(tmpdir, base_test_url + 'offline_predictions.json',
                                 'offline_predictions.json')
     img_dir_pth = os.path.dirname(img_pth)
+    img_dir_pth2 = os.path.dirname(img_pth2)
 
     # Update json for path to match
     patch_json_for_tests(single_img_pth, studio_json_pth, vulcan_json_pth)
@@ -177,7 +179,7 @@ def init_files_setup():
         'STUDIO_JSON': studio_json_pth,
         'OFFLINE_PRED': offline_pred_pth,
         'VULCAN_JSON': vulcan_json_pth,
-        'UNSUPPORTED_FILE': unsupported_file,
+        'UNSUPPORTED_FILE': img_dir_pth2,
     }
     return INPUTS
 
