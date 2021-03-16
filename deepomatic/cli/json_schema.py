@@ -230,7 +230,3 @@ def validate_json(json_data):
     return is_valid, error, schema_type
 
 
-if __name__ == "__main__":
-    A  = {"id": None, "data": [{"file": "single_img.jpg"}], "metadata": "{\"framename\": \"single_img_fashion-v4\", \"original_filename\": \"single_img.jpg\"}", "annotations": [{"concepts": [{"name": "face", "bool": True}], "region": {"bbox": {"xmin": 0.43869650900900903, "ymin": 0.2527734375, "xmax": 0.5399892079579579, "ymax": 0.2527734375}}}, {"concepts": [{"name": "shoes", "bool": True}], "region": {"bbox": {"xmin": 0.39902402402402404, "ymin": 0.898765625, "xmax": 0.5808464714714715, "ymax": 0.9883515625}}}], "splits": ["train"]}
-    print("3B")
-    print(validate_json(A))
