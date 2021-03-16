@@ -157,7 +157,6 @@ def init_files_setup():
 
     unsupported_file = open(tmpdir + '/unsupported_data.abc', 'w')
     unsupported_file.close()
-    
 
     # Download JSON files
     vulcan_json_pth = download(tmpdir, base_test_url + 'vulcan.json', 'vulcan.json')
