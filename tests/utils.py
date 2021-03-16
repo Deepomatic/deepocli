@@ -5,7 +5,7 @@ import shutil
 import tempfile
 import requests
 from contextlib import contextmanager
-from deepomatic.cli.cli_parser import run
+#from deepomatic.cli.cli_parser import run
 
 
 # Define outputs
@@ -155,6 +155,10 @@ def init_files_setup():
     download(tmpdir, base_test_url + 'img.jpg', 'img_dir/img2.jpg')
     download(tmpdir, base_test_url + 'img.jpg', 'img_dir/subdir/img3.jpg')
 
+    unsupported_file = open(tmpdir+'/unsupported_data.abc', 'w')
+    unsupported_file.close()
+    
+
     # Download JSON files
     vulcan_json_pth = download(tmpdir, base_test_url + 'vulcan.json', 'vulcan.json')
     studio_json_pth = download(tmpdir, base_test_url + 'studio-views.txt', 'studio-views.txt')
@@ -174,6 +178,7 @@ def init_files_setup():
         'STUDIO_JSON': studio_json_pth,
         'OFFLINE_PRED': offline_pred_pth,
         'VULCAN_JSON': vulcan_json_pth,
+        'UNSUPPORTED_FILE': unsupported_file,
     }
     return INPUTS
 
@@ -232,3 +237,8 @@ def modified_environ(*remove, **update):
     finally:
         env.update(update_after)
         [env.pop(k) for k in remove_after]
+
+
+
+
+

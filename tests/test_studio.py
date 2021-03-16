@@ -1,4 +1,4 @@
-from deepomatic.cli.cli_parser import run
+#from deepomatic.cli.cli_parser import run
 from utils import init_files_setup
 
 # ------- Files setup ------------------------------------------------------------------------------------------------ #
@@ -22,6 +22,10 @@ def test_2e2_image_upload():
     run_add_images(INPUTS['IMAGE'])
 
 
+def test_2e2_unsupported_file_upload():
+    run_add_images(INPUTS['UNSUPPORTED_FILE'])
+
+
 def test_2e2_directory_upload():
     run_add_images(INPUTS['DIRECTORY'])
 
@@ -39,3 +43,4 @@ def test_2e2_directory_upload_verbose():
 
 def test_2e2_directory_upload_recursive():
     run_add_images(INPUTS['DIRECTORY'], extra_opts=['--recursive'])
+
