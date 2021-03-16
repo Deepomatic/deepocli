@@ -155,7 +155,7 @@ def init_files_setup():
     download(tmpdir, base_test_url + 'img.jpg', 'img_dir/img2.jpg')
     download(tmpdir, base_test_url + 'img.jpg', 'img_dir/subdir/img3.jpg')
 
-    unsupported_file = open(tmpdir+'/unsupported_data.abc', 'w')
+    unsupported_file = open(tmpdir + '/unsupported_data.abc', 'w')
     unsupported_file.close()
     
 
@@ -237,8 +237,3 @@ def modified_environ(*remove, **update):
     finally:
         env.update(update_after)
         [env.pop(k) for k in remove_after]
-
-
-
-
-

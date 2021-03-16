@@ -43,4 +43,3 @@ def test_2e2_directory_upload_verbose():
 
 def test_2e2_directory_upload_recursive():
     run_add_images(INPUTS['DIRECTORY'], extra_opts=['--recursive'])
-
