@@ -5,7 +5,7 @@ import shutil
 import tempfile
 import requests
 from contextlib import contextmanager
-#from deepomatic.cli.cli_parser import run
+from deepomatic.cli.cli_parser import run
 
 
 # Define outputs
