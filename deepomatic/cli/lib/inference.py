@@ -120,7 +120,8 @@ class DrawImagePostprocessing(object):
 
                     # Finally draw everything
                     cv2.rectangle(output_image, background_corner1, background_corner2, background_color, -1)
-                    cv2.putText(output_image, label, text_corner, cv2.FONT_HERSHEY_SIMPLEX, self._font_scale, TEXT_COLOR, self._font_thickness)
+                    cv2.putText(output_image, label, text_corner, cv2.FONT_HERSHEY_SIMPLEX,
+                                self._font_scale, TEXT_COLOR, self._font_thickness)
             elif label != '':
                 # First get ideal corners
                 if tag_drawn == 0:
