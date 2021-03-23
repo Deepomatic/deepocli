@@ -149,6 +149,7 @@ def setup_model_cmd_line_parser(mode, cmd, inference_parsers):
         group.add_argument('-ft', '--font_thickness', dest='font_thickness', type=int,
                            help="Text font thickness, must be an int and defaults to 1",
                            default=1)
+        group.add_argument('--unique_background_color', dest='background_color', help="If true, draws labels with a unique red background color. By default, the background is red/orange/green depending on the threshold set.", action="store_true")
         score_group = group.add_mutually_exclusive_group()
         score_group.add_argument('-S', '--draw_scores', dest='draw_scores', help="Overlay the prediction scores. Default behavior.",
                                  action="store_true")
