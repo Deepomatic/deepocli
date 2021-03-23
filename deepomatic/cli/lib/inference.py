@@ -54,7 +54,7 @@ class DrawImagePostprocessing(object):
         self._font_scale = kwargs['font_scale']
         self._font_thickness = kwargs['font_thickness']
         self._threshold = kwargs['threshold'] if kwargs['threshold'] is not None else 0
-        self._no_background_color = kwargs['background_color']
+        self._no_background_color = kwargs['no_background_color']
 
     def __call__(self, frame):
         frame.output_image = frame.image.copy()
