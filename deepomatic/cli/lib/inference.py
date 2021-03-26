@@ -24,8 +24,7 @@ LOGGER = logging.getLogger(__name__)
 SCORE_DECIMAL_PRECISION = 4             # Prediction score decimal number precision
 FONT_SCALE = 0.5                        # Size of the font we draw in the image_output
 BOX_COLOR = (255, 0, 0)                 # Bounding box color (BGR)
-BACKGROUND_COLOR = (0, 0, 255)          # Text background color (BGR)
-DARK_GREEN_COLOR = (0, 180, 0)
+DARK_GREEN_COLOR = (0, 180, 0)          # Text background color (BGR)
 DARK_RED_COLOR = (0, 0, 200)
 ORANGE_COLOR = (0, 110, 250)
 TEXT_COLOR = (255, 255, 255)            # Text color (BGR)
@@ -54,7 +53,7 @@ class DrawImagePostprocessing(object):
         self._font_scale = kwargs['font_scale']
         self._font_thickness = kwargs['font_thickness']
         self._threshold = kwargs['threshold'] if kwargs['threshold'] is not None else 0
-        self._no_background_color = kwargs['no_background_color']
+        self._font_bg_color = tuple(kwargs['font_bg_color'])
 
     def __call__(self, frame):
         frame.output_image = frame.image.copy()
@@ -63,6 +62,7 @@ class DrawImagePostprocessing(object):
         width = output_image.shape[1]
         tag_drawn = 0  # Used to store the number of tags already drawn
         for pred in frame.predictions['outputs'][0]['labels']['predicted']:
+            score = pred['score']
             # Build legend
             label = u''
             if self._draw_labels:
@@ -70,7 +70,7 @@ class DrawImagePostprocessing(object):
             if self._draw_labels and self._draw_scores:
                 label += ' '
             if self._draw_scores:
-                label += str(round(pred['score'], SCORE_DECIMAL_PRECISION))
+                label += str(round(score, SCORE_DECIMAL_PRECISION))
 
             # Make sure labels are ascii because cv2.FONT_HERSHEY_SIMPLEX doesn't support non-ascii
             label = unidecode(label)
@@ -78,9 +78,8 @@ class DrawImagePostprocessing(object):
             # Get text draw parameters
             ret, baseline = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, self._font_scale, self._font_thickness)
 
-            score = pred.get('score')
-            if self._no_background_color:
-                background_color = BACKGROUND_COLOR
+            if self._font_bg_color:
+                background_color = self._font_bg_color
             # Get background color depending on score
             else:
                 interval = (1 - self._threshold) / 3
