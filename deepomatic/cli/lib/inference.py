@@ -24,9 +24,6 @@ LOGGER = logging.getLogger(__name__)
 SCORE_DECIMAL_PRECISION = 4             # Prediction score decimal number precision
 FONT_SCALE = 0.5                        # Size of the font we draw in the image_output
 BOX_COLOR = (255, 0, 0)                 # Bounding box color (BGR)
-DARK_GREEN_COLOR = (0, 180, 0)          # Text background color (BGR)
-DARK_RED_COLOR = (0, 0, 200)
-ORANGE_COLOR = (0, 110, 250)
 TEXT_COLOR = (255, 255, 255)            # Text color (BGR)
 TAG_TEXT_CORNER = (10, 10)              # Beginning of text tag column (pixel)
 TAG_TEXT_INTERSPACE = 5                 # Vertical space between tags in tag column (pixel)
@@ -53,7 +50,7 @@ class DrawImagePostprocessing(object):
         self._font_scale = kwargs['font_scale']
         self._font_thickness = kwargs['font_thickness']
         self._threshold = kwargs['threshold'] if kwargs['threshold'] is not None else 0
-        self._font_bg_color = tuple(kwargs['font_bg_color'])
+        self._font_bg_color = kwargs['font_bg_color']
 
     def __call__(self, frame):
         frame.output_image = frame.image.copy()
@@ -79,16 +76,11 @@ class DrawImagePostprocessing(object):
             ret, baseline = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, self._font_scale, self._font_thickness)
 
             if self._font_bg_color:
-                background_color = self._font_bg_color
-            # Get background color depending on score
+                background_color = tuple(self._font_bg_color)
+            # Get background color depending on score with a gradient from green to red depending on the threshold set
             else:
-                interval = (1 - self._threshold) / 3
-                if score < interval:
-                    background_color = DARK_RED_COLOR
-                elif score > 1 - interval:
-                    background_color = DARK_GREEN_COLOR
-                else:
-                    background_color = ORANGE_COLOR
+                background_color = (0, 250 * (score - self._threshold) / (1 - self._threshold),
+                                    250 * (1 + self._threshold - score) / (1 - self._threshold))
 
             # If we have a bounding box
             roi = pred.get('roi')
