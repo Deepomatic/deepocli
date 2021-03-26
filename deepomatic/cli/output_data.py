@@ -205,7 +205,7 @@ class VideoOutputData(OutputData):
         elif ext == '.mp4':
             fourcc = cv2.VideoWriter_fourcc('m', 'p', '4', 'v')
         else:
-            raise DeepoUnknownOutputError('Unsupported video output extension')
+            raise DeepoUnknownOutputError(f'Unsupported video output extension: {ext}')
         self._fourcc = fourcc
         self._fps = kwargs['output_fps']
         self._writer = None
