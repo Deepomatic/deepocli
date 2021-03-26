@@ -135,6 +135,12 @@ def test_e2e_image_draw_image_scores_and_labels():
 def test_e2e_image_draw_image_no_scores_and_no_labels():
     run_draw(INPUTS['IMAGE'], [OUTPUTS['IMAGE']], expect_nb_image=1, extra_opts=['--no_draw_scores', '--no_draw_labels'])
 
+def test_e2e_image_draw_image_font_scale_and_thickness():
+    run_draw(INPUTS['IMAGE'], [OUTPUTS['IMAGE']], expect_nb_image=1, extra_opts=['-fs', '2'])
+    run_draw(INPUTS['IMAGE'], [OUTPUTS['IMAGE']], expect_nb_image=1, extra_opts=['-ft', '2'])
+
+def test_e2e_image_draw_image_font_bg_color():
+    run_draw(INPUTS['IMAGE'], [OUTPUTS['IMAGE']], expect_nb_image=1, extra_opts=['--font_bg_color', '255 0 0'])
 
 def test_e2e_image_draw_from_file():
     run_draw(INPUTS['VIDEO'], [OUTPUTS['VIDEO']], expect_nb_video=1, extra_opts=['--from_file', INPUTS['OFFLINE_PRED']])
