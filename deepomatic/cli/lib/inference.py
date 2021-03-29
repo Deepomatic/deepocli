@@ -1,6 +1,7 @@
 import sys
 import cv2
 import logging
+import numpy as np
 import threading
 from text_unidecode import unidecode
 from tqdm import tqdm
@@ -24,7 +25,6 @@ LOGGER = logging.getLogger(__name__)
 SCORE_DECIMAL_PRECISION = 4             # Prediction score decimal number precision
 FONT_SCALE = 0.5                        # Size of the font we draw in the image_output
 BOX_COLOR = (255, 0, 0)                 # Bounding box color (BGR)
-BACKGROUND_COLOR = (0, 0, 255)          # Text background color (BGR)
 TEXT_COLOR = (255, 255, 255)            # Text color (BGR)
 TAG_TEXT_CORNER = (10, 10)              # Beginning of text tag column (pixel)
 TAG_TEXT_INTERSPACE = 5                 # Vertical space between tags in tag column (pixel)
@@ -48,6 +48,10 @@ class DrawImagePostprocessing(object):
     def __init__(self, **kwargs):
         self._draw_labels = kwargs['draw_labels']
         self._draw_scores = kwargs['draw_scores']
+        self._font_scale = kwargs['font_scale']
+        self._font_thickness = kwargs['font_thickness']
+        self._threshold = kwargs['threshold'] if kwargs['threshold'] is not None else 0
+        self._font_bg_color = kwargs['font_bg_color']
 
     def __call__(self, frame):
         frame.output_image = frame.image.copy()
@@ -56,6 +60,7 @@ class DrawImagePostprocessing(object):
         width = output_image.shape[1]
         tag_drawn = 0  # Used to store the number of tags already drawn
         for pred in frame.predictions['outputs'][0]['labels']['predicted']:
+            score = pred['score']
             # Build legend
             label = u''
             if self._draw_labels:
@@ -63,14 +68,21 @@ class DrawImagePostprocessing(object):
             if self._draw_labels and self._draw_scores:
                 label += ' '
             if self._draw_scores:
-                label += str(round(pred['score'], SCORE_DECIMAL_PRECISION))
+                label += str(round(score, SCORE_DECIMAL_PRECISION))
 
             # Make sure labels are ascii because cv2.FONT_HERSHEY_SIMPLEX doesn't support non-ascii
             label = unidecode(label)
 
             # Get text draw parameters
-            ret, baseline = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, FONT_SCALE, 1)
+            ret, baseline = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, self._font_scale, self._font_thickness)
 
+            if self._font_bg_color:
+                background_color = tuple(self._font_bg_color)
+            # Get background color depending on score with a gradient from green to red depending on the threshold set
+            else:
+                hsv_color = (60 * (score - self._threshold) / (1 - self._threshold), 255, 200)
+                background_color = cv2.cvtColor(np.uint8([[hsv_color]]), cv2.COLOR_HSV2BGR).flatten()
+                background_color = background_color.astype('float64')
             # If we have a bounding box
             roi = pred.get('roi')
             if roi is not None:
@@ -99,8 +111,9 @@ class DrawImagePostprocessing(object):
                     text_corner = substract_tuple(text_corner, (x_offset, y_offset))
 
                     # Finally draw everything
-                    cv2.rectangle(output_image, background_corner1, background_corner2, BACKGROUND_COLOR, -1)
-                    cv2.putText(output_image, label, text_corner, cv2.FONT_HERSHEY_SIMPLEX, FONT_SCALE, TEXT_COLOR, 1)
+                    cv2.rectangle(output_image, background_corner1, background_corner2, background_color, -1)
+                    cv2.putText(output_image, label, text_corner, cv2.FONT_HERSHEY_SIMPLEX,
+                                self._font_scale, TEXT_COLOR, self._font_thickness)
             elif label != '':
                 # First get ideal corners
                 if tag_drawn == 0:
@@ -111,8 +124,8 @@ class DrawImagePostprocessing(object):
                 text_corner = (background_corner1[0], background_corner1[1] + ret[1])
 
                 # Finally draw everything
-                cv2.rectangle(output_image, background_corner1, background_corner2, BACKGROUND_COLOR, -1)
-                cv2.putText(output_image, label, text_corner, cv2.FONT_HERSHEY_SIMPLEX, FONT_SCALE, TEXT_COLOR, 1)
+                cv2.rectangle(output_image, background_corner1, background_corner2, background_color, -1)
+                cv2.putText(output_image, label, text_corner, cv2.FONT_HERSHEY_SIMPLEX, self._font_scale, TEXT_COLOR, self._font_thickness)
                 tag_drawn += 1
 
 
