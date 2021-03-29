@@ -142,7 +142,7 @@ def test_e2e_image_draw_image_font_scale_and_thickness():
 
 
 def test_e2e_image_draw_image_font_bg_color():
-    run_draw(INPUTS['IMAGE'], [OUTPUTS['IMAGE']], expect_nb_image=1, extra_opts=['--font_bg_color', '255 0 0'])
+    run_draw(INPUTS['IMAGE'], [OUTPUTS['IMAGE']], expect_nb_image=1, extra_opts=['--font_bg_color', '255', '0', '0'])
 
 
 def test_e2e_image_draw_from_file():
