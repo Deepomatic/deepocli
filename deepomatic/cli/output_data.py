@@ -204,6 +204,8 @@ class VideoOutputData(OutputData):
             fourcc = cv2.VideoWriter_fourcc('X', 'V', 'I', 'D')
         elif ext == '.mp4':
             fourcc = cv2.VideoWriter_fourcc('m', 'p', '4', 'v')
+        else:
+            raise Exception("Unsupported video output extension {}".format(ext))
         self._fourcc = fourcc
         self._fps = kwargs['output_fps']
         self._writer = None
