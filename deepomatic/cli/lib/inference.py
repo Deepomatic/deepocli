@@ -81,7 +81,8 @@ class DrawImagePostprocessing(object):
             # Get background color depending on score with a gradient from green to red depending on the threshold set
             else:
                 hsv_color = (60 * (score - self._threshold) / (1 - self._threshold), 255, 200)
-                background_color = tuple(int(i) for i in cv2.cvtColor(np.uint8([[hsv_color]]), cv2.COLOR_HSV2BGR).flatten())
+                background_color = cv2.cvtColor(np.uint8([[hsv_color]]), cv2.COLOR_HSV2BGR).flatten()
+                background_color = background_color.astype('float64')
             # If we have a bounding box
             roi = pred.get('roi')
             if roi is not None:
