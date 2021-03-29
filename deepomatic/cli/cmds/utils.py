@@ -62,6 +62,7 @@ class BuildDict(argparse.Action):
     """
     This class is used in argparse. It will transform a chain of name:values into a dict.
     """
+
     def __init__(self, option_strings, dest, nargs=None, **kwargs):
         self._nargs = nargs
         super(BuildDict, self).__init__(option_strings, dest, nargs=nargs, **kwargs)
@@ -143,6 +144,16 @@ def setup_model_cmd_line_parser(mode, cmd, inference_parsers):
     if cmd == "draw":
         # Define draw specific options
         group = inference_parsers.add_argument_group('drawing arguments')
+        group.add_argument('-fs', '--font_scale', dest='font_scale', type=float,
+                           help="Text font scale, defaults to 0.5",
+                           default=0.5)
+        group.add_argument('-ft', '--font_thickness', dest='font_thickness', type=int,
+                           help="Text font thickness, must be an int and defaults to 1",
+                           default=1)
+        group.add_argument('--font_bg_color', default=None, nargs=3,
+                           help="Expect a B G R value. If set, draws labels with a unique background color."
+                                " By default, the background is red/orange/green depending on the threshold set"
+                                " and the prediction score.", type=int)
         score_group = group.add_mutually_exclusive_group()
         score_group.add_argument('-S', '--draw_scores', dest='draw_scores', help="Overlay the prediction scores. Default behavior.",
                                  action="store_true")

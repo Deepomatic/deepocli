@@ -199,11 +199,13 @@ class VideoOutputData(OutputData):
 
     def __init__(self, descriptor, **kwargs):
         super(VideoOutputData, self).__init__(descriptor, **kwargs)
-        ext = os.path.splitext(descriptor)[1]
+        ext = os.path.splitext(descriptor)[1].lower()
         if ext == '.avi':
             fourcc = cv2.VideoWriter_fourcc('X', 'V', 'I', 'D')
         elif ext == '.mp4':
             fourcc = cv2.VideoWriter_fourcc('m', 'p', '4', 'v')
+        else:
+            raise Exception("Unsupported video output extension {}".format(ext))
         self._fourcc = fourcc
         self._fps = kwargs['output_fps']
         self._writer = None
