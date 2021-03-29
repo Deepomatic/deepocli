@@ -279,7 +279,7 @@ class TestSite(object):
         args = "site intervention status -i {} --api_url {}".format(intervention_id, customer_api_url)
         result = call_deepo(args, api_key=customer_api_key)
         assert set(result.keys()) == set(['id', 'name', 'config_id', 'questions', 'answers', 'site_id',
-                                          'app_version_id', 'start_date', 'end_date', 'workflow_parameters', 'update_date',
+                                          'app_version_id', 'create_date', 'workflow_parameters', 'update_date',
                                           'review_date', 'tags', 'assigned_user_id', 'enabled', 'metadata'])
         args = "site intervention delete -i {} --api_url {}".format(intervention_id, customer_api_url)
         result = call_deepo(args, api_key=customer_api_key)
