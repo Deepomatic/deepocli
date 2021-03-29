@@ -151,7 +151,9 @@ def setup_model_cmd_line_parser(mode, cmd, inference_parsers):
                            help="Text font thickness, must be an int and defaults to 1",
                            default=1)
         group.add_argument('--font_bg_color', default=None, nargs=3,
-                           help="Expect a B G R value. If set, draws labels with a unique background color. By default, the background is red/orange/green depending on the threshold set and the prediction score.", type=int)
+                           help="Expect a B G R value. If set, draws labels with a unique background color."
+                                " By default, the background is red/orange/green depending on the threshold set"
+                                " and the prediction score.", type=int)
         score_group = group.add_mutually_exclusive_group()
         score_group.add_argument('-S', '--draw_scores', dest='draw_scores', help="Overlay the prediction scores. Default behavior.",
                                  action="store_true")
