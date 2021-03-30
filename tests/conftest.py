@@ -1,6 +1,6 @@
 from gevent.monkey import patch_all
 patch_all(thread=False, time=False, subprocess=False)
-import pytest
+import pytest  # noqa: E402
 
 
 @pytest.fixture
