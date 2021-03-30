@@ -33,8 +33,13 @@ class Client(object):
 def get_all_files_with_ext(path, supported_ext, recursive=True):
     """Scans path to find all supported extensions."""
     all_files = []
-    if os.path.isfile(path) and os.path.splitext(path)[1].lower() in supported_ext:
-        all_files.append(path)
+    if os.path.isfile(path):
+        ext_file = os.path.splitext(path)[1].lower()
+        if ext_file not in supported_ext:
+            LOGGER.warning(
+                "The path {} is neither a supported file {} nor a directory, it has been ignored.".format(path, supported_ext))
+        else:
+            all_files.append(path)
     elif os.path.isdir(path):
         for file in os.listdir(path):
             file_path = os.path.join(path, file)
@@ -42,9 +47,6 @@ def get_all_files_with_ext(path, supported_ext, recursive=True):
                 all_files.extend(get_all_files_with_ext(file_path, supported_ext))
             elif os.path.isfile(file_path) and os.path.splitext(file_path)[1].lower() in supported_ext:
                 all_files.append(file_path)
-    else:
-        raise RuntimeError(
-            "The path {} is neither a supported file {} nor a directory".format(path, supported_ext))
 
     return all_files
 
