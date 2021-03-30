@@ -161,6 +161,9 @@ class JSONSchemaType:
         ],
         "additionalProperties": False,
         "properties": {
+            "id": {
+                "type": ["number", "null"]
+            },
             "data": {
                 "type": "array",
                 "items": {
