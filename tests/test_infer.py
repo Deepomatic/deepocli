@@ -35,7 +35,7 @@ def run_infer(*args, **kwargs):
         })
     ]
 )
-def test_e2e_image_infer(outputs, expected):
+def test_e2e_image_infer(outputs, expected, no_error_logs):
     run_infer(INPUTS['IMAGE'], outputs, **expected)
 
 
@@ -61,7 +61,7 @@ def test_e2e_image_infer(outputs, expected):
         })
     ]
 )
-def test_e2e_video_infer(outputs, expected):
+def test_e2e_video_infer(outputs, expected, no_error_logs):
     run_infer(INPUTS['VIDEO'], outputs, **expected)
 
 
@@ -87,24 +87,28 @@ def test_e2e_video_infer(outputs, expected):
         })
     ]
 )
-def test_e2e_directory_infer(outputs, expected):
+def test_e2e_directory_infer(outputs, expected, no_error_logs):
     run_infer(INPUTS['DIRECTORY'], outputs, **expected)
 
 
 # # ------- Special Options Tests -------------------------------------------------------------------------------------- #
 
 
-def test_e2e_image_infer_json_verbose():
-    run_infer(INPUTS['IMAGE'], [OUTPUTS['NO_WILDCARD_JSON']], expect_nb_json=1, extra_opts=['--verbose'])
+def test_e2e_image_infer_json_verbose(no_error_logs):
+    run_infer(INPUTS['IMAGE'], [OUTPUTS['NO_WILDCARD_JSON']], expect_nb_json=1,
+              extra_opts=['--verbose'])
 
 
-def test_e2e_image_infer_json_threshold():
-    run_infer(INPUTS['IMAGE'], [OUTPUTS['NO_WILDCARD_JSON']], expect_nb_json=1, extra_opts=['-t', '0.5'])
+def test_e2e_image_infer_json_threshold(no_error_logs):
+    run_infer(INPUTS['IMAGE'], [OUTPUTS['NO_WILDCARD_JSON']], expect_nb_json=1,
+              extra_opts=['-t', '0.5'])
 
 
 def test_e2e_image_corrupted_infer_json():
-    run_infer(INPUTS['IMAGE_CORRUPTED'], [OUTPUTS['INT_WILDCARD_JSON']], expect_nb_json=0)
+    run_infer(INPUTS['IMAGE_CORRUPTED'], [OUTPUTS['INT_WILDCARD_JSON']],
+              expect_nb_json=0)
 
 
-def test_e2e_image_infer_reproduce_input_dir_struct():
-    run_infer(INPUTS['DIRECTORY'], [OUTPUTS['STR_WILDCARD_JSON']], expect_nb_json=2, expect_nb_subdir=1, extra_opts=['--recursive'])
+def test_e2e_image_infer_reproduce_input_dir_struct(no_error_logs):
+    run_infer(INPUTS['DIRECTORY'], [OUTPUTS['STR_WILDCARD_JSON']], expect_nb_json=2,
+              expect_nb_subdir=1, extra_opts=['--recursive'])

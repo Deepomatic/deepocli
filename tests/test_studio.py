@@ -18,28 +18,28 @@ def run_add_images(test_input, extra_opts=None):
 # ------- Studio Upload Tests----------------------------------------------------------------------------------------- #
 
 
-def test_2e2_image_upload():
+def test_2e2_image_upload(no_error_logs):
     run_add_images(INPUTS['IMAGE'])
 
 
-def test_2e2_unsupported_file_upload():
+def test_2e2_unsupported_file_upload(no_error_logs):
     run_add_images(INPUTS['UNSUPPORTED_FILE'])
 
 
-def test_2e2_directory_upload():
+def test_2e2_directory_upload(no_error_logs):
     run_add_images(INPUTS['DIRECTORY'])
 
 
-def test_2e2_studio_json_upload():
+def test_2e2_studio_json_upload(no_error_logs):
     run_add_images(INPUTS['STUDIO_JSON'], extra_opts=['--txt'])
 
 
 # ------- Special Options Tests -------------------------------------------------------------------------------------- #
 
 
-def test_2e2_directory_upload_verbose():
+def test_2e2_directory_upload_verbose(no_error_logs):
     run_add_images(INPUTS['DIRECTORY'], extra_opts=['--verbose'])
 
 
-def test_2e2_directory_upload_recursive():
+def test_2e2_directory_upload_recursive(no_error_logs):
     run_add_images(INPUTS['DIRECTORY'], extra_opts=['--recursive'])
