@@ -25,7 +25,7 @@ def run_noop(*args, **kwargs):
         ([OUTPUTS['DIR']], {'expect_nb_subdir': 1, 'expect_subir': {OUTPUTS['DIR']: {'expect_nb_image': 1}}}),
     ]
 )
-def test_e2e_image_infer(outputs, expected):
+def test_e2e_image_infer(outputs, expected, no_error_logs):
     run_noop(INPUTS['IMAGE'], outputs, **expected)
 
 
@@ -41,7 +41,7 @@ def test_e2e_image_infer(outputs, expected):
         ([OUTPUTS['DIR']], {'expect_nb_subdir': 1, 'expect_subir': {OUTPUTS['DIR']: {'expect_nb_image': 21}}}),
     ]
 )
-def test_e2e_video_infer(outputs, expected):
+def test_e2e_video_infer(outputs, expected, no_error_logs):
     run_noop(INPUTS['VIDEO'], outputs, **expected)
 
 
@@ -57,5 +57,5 @@ def test_e2e_video_infer(outputs, expected):
         ([OUTPUTS['DIR']], {'expect_nb_subdir': 1, 'expect_subir': {OUTPUTS['DIR']: {'expect_nb_image': 2, 'expect_nb_subdir': 1}}}),
     ]
 )
-def test_e2e_directory_infer(outputs, expected):
+def test_e2e_directory_infer(outputs, expected, no_error_logs):
     run_noop(INPUTS['DIRECTORY'], outputs, **expected)

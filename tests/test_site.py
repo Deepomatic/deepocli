@@ -158,7 +158,7 @@ def site():
 
 
 class TestSite(object):
-    def test_all(self):
+    def test_all(self, no_error_logs):
         with setup() as manager:
             # create site
             app_version_id = str(uuid4())
@@ -230,7 +230,7 @@ class TestSite(object):
             manager.uninstall(site_id)
             assert(site_id not in manager.list())
 
-    def test_site(self):
+    def test_site(self, no_error_logs):
         with app_version() as (app_version_id, app_id):
             args = "site create -n test_si -d xyz -v {}".format(app_version_id)
             result = call_deepo(args)
@@ -245,7 +245,7 @@ class TestSite(object):
             message = call_deepo(args)
             assert message == 'Site{} deleted'.format(site_id)
 
-    def test_site_deployment_manifest(self):
+    def test_site_deployment_manifest(self, no_error_logs):
         for service in ['customer-api', 'camera-server']:
             with site() as (site_id, app_version_id, app_id):
                 # add extra service
@@ -270,7 +270,7 @@ class TestSite(object):
                 if service == 'customer-api':
                     assert 'kind: Ingress' in message
 
-    def test_intervention(self):
+    def test_intervention(self, no_error_logs):
         args = "site intervention create -n ciao --api_url {} -m hello:2".format(customer_api_url)
         result = call_deepo(args, api_key=customer_api_key)
         intervention_id = result

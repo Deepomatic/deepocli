@@ -51,7 +51,7 @@ def app_version():
 
 
 class TestPlatform(object):
-    def test_app(self):
+    def test_app(self, no_error_logs):
         args = "platform app create -n test -d abc -w {} -c {}".format(WORKFLOW_PATH, CUSTOM_NODES_PATH)
         result = call_deepo(args)
         message, app_id = result.split(':')
@@ -65,7 +65,7 @@ class TestPlatform(object):
         message = call_deepo(args)
         assert message == 'App{} deleted'.format(app_id)
 
-    def test_app_without_workflow(self):
+    def test_app_without_workflow(self, no_error_logs):
 
         args = "platform app create -n test -d abc"
         with pytest.raises(ValueError):
@@ -90,7 +90,7 @@ class TestPlatform(object):
             # workflow yaml and specs are exclusive
             result = call_deepo(args)
 
-    def test_appversion(self):
+    def test_appversion(self, no_error_logs):
         with app() as app_id:
             args = "platform app-version create -n test_av -d abc -a {} -r 44363 44364".format(app_id)
             result = call_deepo(args)
@@ -105,7 +105,7 @@ class TestPlatform(object):
             message = call_deepo(args)
             assert message == 'App version{} deleted'.format(app_version_id)
 
-    def test_service(self):
+    def test_service(self, no_error_logs):
         for service in ['customer-api', 'camera-server']:
             with app() as app_id:
                 args = "platform service create -a {} -n {}".format(app_id, service)
