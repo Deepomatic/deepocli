@@ -12,7 +12,7 @@ class BlurCommand(Command):
     def setup(self, subparsers):
         parser = super(BlurCommand, self).setup(subparsers)
 
-        setup_model_cmd_line_parser("site", "model", "blur", parser)
+        setup_model_cmd_line_parser("site", "workflow", "blur", parser)
         return parser
 
     def run(self, **kwargs):

@@ -27,3 +27,4 @@ class SiteCommand(Command):
 
     from .intervention import InterventionCommand
     from .model import ModelCommand
+    from .workflow import WorkflowCommand

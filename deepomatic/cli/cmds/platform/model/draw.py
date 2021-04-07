@@ -11,7 +11,7 @@ class DrawCommand(Command):
 
     def setup(self, subparsers):
         parser = super(DrawCommand, self).setup(subparsers)
-        setup_model_cmd_line_parser("platform", "draw", parser)
+        setup_model_cmd_line_parser("platform", "model", "draw", parser)
         return parser
 
     def run(self, **kwargs):

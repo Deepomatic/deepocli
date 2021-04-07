@@ -78,8 +78,9 @@ class BuildDict(argparse.Action):
         setattr(namespace, self.dest, dic)
 
 
-def setup_model_cmd_line_parser(mode, cmd, inference_parsers):
+def setup_model_cmd_line_parser(mode, inference_type, cmd, inference_parsers):
     assert mode in ['site', 'platform']
+    assert inference_type in ['model', 'workflow']
     assert cmd in ['infer', 'draw', 'blur', 'noop']
 
     # Define input group for infer draw blur noop
@@ -136,10 +137,15 @@ def setup_model_cmd_line_parser(mode, cmd, inference_parsers):
     # Define onprem group for infer draw blur
     if mode == "site" and cmd in ['infer', 'draw', 'blur']:
         group = inference_parsers.add_argument_group('on-premises arguments')
-        group.add_argument('-u', '--amqp_url', required=True,
-                           help="AMQP url for on-premises deployments.")
-        group.add_argument('-k', '--routing_key', required=True,
-                           help="Recognition routing key for on-premises deployments.")
+        if inference_type == 'model':
+            group.add_argument('-u', '--amqp_url', required=True,
+                            help="AMQP url for on-premises deployments.")
+            group.add_argument('-k', '--routing_key', required=True,
+                            help="Recognition routing key for on-premises deployments.")
+        elif inference_type == 'workflow':
+            group.add_argument('-w', '--workflow_server', required=True,
+                               help="Workflow server URI")
+            
 
     if cmd == "draw":
         # Define draw specific options
