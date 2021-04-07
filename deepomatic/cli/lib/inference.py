@@ -35,11 +35,17 @@ def substract_tuple(tuple1, tuple2):
 
 
 def get_coordinates_from_roi(roi, width, height):
-    bbox = roi['bbox']
-    xmin = int(bbox['xmin'] * width)
-    ymin = int(bbox['ymin'] * height)
-    xmax = int(bbox['xmax'] * width)
-    ymax = int(bbox['ymax'] * height)
+    if 'bbox' in roi:
+        bbox = roi['bbox']
+        xmin = int(bbox['xmin'] * width)
+        ymin = int(bbox['ymin'] * height)
+        xmax = int(bbox['xmax'] * width)
+        ymax = int(bbox['ymax'] * height)
+    else:
+        xmin = 0
+        ymin = 0
+        xmax = width
+        ymax = height
     return (xmin, ymin, xmax, ymax)
 
 
