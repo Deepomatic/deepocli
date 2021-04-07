@@ -4,7 +4,7 @@ from ..exceptions import DeepoRPCRecognitionError, DeepoRPCUnavailableError
 
 
 def import_rpc_package(should_raise=False):
-    rpc, protobuf = None, None
+    rpc, protobuf, grpc = None, None, None
     try:
         from deepomatic import rpc
     except ImportError:
