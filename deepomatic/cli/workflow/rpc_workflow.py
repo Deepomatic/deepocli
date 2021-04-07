@@ -20,16 +20,19 @@ def import_rpc_package(should_raise=False):
         from deepomatic.rpc.helpers.v07_proto import create_recognition_command_mix  # noqa: F401
         from deepomatic.rpc.helpers.proto import create_v07_images_command  # noqa: F401
         from deepomatic.rpc.buffers.protobuf.cli.Message_pb2 import Message  # noqa: F401
+        from deepomatic.rpc.buffers.protobuf.workflows import (WorkflowExecution_pb2_grpc,
+                                                               WorkflowExecution_pb2)
         from google import protobuf  # noqa: F401
+        import grpc  # noqa: F401
         import google.protobuf.json_format  # noqa: F401
     except ImportError as e:
         if should_raise:
             raise DeepoRPCUnavailableError('RPC not up-to-date: %s' % e)
 
-    return rpc, protobuf
+    return rpc, protobuf, grpc
 
 
-rpc, protobuf = import_rpc_package()
+rpc, protobuf, _ = import_rpc_package()
 
 
 # decorator that prevents class instanciation when deepomatic rpc is not available
@@ -38,6 +41,7 @@ def requires_deepomatic_rpc(cls):
         def __init__(self, *args, **kwargs):
             # checks that rpc is installed and up-to-date
             import_rpc_package(should_raise=True)
+            old_init(self, *args, **kwargs)
             try:
                 old_init(self, *args, **kwargs)
             except Exception:
