@@ -8,7 +8,7 @@ class Frame(object):
         self.filename = filename  # the original filename from which the frame was extracted
         self.image = image  # an opencv loaded image (numpy array)
         self.decoded_video_frame_index = decoded_video_frame_index  # index of the frame within the video decoded frames (skipped frames are not included)
-        self.absolute_video_frame_index = absolute_video_frame_index  # index of the frame in the input video sequence
+        self.absolute_video_frame_index = absolute_video_frame_index  # absolute index of the frame in the video sequence (skipped frames included)
         self.frame_number = None  # frame_number since deepocli started (set by input_loop)
         self.inference_async_result = None  # an inference request object that will allow us to retrieve the predictions when ready
         self.predictions = None  # predictions result dict
