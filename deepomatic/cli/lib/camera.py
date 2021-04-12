@@ -10,8 +10,7 @@ from ..version import __title__, __version__
 
 LOGGER = logging.getLogger(__name__)
 
-DEFAULT_USER_AGENT_PREFIX = user_agent_prefix = '{}/{}'.format(
-    __title__, __version__)
+DEFAULT_USER_AGENT_PREFIX = '{}/{}'.format(__title__, __version__)
 
 CLIENT = None
 
@@ -35,7 +34,7 @@ class Client(HTTPHelper):
         self.verify_ssl = verify_ssl
         self.host = host
 
-    def _setup_credentials(self):
+    def _setup_credentials(self, app_id, api_key):
         # No credentials
         pass
 
@@ -114,8 +113,8 @@ def add_start_camera(name, address):
 
 
 def add(args):
-    camera = get_camera_ctrl().add(args.camera_name, args.camera_address)
-    LOGGER.info("Camera added: ".format(camera))
+    get_camera_ctrl().add(args.camera_name, args.camera_address)
+    LOGGER.info("Camera '{}' added".format(args.camera_name))
 
 
 def start(args):

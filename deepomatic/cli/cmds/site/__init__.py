@@ -24,3 +24,6 @@ class SiteCommand(Command):
     from .update import UpdateCommand
     from .delete import DeleteCommand
     from .manifest import ManifestCommand
+
+    from .intervention import InterventionCommand
+    from .model import ModelCommand

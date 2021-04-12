@@ -3,11 +3,9 @@ import os
 import json
 import uuid
 import logging
-from .vulcan2studio import transform_json_from_vulcan_to_studio
 from ...thread_base import Greenlet
-from ...common import SUPPORTED_IMAGE_INPUT_FORMAT, SUPPORTED_VIDEO_INPUT_FORMAT
+from ...common import SUPPORTED_IMAGE_INPUT_FORMAT
 from ...json_schema import JSONSchemaType, validate_json
-from ...exceptions import DeepoOpenJsonError, DeepoUploadJsonError
 
 
 BATCH_SIZE = int(os.getenv('DEEPOMATIC_CLI_ADD_IMAGES_BATCH_SIZE', '10'))
@@ -39,11 +37,12 @@ class UploadImageGreenlet(Greenlet):
 
                 # Update corresponding metadata
                 file_meta = file.get('meta', {})
+                file_metadata = file_meta.get('metadata', '{}')
+                if type(file_metadata) is str:
+                    file_metadata = json.loads(file_metadata)
                 if self._set_metadata_path:
-                    if 'data' in file_meta:
-                        file_meta['data']['image_path'] = file['path']
-                    else:
-                        file_meta['data'] = {'image_path': file['path']}
+                    file_metadata.update({'image_path': file['path']})
+                file_meta['metadata'] = json.dumps(file_metadata)
                 meta[file['key']] = file_meta
             except RuntimeError as e:
                 self.current_messages.report_error()
@@ -87,9 +86,9 @@ class DatasetFiles(object):
             return self.flush_batch(url, batch)
         return batch
 
-    def fill_queue(self, files, dataset_name, commit_pk):
+    def fill_queue(self, files, org_slug, project_name):
         total_files = 0
-        url = 'v1-beta/datasets/{}/commits/{}/images/batch/'.format(dataset_name, commit_pk)
+        url = 'orgs/{}/datasets/{}/images/batch/'.format(org_slug, project_name)
         batch = []
 
         for upload_file in files:
@@ -100,64 +99,44 @@ class DatasetFiles(object):
                 batch = self.fill_flush_batch(url, batch, upload_file, meta=meta)
                 total_files += 1
 
-            # If it's a video file add it to the queue
-            elif extension in SUPPORTED_VIDEO_INPUT_FORMAT:
-                meta = {'file_type': 'video'}
-                batch = self.fill_flush_batch(url, batch, upload_file, meta=meta)
-                total_files += 1
-
-            # If it's a json, deal with it accordingly
-            elif extension == '.json':
-                # Verify json validity
-                try:
-                    with open(upload_file, 'r') as fd:
-                        json_data = json.load(fd)
-                except IOError as e:
-                    raise DeepoOpenJsonError("Upload JSON file {} failed: {}".format(upload_file, e))
-                except ValueError:
-                    raise DeepoOpenJsonError("Upload JSON file {} is not a valid JSON file".format(upload_file))
-
-                is_valid_json, error, schema_type = validate_json(json_data)
-                if is_valid_json:
-                    # If it's a Studio json, use it directly
-                    if schema_type == JSONSchemaType.STUDIO:
-                        studio_json = json_data
-                        LOGGER.warning("{} JSON {} validated".format(schema_type, upload_file))
-                    # If it's a Vulcan json, transform it to Studio
-                    elif schema_type == JSONSchemaType.VULCAN:
-                        studio_json = transform_json_from_vulcan_to_studio(json_data)
-                        LOGGER.warning("Vulcan JSON {} validated and transformed to Studio format".format(upload_file))
-                # If the JSON is not valid but its type is known, print the error
-                elif schema_type is not None and error is not None:
-                    LOGGER.warning("Error with {} JSON : {} in the instance {}".format(schema_type, error.message, list(error.path)))
-                    raise DeepoUploadJsonError("Upload JSON file {} is not a proper {} JSON file".format(upload_file, schema_type))
-                # If the schema type is not known, print the error message
-                else:
-                    raise DeepoUploadJsonError("Upload JSON file {} is neither a proper Studio or Vulcan JSON file".format(upload_file))
-
-                # Add files to the queue
-                for ftype in ['images', 'videos']:
-                    file_list = studio_json.get(ftype, None)
-                    if file_list is not None:
-                        for img_json in file_list:
-                            img_loc = img_json['location']
-                            img_json['file_type'] = ftype[:-1]
-                            file_path = os.path.join(os.path.dirname(upload_file), img_loc)
-                            if not os.path.isfile(file_path):
-                                LOGGER.error("Can't find file named {}".format(img_loc))
-                                continue
-                            batch = self.fill_flush_batch(url, batch, file_path, meta=img_json)
-                            total_files += 1
+            # If it's a txt, deal with it accordingly
+            elif extension == '.txt':
+                with open(upload_file, 'r') as fd:
+                    line_number = 0
+                    for line in fd:
+                        line_number += 1
+                        line = json.loads(line)
+                        is_valid_json, error, schema_type = validate_json(line)
+                        if schema_type == JSONSchemaType.STUDIO_HEADER:
+                            self.post_header(org_slug, project_name, line)
+                        elif schema_type == JSONSchemaType.STUDIO_INPUT:
+                            input = line.pop('data')[0]
+                            if 'file' in input:
+                                img_loc = input['file']
+                                file_path = os.path.join(os.path.dirname(upload_file), img_loc)
+                                if not os.path.isfile(file_path):
+                                    LOGGER.error("Can't find file named {}".format(img_loc))
+                                    continue
+                                batch = self.fill_flush_batch(url, batch, file_path, meta=line)
+                                total_files += 1
+                            else:
+                                LOGGER.error("Line {} invalid \"{}\". Skipping it".format(line_number, line))
+                        else:
+                            LOGGER.error("Line {} invalid \"{}\". Skipping it".format(line_number, line))
             else:
                 LOGGER.info("File {} not supported. Skipping it.".format(upload_file))
         self.flush_batch(url, batch)
         return total_files
 
-    def post_files(self, dataset_name, files):
+    def post_files(self, org_slug, project_name, files):
         # Retrieve endpoint
         try:
-            ret = self._helper.get('datasets/' + dataset_name + '/')
+            request = 'orgs/{}/projects/{}/'.format(org_slug, project_name)
+            self._helper.get(request)
         except RuntimeError:
-            raise RuntimeError("Can't find the dataset {}".format(dataset_name))
-        commit_pk = ret['commits'][0]['uuid']
-        return self.fill_queue(files, dataset_name, commit_pk)
+            raise RuntimeError("Can't find the project {}".format(project_name))
+        return self.fill_queue(files, org_slug, project_name)
+
+    def post_header(self, org_slug, project_name, project_header):
+        request = 'orgs/{}/projects/{}/create_views/'.format(org_slug, project_name)
+        self._helper.post(request, data=project_header)

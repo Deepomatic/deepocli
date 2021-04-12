@@ -7,35 +7,35 @@ workflow:
       data_type: Image
 
   outcomes:
-    - name: number_of_b
-      output_of: b_counter
+    - name: number_of_aeroplane
+      output_of: aeroplane_counter
       concept:
-        name: b_count
+        name: aeroplane_count
         type: Number
 
   steps:
-    - name: detector_a
+    - name: classifier
       type: Inference
       inputs:
         - test_image
       args:
-        model_id: 80158
+        model_id: 53638
         concepts:
-          - a
+          - coucou
 
-    - name: detector_b
+    - name: detector
       type: Inference
       inputs:
         - test_image
       args:
-        model_id: 80157
+        model_id: 53639
         concepts:
-          - b
+          - aeroplane
 
-    - name: b_counter
+    - name: aeroplane_counter
       type: Counter
       inputs:
-        - detector_b
+        - detector_aeroplane
       args:
         entry: test_image
-        concept_name: b
+        concept_name: aeroplane

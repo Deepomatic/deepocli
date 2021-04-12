@@ -100,6 +100,15 @@ def load_json_from_file(json_pth):
     return json_data
 
 
+def load_studio_from_file(txt_path):
+    """Load data from studio txt file"""
+    ret = []
+    with open(txt_path, 'r') as txt_file:
+        for line in txt_file:
+            ret.append(json.loads(line))
+    return ret
+
+
 def save_json_to_file(json_data, json_pth):
     """Save data to a json"""
     with open(json_pth, 'w') as json_file:
@@ -108,11 +117,6 @@ def save_json_to_file(json_data, json_pth):
 
 def patch_json_for_tests(image_path, studio_json, vulcan_json):
     """Update the image path in test files"""
-    # Patch studio JSON
-    json_data = load_json_from_file(studio_json)
-    json_data['images'][0]['location'] = image_path
-    save_json_to_file(json_data, studio_json)
-
     # Patch vulcan JSON
     json_data = load_json_from_file(vulcan_json)
     json_data[0]['location'] = image_path
@@ -137,29 +141,31 @@ def init_files_setup():
     # Make temporary directory for file storage
     tmpdir = tempfile.mkdtemp()
 
+    base_test_url = 'https://tests-resources.internal.deepomatic.com/deepocli/'
+
     # Download image and video files
     single_img_pth = download(tmpdir,
-                              'https://s3-eu-west-1.amazonaws.com/deepo-tests/vulcain/images/test.jpg',
+                              base_test_url + 'img.jpg',
                               'single_img.jpg')
     single_img_corrupted_pth = download(tmpdir,
-                                        'https://s3-eu-west-1.amazonaws.com/deepo-tests/vulcain/images/test_corrupted.jpg',
+                                        base_test_url + 'corrupted.jpg',
                                         'single_img_corrupted.jpg')
-    video_pth = download(tmpdir, 'https://s3-eu-west-1.amazonaws.com/deepo-tests/vulcain/videos/test.mp4', 'video.mp4')
-    img_pth = download(tmpdir, 'https://s3-eu-west-1.amazonaws.com/deepo-tests/vulcain/images/test.jpg', 'img_dir/img1.jpg')
-    download(tmpdir, 'https://s3-eu-west-1.amazonaws.com/deepo-tests/vulcain/images/test.jpg', 'img_dir/img2.jpg')
-    download(tmpdir, 'https://s3-eu-west-1.amazonaws.com/deepo-tests/vulcain/images/test.jpg', 'img_dir/subdir/img3.jpg')
+    video_pth = download(tmpdir, base_test_url + 'video.mp4', 'video.mp4')
+    img_pth = download(tmpdir, base_test_url + 'img.jpg', 'img_dir/img1.jpg')
+    download(tmpdir, base_test_url + 'img.jpg', 'img_dir/img2.jpg')
+    download(tmpdir, base_test_url + 'img.jpg', 'img_dir/subdir/img3.jpg')
+
+    img_pth2 = download(tmpdir, base_test_url + 'img.jpg', 'img_dir2/img2.jpg')
+    unsupported_file = open(tmpdir + '/img_dir2/unsupported_data.abc', 'w')
+    unsupported_file.close()
 
     # Download JSON files
-    vulcan_json_pth = download(tmpdir,
-                               'https://s3-eu-west-1.amazonaws.com/deepo-tests/vulcain/json/vulcan.json',
-                               'vulcan.json')
-    studio_json_pth = download(tmpdir,
-                               'https://s3-eu-west-1.amazonaws.com/deepo-tests/vulcain/json/studio.json',
-                               'studio.json')
-    offline_pred_pth = download(tmpdir,
-                                'https://s3-eu-west-1.amazonaws.com/deepo-tests/vulcain/json/offline_pred2.json',
-                                'offline_pred.json')
+    vulcan_json_pth = download(tmpdir, base_test_url + 'vulcan.json', 'vulcan.json')
+    studio_json_pth = download(tmpdir, base_test_url + 'studio-views.txt', 'studio-views.txt')
+    offline_pred_pth = download(tmpdir, base_test_url + 'offline_predictions.json',
+                                'offline_predictions.json')
     img_dir_pth = os.path.dirname(img_pth)
+    img_dir_pth2 = os.path.dirname(img_pth2)
 
     # Update json for path to match
     patch_json_for_tests(single_img_pth, studio_json_pth, vulcan_json_pth)
@@ -173,12 +179,13 @@ def init_files_setup():
         'STUDIO_JSON': studio_json_pth,
         'OFFLINE_PRED': offline_pred_pth,
         'VULCAN_JSON': vulcan_json_pth,
+        'UNSUPPORTED_FILE': img_dir_pth2,
     }
     return INPUTS
 
 
 def run_cmd(cmds, inp, outputs, *args, **kwargs):
-    reco_opts = [] if 'noop' in cmds else ['-r', 'fashion-v4']
+    reco_opts = [] if 'noop' in cmds else ['-r', '44411']
     extra_opts = kwargs.pop('extra_opts', [])
     absolute_outputs = []
     with create_tmp_dir() as tmpdir:

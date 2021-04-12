@@ -16,8 +16,27 @@ class PlatformManager(object):
     def __init__(self, client_cls=HTTPHelper):
         self.client = client_cls()
 
-    def create_app(self, name, description, workflow_path, custom_nodes_path):
+    def create_app(self, name, description, workflow_path, custom_nodes_path, app_specs):
 
+        if custom_nodes_path and not workflow_path:
+            raise ValueError('Custom nodes require a workflow yaml.')
+
+        if workflow_path:
+            if app_specs is not None:
+                raise ValueError('Specs are deduced from workflow yaml, no need to specify them.')
+            ret = self.create_workflow_app(name, description, workflow_path, custom_nodes_path)
+            app_id = ret['app_id']
+        else:
+            if app_specs is None:
+                raise ValueError('Specs are mandatory for non workflow apps.')
+            # creating an app from scratch
+            # require to add the services manually
+            data_app = {'name': name, 'desc': description, 'app_specs': app_specs}
+            ret = self.client.post('/apps', data=data_app)
+            app_id = ret['id']
+        return "New app created with id: {}".format(app_id)
+
+    def create_workflow_app(self, name, description, workflow_path, custom_nodes_path):
         with open(workflow_path, 'r') as f:
             workflow = yaml.safe_load(f)
 
@@ -39,7 +58,7 @@ class PlatformManager(object):
                     ret = self.client.post('/apps-workflow', data=data_app, files=files, content_type='multipart/mixed')
             else:
                 ret = self.client.post('/apps-workflow', data=data_app, files=files, content_type='multipart/mixed')
-            return "New app created with id: {}".format(ret['app_id'])
+            return ret
 
     def update_app(self, app_id, name, description):
         data = {}
@@ -92,15 +111,3 @@ class PlatformManager(object):
     def delete_service(self, service_id):
         self.client.delete('/services/{}'.format(service_id))
         return "Service {} deleted".format(service_id)
-
-    def infer(self, input):
-        raise NotImplementedError()
-
-    def inspect(self, workflow_path):
-        raise NotImplementedError()
-
-    def train(self):
-        raise NotImplementedError()
-
-    def upload(self):
-        raise NotImplementedError()

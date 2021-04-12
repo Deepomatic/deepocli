@@ -1,12 +1,14 @@
 import os
 from uuid import uuid4
 from deepomatic.cli.lib.site import SiteManager
-from deepomatic.api.client import Client
+
 from contextlib import contextmanager
-from test_platform import (app_version, call_deepo,
-                           deploy_api_key, deploy_api_url)
+from test_platform import app_version, call_deepo
 import tempfile
 import shutil
+
+customer_api_url = os.environ["DEEPOCLI_CUSTOMER_API_API_URL"]
+customer_api_key = os.environ["DEEPOCLI_CUSTOMER_API_API_KEY"]
 
 
 def generate_site(name, app_version_id, desc):
@@ -156,7 +158,7 @@ def site():
 
 
 class TestSite(object):
-    def test_all(self):
+    def test_all(self, no_error_logs):
         with setup() as manager:
             # create site
             app_version_id = str(uuid4())
@@ -228,7 +230,7 @@ class TestSite(object):
             manager.uninstall(site_id)
             assert(site_id not in manager.list())
 
-    def test_site(self):
+    def test_site(self, no_error_logs):
         with app_version() as (app_version_id, app_id):
             args = "site create -n test_si -d xyz -v {}".format(app_version_id)
             result = call_deepo(args)
@@ -243,29 +245,42 @@ class TestSite(object):
             message = call_deepo(args)
             assert message == 'Site{} deleted'.format(site_id)
 
-    def test_site_deployment_manifest(self):
-        with site() as (site_id, app_version_id, app_id):
-            # create services
-            for service in ['worker-nn', 'workflow-server', 'customer-api']:
+    def test_site_deployment_manifest(self, no_error_logs):
+        for service in ['customer-api', 'camera-server']:
+            with site() as (site_id, app_version_id, app_id):
+                # add extra service
                 call_deepo("platform service create -a {} -n {}".format(app_id, service))
 
-            client = Client(api_key=deploy_api_key, host=deploy_api_url)
-            client.http_helper.post('/accounts/me/read-only-keys',
-                                    data={'name': 'SITE_0-{}-test-deepocli'.format(site_id)})
-            args = "site manifest -i {} -t docker-compose".format(site_id)
-            message = call_deepo(args)
-            assert message.startswith('version: "2.4"')
-            assert 'services:' in message
-            assert 'neural-worker:' in message
-            assert 'workflow-server:' in message
-            assert 'customer-api:' in message
+                args = "site manifest -i {} -t docker-compose".format(site_id)
+                message = call_deepo(args)
+                assert message.startswith('version: "2.4"')
+                assert 'services:' in message
+                assert 'neural-worker:' in message
+                assert 'workflow-server:' in message
+                assert '{}:'.format(service) in message
 
-            args = "site manifest -i {} -t gke".format(site_id)
-            message = call_deepo(args)
-            assert message.startswith('apiVersion: apps/v1')
-            assert 'kind: StatefulSet' in message
-            assert 'containers:' in message
-            assert '- name: neural-worker' in message
-            assert '- name: workflow-server' in message
-            assert '- name: customer-api' in message
-            assert 'kind: Ingress' in message
+                args = "site manifest -i {} -t gke".format(site_id)
+                message = call_deepo(args)
+                assert message.startswith('apiVersion: apps/v1')
+                assert 'kind: StatefulSet' in message
+                assert 'containers:' in message
+                assert '- name: neural-worker' in message
+                assert '- name: workflow-server' in message
+                assert '- name: {}'.format(service) in message
+                if service == 'customer-api':
+                    assert 'kind: Ingress' in message
+
+    def test_intervention(self, no_error_logs):
+        args = "site intervention create -n ciao --api_url {} -m hello:2".format(customer_api_url)
+        result = call_deepo(args, api_key=customer_api_key)
+        intervention_id = result
+        assert len(intervention_id) == 36
+
+        args = "site intervention status -i {} --api_url {}".format(intervention_id, customer_api_url)
+        result = call_deepo(args, api_key=customer_api_key)
+        assert set(result.keys()) == set(['id', 'name', 'config_id', 'questions', 'answers', 'site_id',
+                                          'app_version_id', 'create_date', 'workflow_parameters', 'update_date',
+                                          'review_date', 'tags', 'assigned_user_id', 'enabled', 'metadata'])
+        args = "site intervention delete -i {} --api_url {}".format(intervention_id, customer_api_url)
+        result = call_deepo(args, api_key=customer_api_key)
+        assert result == 'Intervention deleted'

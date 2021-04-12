@@ -1,5 +1,0 @@
--r requirements.txt
-flake8==3.7.9
-pytest==4.3.0
-pytest-cov==2.8.1
-wheel

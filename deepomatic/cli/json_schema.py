@@ -2,7 +2,8 @@ from jsonschema import validate, ValidationError
 
 
 class JSONSchemaType:
-    STUDIO = 'Studio'
+    STUDIO_HEADER = 'Studio-header'
+    STUDIO_INPUT = 'Studio-input'
     VULCAN = 'Vulcan'
     # Define the vulcan json schema
     VULCAN_ANNOTATION_SCHEMA = {
@@ -46,86 +47,147 @@ class JSONSchemaType:
     }
 
     # Define the studio json format
-    STUDIO_JSON_SCHEMA = {
+    CONCEPT_SCHEMA = {
         "type": "object",
-        "required": ["tags"],
-        "anyOf": [
-            {"required": ["images"]},
-            {"required": ["videos"]}
+        "required": ["name"],
+        "additionalProperties": False,
+        "properties": {
+            "name": {
+                "type": "string"
+            },
+            "bool": {
+                "type": "boolean"
+            }
+        }
+    }
+
+    HEADER_SCHEMA = {
+        "type": "object",
+        "required": [
+            "name",
+            "splits",
+            "views"
         ],
         "additionalProperties": False,
         "properties": {
-            "tags": {
-                "type": "array",
-                "items": {"type": "string"}
+            "name": {
+                "type": "string"
             },
-            "images": {
+            "splits": {
+                "type": "array",
+                "items": [
+                    {
+                        "type": "string",
+                        "enum": ["train", "val"]
+                    },
+                    {
+                        "type": "string",
+                        "enum": ["train", "val"]
+                    }
+                ]
+            },
+            "views": {
                 "type": "array",
                 "items": {
                     "type": "object",
-                    "required": ["location"],
+                    "required": [
+                        "concepts",
+                        "type",
+                        "name",
+                        "conditions"
+                    ],
                     "additionalProperties": False,
                     "properties": {
-                        "location": {"type": "string"},
-                        "data": {"type": "object"},
-                        "stage": {
-                            "type": "string",
-                            "enum": ["train", "val"]
+                        "name": {
+                            "type": "string"
                         },
-                        "annotated_regions": {
+                        "type": {
+                            "type": "string"
+                        },
+                        "concepts": {
                             "type": "array",
-                            "items": {
-                                "type": "object",
-                                "required": ["tags", "region_type"],
-                                "additionalProperties": False,
-                                "properties": {
-                                    "tags": {
-                                        "type": "array",
-                                        "items": {"type": "string"}
-                                    },
-                                    "region_type": {
-                                        "type": "string",
-                                        "enum": ["Box", "Whole"]
-                                    },
-                                    "score": {"type": "number"},
-                                    "threshold": {"type": "number"},
-                                    "region": {
-                                        "type": "object",
-                                        "required": ["xmin", "xmax", "ymin", "ymax"],
-                                        "properties": {
-                                            "xmin": {"type": "number", "minimum": 0, "maximum": 1},
-                                            "xmax": {"type": "number", "minimum": 0, "maximum": 1},
-                                            "ymin": {"type": "number", "minimum": 0, "maximum": 1},
-                                            "ymax": {"type": "number", "minimum": 0, "maximum": 1}
-                                        }
-                                    }
-                                }
+                            "items": CONCEPT_SCHEMA
+                        },
+                        "conditions": {
+                            "type": "array"
+                        },
+                        "id": {
+                            "type": ["number", "null"]
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    ANNOTATION_SCHEMA = {
+        "type": "array",
+        "items": {
+            "type": "object",
+            "required": ["concepts", "region"],
+            "additionalProperties": False,
+            "properties": {
+                "concepts": {
+                    "type": "array",
+                    "objects": CONCEPT_SCHEMA
+                },
+                "region": {
+                    "type": "object",
+                    "required": ["bbox"],
+                    "additionalProperties": False,
+                    "properties": {
+                        "bbox": {
+                            "type": "object",
+                            "required": ["xmin", "xmax", "ymin", "ymax"],
+                            "additionalProperties": False,
+                            "properties": {
+                                "xmin": {"type": "number", "minimum": 0, "maximum": 1},
+                                "xmax": {"type": "number", "minimum": 0, "maximum": 1},
+                                "ymin": {"type": "number", "minimum": 0, "maximum": 1},
+                                "ymax": {"type": "number", "minimum": 0, "maximum": 1}
                             }
+                        }
+
+                    }
+                }
+            }
+        }
+    }
+
+    IMAGE_SCHEMA = {
+        "type": "object",
+        "required": [
+            "data"
+        ],
+        "additionalProperties": False,
+        "properties": {
+            "id": {
+                "type": ["number", "null"]
+            },
+            "data": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "required": ["file"],
+                    "additionalProperties": False,
+                    "properties": {
+                        "file": {
+                            "type": "string"
                         }
                     }
                 }
             },
-            "videos": {
+            "metadata": {
+                "type": "string"
+            },
+            "annotations": ANNOTATION_SCHEMA,
+            "splits": {
                 "type": "array",
                 "items": {
-                    "type": "object",
-                    "required": ["location"],
-                    "properties": {
-                        "location": {"type": "string"},
-                        "data": {"type": "object"},
-                        "stage": {
-                            "type": "string",
-                            "enum": ["train", "val"]
-                        },
-                        "preprocessing": {
-                            "type": "object",
-                            "properties": {
-                                "fps": {"type": "number", "minimum": 1},
-                                "start_time": {"type": "string"},
-                                "end_time": {"type": "string"}
-                            }
-                        }
-                    }
+                    "anyOf": [
+                        {"required": ["train"]},
+                        {"required": ["val"]}
+                    ]
                 }
             }
         }
@@ -152,7 +214,8 @@ def validate_json(json_data):
     is_valid = False
     error = None
     schema_type = None
-    schema_dict = {JSONSchemaType.STUDIO: JSONSchemaType.STUDIO_JSON_SCHEMA,
+    schema_dict = {JSONSchemaType.STUDIO_HEADER: JSONSchemaType.HEADER_SCHEMA,
+                   JSONSchemaType.STUDIO_INPUT: JSONSchemaType.IMAGE_SCHEMA,
                    JSONSchemaType.VULCAN: JSONSchemaType.VULCAN_JSON_SCHEMA}
     for schema_name, json_schema in schema_dict.items():
         try:
