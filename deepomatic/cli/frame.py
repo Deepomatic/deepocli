@@ -17,12 +17,12 @@ class Frame(object):
 
     def __str__(self):
         return "<Frame {}>".format(' '.join("{}={}".format(key, getattr(self, key)) for key in [
-                'name',
-                'filename',
-                'frame_number',
-                'video_frame_index',
-                'absolute_video_frame_index',
-                'inference_async_result']))
+            'name',
+            'filename',
+            'frame_number',
+            'video_frame_index',
+            'absolute_video_frame_index',
+            'inference_async_result']))
 
 
 class CurrentFrames(CurrentMessages):
