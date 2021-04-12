@@ -20,7 +20,7 @@ class Frame(object):
             'name',
             'filename',
             'frame_number',
-            'video_frame_index',
+            'decoded_video_frame_index',
             'absolute_video_frame_index',
             'inference_async_result']))
 
