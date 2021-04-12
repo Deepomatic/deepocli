@@ -143,8 +143,8 @@ class VideoInputData(InputData):
 
     def __init__(self, descriptor, **kwargs):
         super(VideoInputData, self).__init__(descriptor, **kwargs)
-        self._input_index = 0
-        self._output_index = 0
+        self._absolute_video_frame_index = 0
+        self._decoded_video_index = 0
         self._name = '%s_%s_%s' % (self._name, '%05d', self._reco)
         self._cap = None
         self._open_video()
@@ -167,8 +167,8 @@ class VideoInputData(InputData):
 
     def __iter__(self):
         self._open_video()
-        self._input_index = 0
-        self._output_index = 0
+        self._absolute_video_frame_index = 0
+        self._decoded_video_index = 0
         self._frames_to_skip = 0
         self._should_skip_fps = self._video_fps
         return self
@@ -180,7 +180,7 @@ class VideoInputData(InputData):
 
     def _grab_next(self):
         grabbed = self._cap.grab()
-        self._input_index += 1
+        self._absolute_video_frame_index += 1
         if not grabbed:
             self._stop_video()
 
@@ -189,15 +189,15 @@ class VideoInputData(InputData):
         if not decoded:
             self._stop_video()
         else:
-            self._output_index += 1
-            return Frame(self._name % self._output_index, self._filename, frame, self._output_index, self._input_index)
+            self._decoded_video_index += 1
+            return Frame(self._name % self._decoded_video_index, self._filename, frame, self._decoded_video_index, self._absolute_video_frame_index)
 
     def _read_next(self):
         read, frame = self._cap.read()
         if read:
-            self._input_index += 1
-            self._output_index += 1
-            return Frame(self._name % self._output_index, self._filename, frame, self._output_index, self._input_index)
+            self._absolute_video_frame_index += 1
+            self._decoded_video_index += 1
+            return Frame(self._name % self._decoded_video_index, self._filename, frame, self._decoded_video_index, self._absolute_video_frame_index)
         else:
             self._stop_video()
 
