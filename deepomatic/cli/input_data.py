@@ -174,9 +174,10 @@ class VideoInputData(InputData):
 
     def _grab_next(self):
         grabbed = self._cap.grab()
-        self._absolute_video_frame_index += 1
         if not grabbed:
             self._stop_video()
+        else:
+            self._absolute_video_frame_index += 1
 
     def _decode_next(self):
         decoded, frame = self._cap.retrieve()
