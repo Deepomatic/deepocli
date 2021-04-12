@@ -220,7 +220,7 @@ class ThreadBase(object):
         except BadStatus as e:
             if e.status_code >= 400 and e.status_code < 500:
                 LOGGER.error("API raised a bad status code {}: {}".format(
-                    e.status_code, e.json()['error']
+                    e.status_code, e.content
                 ))
             else:
                 # TODO: we probably want to retry on some errors earlier in the greenlet
