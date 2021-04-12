@@ -185,7 +185,7 @@ class VideoInputData(InputData):
             self._stop_video()
         else:
             self._decoded_video_frame_index += 1
-            return Frame(self._name % self._decoded_video_frame_index,
+            return Frame(self._name % self._absolute_video_frame_index,
                          self._filename, frame,
                          self._decoded_video_frame_index,
                          self._absolute_video_frame_index)
@@ -195,7 +195,7 @@ class VideoInputData(InputData):
         if read:
             self._absolute_video_frame_index += 1
             self._decoded_video_frame_index += 1
-            return Frame(self._name % self._decoded_video_frame_index,
+            return Frame(self._name % self._absolute_video_frame_index,
                          self._filename, frame,
                          self._decoded_video_frame_index,
                          self._absolute_video_frame_index)
