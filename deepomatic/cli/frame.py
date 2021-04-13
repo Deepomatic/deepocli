@@ -2,12 +2,13 @@ from .thread_base import CurrentMessages
 
 
 class Frame(object):
-    def __init__(self, name, filename, image, video_frame_index=None):
+    def __init__(self, name, filename, image, decoded_video_frame_index=None, absolute_video_frame_index=None):
         # The Frame object is used as a data exchanged in the different queues
         self.name = name  # name of the frame
         self.filename = filename  # the original filename from which the frame was extracted
         self.image = image  # an opencv loaded image (numpy array)
-        self.video_frame_index = video_frame_index  # index of the frame in the video sequence
+        self.decoded_video_frame_index = decoded_video_frame_index  # frame index in the input sequence (skipped frames are not included)
+        self.absolute_video_frame_index = absolute_video_frame_index  # frame index in the input sequence (skipped frames included)
         self.frame_number = None  # frame_number since deepocli started (set by input_loop)
         self.inference_async_result = None  # an inference request object that will allow us to retrieve the predictions when ready
         self.predictions = None  # predictions result dict
@@ -15,8 +16,13 @@ class Frame(object):
         self.buf_bytes = None
 
     def __str__(self):
-        return '<Frame name={} filename={} frame_number={} video_frame_index={} inference_async_result={}>'.format(
-            self.name, self.filename, self.frame_number, self.video_frame_index, self.inference_async_result)
+        return "<Frame {}>".format(' '.join("{}={}".format(key, getattr(self, key)) for key in [
+            'name',
+            'filename',
+            'frame_number',
+            'decoded_video_frame_index',
+            'absolute_video_frame_index',
+            'inference_async_result']))
 
 
 class CurrentFrames(CurrentMessages):
