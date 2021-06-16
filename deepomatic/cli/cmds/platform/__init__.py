@@ -7,6 +7,7 @@ class PlatformCommand(Command):
     """
 
     from .app import AppCommand
+    from .app_engage import AppEngageCommand
     from .app_version import AppVersionCommand
     from .service import ServiceCommand
     from .model import ModelCommand
