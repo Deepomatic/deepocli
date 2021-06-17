@@ -50,6 +50,7 @@ class DrawImagePostprocessing(object):
         self._draw_scores = kwargs['draw_scores']
         self._font_scale = kwargs['font_scale']
         self._font_thickness = kwargs['font_thickness']
+        self._box_thickness = kwargs['box_thickness']
         self._threshold = kwargs['threshold'] if kwargs['threshold'] is not None else 0
         self._font_bg_color = kwargs['font_bg_color']
 
@@ -90,7 +91,7 @@ class DrawImagePostprocessing(object):
                 xmin, ymin, xmax, ymax = get_coordinates_from_roi(roi, width, height)
 
                 # Draw bounding box
-                cv2.rectangle(output_image, (xmin, ymin), (xmax, ymax), BOX_COLOR, 1)
+                cv2.rectangle(output_image, (xmin, ymin), (xmax, ymax), BOX_COLOR, self._box_thickness)
 
                 if label != '':
                     # First get ideal corners

@@ -150,6 +150,9 @@ def setup_model_cmd_line_parser(mode, cmd, inference_parsers):
         group.add_argument('-ft', '--font_thickness', dest='font_thickness', type=int,
                            help="Text font thickness, must be an int and defaults to 1",
                            default=1)
+        group.add_argument('-bt', '--box_thickness', dest='box_thickness', type=int,
+                           help="Thickness of the box border, must be an int and defaults to 1",
+                           default=1)
         group.add_argument('--font_bg_color', default=None, nargs=3,
                            help="Expect a B G R value. If set, draws labels with a unique background color."
                                 " By default, the background is red/orange/green depending on the threshold set"

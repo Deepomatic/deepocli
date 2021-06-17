@@ -151,6 +151,9 @@ def test_e2e_image_draw_image_font_scale_and_thickness(no_error_logs):
     run_draw(INPUTS['IMAGE'], [OUTPUTS['IMAGE']], expect_nb_image=1,
              extra_opts=['-ft', '2'])
 
+def test_e2e_image_draw_image_box_thickness(no_error_logs):
+    run_draw(INPUTS['IMAGE'], [OUTPUTS['IMAGE']], expect_nb_image=1,
+             extra_opts=['-bt', '2'])
 
 def test_e2e_image_draw_image_font_bg_color(no_error_logs):
     run_draw(INPUTS['IMAGE'], [OUTPUTS['IMAGE']], expect_nb_image=1,
