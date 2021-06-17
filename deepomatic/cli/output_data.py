@@ -320,10 +320,12 @@ class JsonOutputData(OutputData):
 
     def output_frame(self, frame):
         self._i += 1
+        LOGGER.info(frame.predictions)
         if frame.predictions is None:
             # For noop command
-            LOGGER.warning('No predictions to output.')
-            return
+            #LOGGER.warning('No predictions to output.')
+            frame.predictions = {}
+            # frame.predictions = {'outputs': []}
         predictions = frame.predictions
         predictions['location'] = frame.filename
         predictions['data'] = {
