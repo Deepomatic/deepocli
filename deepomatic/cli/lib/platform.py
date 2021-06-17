@@ -86,7 +86,7 @@ class EngagePlatformManager(object):
             ENGAGE_API_URL = os.environ['ENGAGE_API_URL']
         except KeyError as e:
             raise SystemExit(e, "environment variable ENGAGE_API_URL is missing.")
-        self.engage_client = client_cls(host=ENGAGE_API_URL)
+        self.engage_client = client_cls(host=ENGAGE_API_URL, version="")
 
     def create(self, name, workflow_path, custom_nodes_path):
         data_app = {"name": name}
@@ -106,9 +106,19 @@ class EngagePlatformManager(object):
         return "New Engage App created with id: {}. New Drive App created with id: {}".format(engage_app_id, drive_app_id)
 
     def update(self, id, workflow_path, custom_nodes_path):
-        # TODO: Not yet implemented
+        # TODO: Not yet implemented in Engage
         return ""
 
+        with open(workflow_path, 'r') as w:
+            files = {'workflow_yaml': w}
+            if custom_nodes_path is not None:
+                with open(custom_nodes_path, 'r') as c:
+                    files['custom_nodes_py'] = c
+                    ret = self.engage_client.patch(f'/apps-workflow/{id}', data=data_app, files=files, content_type='multipart/mixed')
+            else:
+                ret = self.engage_client.patch(f'/apps-workflow{id}', data=data_app, files=files, content_type='multipart/mixed')
+        return "EngageApp {} updated".format(ret['id'])
+
     def delete(self, id):
-        ret = self.engage_client.delete(f'/apps-workflow/{id}')
+        self.engage_client.delete(f'/apps-workflow/{id}')
         return "Engage App {} deleted".format(id)
