@@ -9,7 +9,7 @@ class DeleteCommand(Command):
 
     def setup(self, subparsers):
         parser = super(DeleteCommand, self).setup(subparsers)
-        parser.add_argument('-i', '--id', required=True, type=str, help="EngageApp id")
+        parser.add_argument('-i', '--id', required=True, type=str, help="Engage App id")
         return parser
 
     def run(self, id, **kwargs):

@@ -103,7 +103,7 @@ class EngagePlatformManager(object):
         drive_app_id = ret['drive_app_id']
         engage_app_id = ret['engage_app_id']
 
-        return "New Engage App created with id: {}. New DriveApp created with id: {}".format(engage_app_id, drive_app_id)
+        return "New Engage App created with id: {}. New Drive App created with id: {}".format(engage_app_id, drive_app_id)
 
     def update(self, id, workflow_path, custom_nodes_path):
         # TODO: Not yet implemented

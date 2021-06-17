@@ -9,7 +9,7 @@ class CreateCommand(Command):
 
     def setup(self, subparsers):
         parser = super(CreateCommand, self).setup(subparsers)
-        parser.add_argument('-n', '--name', required=True, type=str, help="EngageApp name")
+        parser.add_argument('-n', '--name', required=True, type=str, help="Engage App name")
         parser.add_argument('-w', '--workflow', default=None, type=valid_path, help="Path to the workflow yaml file")
         parser.add_argument('-c', '--custom_nodes', type=valid_path, help="Path to the custom nodes python file")
         return parser
