@@ -1,4 +1,5 @@
 import yaml
+import os
 import logging
 
 try:
@@ -15,8 +16,6 @@ LOGGER = logging.getLogger(__name__)
 class PlatformManager(object):
     def __init__(self, client_cls=HTTPHelper):
         self.drive_client = client_cls()
-        ENGAGE_API_URL = os.environ['ENGAGE_API_URL']
-        self.engage_client = client_cls(host=ENGAGE_API_URL)
 
     def create_app(self, name, description, app_specs):
         if app_specs is None:
@@ -80,19 +79,17 @@ class PlatformManager(object):
         self.drive_client.delete('/services/{}'.format(service_id))
         return "Service {} deleted".format(service_id)
 
-    def create_workflow_app(self, name, workflow_path, custom_nodes_path):
-        with open(workflow_path, 'r') as f:
-            workflow = yaml.safe_load(f)
 
-        # create using workflow server
-        app_specs = [{
-            "queue_name": "{}.forward".format(node['name']),
-            "recognition_spec_id": node['args']['model_id']
-        } for node in workflow['workflow']['steps'] if node["type"] == "Inference"]
+class EngagePlatformManager(object):
+    def __init__(self, client_cls=HTTPHelper):
+        try:
+            ENGAGE_API_URL = os.environ['ENGAGE_API_URL']
+        except KeyError as e:
+            raise SystemExit(e, "environment variable ENGAGE_API_URL is missing.")
+        self.engage_client = client_cls(host=ENGAGE_API_URL)
 
-        data_app = {"name": name, "app_specs": app_specs}
-        if description is not None:
-            data_app['desc'] = description
+    def create(self, name, workflow_path, custom_nodes_path):
+        data_app = {"name": name}
 
         with open(workflow_path, 'r') as w:
             files = {'workflow_yaml': w}
@@ -102,10 +99,16 @@ class PlatformManager(object):
                     ret = self.engage_client.post('/apps-workflow', data=data_app, files=files, content_type='multipart/mixed')
             else:
                 ret = self.engage_client.post('/apps-workflow', data=data_app, files=files, content_type='multipart/mixed')
-            return ret
 
-    def delete_workflow_app(self, id):
-        pass
+        drive_app_id = ret['drive_app_id']
+        engage_app_id = ret['engage_app_id']
 
-    def update_workflow_app(self, id, workflow_path, custom_nodes_path):
-        pass
+        return "New Engage App created with id: {}. New DriveApp created with id: {}".format(engage_app_id, drive_app_id)
+
+    def update(self, id, workflow_path, custom_nodes_path):
+        # TODO: Not yet implemented
+        return ""
+
+    def delete(self, id):
+        ret = self.engage_client.delete(f'/apps-workflow/{id}')
+        return "Engage App {} deleted".format(id)

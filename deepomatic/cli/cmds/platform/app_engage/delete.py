@@ -1,16 +1,16 @@
 from ...utils import Command
-from ..utils import PlatformManager
+from ..utils import EngagePlatformManager
 
 
 class DeleteCommand(Command):
     """
-        Delete an app engage
+        Delete an Engage App
     """
 
     def setup(self, subparsers):
         parser = super(DeleteCommand, self).setup(subparsers)
-        parser.add_argument('-i', '--id', required=True, type=str, help="AppEngage id")
+        parser.add_argument('-i', '--id', required=True, type=str, help="EngageApp id")
         return parser
 
     def run(self, id, **kwargs):
-        return PlatformManager().delete_app_engage(id)
+        return EngagePlatformManager().delete(id)
