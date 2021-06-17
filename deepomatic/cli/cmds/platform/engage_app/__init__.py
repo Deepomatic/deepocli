@@ -1,9 +1,9 @@
 from ...utils import Command
 
 
-class AppEngageCommand(Command):
+class EngageAppCommand(Command):
     """
-        App related commands
+        Engage App related commands
     """
 
     from .create import CreateCommand
