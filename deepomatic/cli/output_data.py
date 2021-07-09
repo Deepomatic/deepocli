@@ -395,6 +395,8 @@ class JsonlOutputData(JsonOutputData):
             open(self._descriptor, 'w').close()
 
     def close(self):
+        # Nothing to do at the end
+        # In this implementation the file is opened / closed at each frame
         pass
 
 class DirectoryOutputData(OutputData):
