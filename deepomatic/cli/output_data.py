@@ -384,7 +384,7 @@ class JsonlOutputData(JsonOutputData):
         # Enforce wildcard_type to None, because wildcards do not make sense for jsonl output
         if self._wildcard_type is not WildCardType.NONE:
             LOGGER.warning('Wildcards are ignored when using the .jsonl output.')
-            self._wildcard_type = None
+            self._wildcard_type = WildCardType.NONE
 
         # By setting all_predictions to None, the JsonOutputData implementation will process each frames individually,
         self._all_predictions = None
