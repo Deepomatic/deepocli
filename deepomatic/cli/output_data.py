@@ -22,12 +22,14 @@ except AttributeError:
     write_bytes_to_stdout = sys.stdout.write
 
 
-def save_json_to_file(json_data, json_path):
+def save_json_to_file(json_data, json_path, write_mode='w'):
     try:
-        with open('%s.json' % json_path, 'w') as f:
-            LOGGER.debug('Writing %s.json' % json_path)
+        with open(json_path, write_mode) as f:
+            LOGGER.debug('Writing %s' % json_path)
             json.dump(json_data, f)
-            LOGGER.debug('Writing %s.json done' % json_path)
+            if write_mode == 'a':
+                f.write('\n')
+            LOGGER.debug('Writing %s done' % json_path)
     except Exception:
         raise DeepoSaveJsonToFileError("Could not save file {} in json format: {}".format(json_path, traceback.format_exc()))
 
@@ -40,6 +42,8 @@ def get_output(descriptor, kwargs):
             return VideoOutputData(descriptor, **kwargs)
         elif JsonOutputData.is_valid(descriptor):
             return JsonOutputData(descriptor, **kwargs)
+        elif JsonlOutputData.is_valid(descriptor):
+            return JsonlOutputData(descriptor, **kwargs)
         elif DirectoryOutputData.is_valid(descriptor):
             return DirectoryOutputData(descriptor, **kwargs)
         elif descriptor == 'stdout':
@@ -290,6 +294,7 @@ class JsonOutputData(OutputData):
         self._to_studio_format = kwargs.get('studio_format')
         self._preserve_input_dir_structure = False
         self._input_path = None
+        self._write_mode = 'w'
 
         # Check if the output is a string wildcard
         try:
@@ -315,7 +320,7 @@ class JsonOutputData(OutputData):
 
     def close(self):
         if self._all_predictions is not None:
-            json_path = os.path.splitext(self._descriptor)[0]
+            json_path = self._descriptor
             save_json_to_file(self._all_predictions, json_path)
 
     def output_frame(self, frame):
@@ -346,10 +351,10 @@ class JsonOutputData(OutputData):
         else:
             # Build the prediction json path
             if self._wildcard_type == WildCardType.INTEGER:
-                json_path = os.path.splitext(self._descriptor % self._i)[0]
+                json_path = self._descriptor % self._i
             elif self._wildcard_type == WildCardType.STRING:
                 if not self._preserve_input_dir_structure:
-                    json_path = os.path.splitext(self._descriptor % frame.name)[0]
+                    json_path = self._descriptor % frame.name
                 else:
                     # Build the output directory with input structure
                     output_base_dir = os.path.dirname(self._descriptor)
@@ -357,14 +362,40 @@ class JsonOutputData(OutputData):
                     output_full_dir = os.path.join(output_base_dir, input_rel_dir)
 
                     # Build the final path
-                    json_file = os.path.splitext(os.path.basename(self._descriptor) % frame.name)[0]
+                    json_file = os.path.basename(self._descriptor) % frame.name
                     json_path = os.path.join(output_full_dir, json_file)
 
                     # Build the json directory if it doesn't exist
                     if output_full_dir and not os.path.isdir(output_full_dir):
                         os.makedirs(output_full_dir)
-            save_json_to_file(predictions, json_path)
+            else:
+                json_path = self._descriptor
+            save_json_to_file(predictions, json_path, self._write_mode)
 
+class JsonlOutputData(JsonOutputData):
+    @classmethod
+    def is_valid(cls, descriptor):
+        _, ext = os.path.splitext(descriptor)
+        return ext.lower() == '.jsonl'
+
+    def __init__(self, descriptor, **kwargs):
+        super(JsonlOutputData, self).__init__(descriptor, **kwargs)
+
+        # Enforce wildcard_type to None, because wildcards do not make sense for jsonl output
+        if self._wildcard_type is not WildCardType.NONE:
+            LOGGER.warning('Wildcards are ignored when using the .jsonl output.')
+            self._wildcard_type = None
+
+        # By setting all_predictions to None, the JsonOutputData implementation will process each frames individually,
+        self._all_predictions = None
+
+        self._write_mode = 'a'
+        # clear the file before appending
+        if os.path.exists(self._descriptor):
+            open(self._descriptor, 'w').close()
+
+    def close(self):
+        pass
 
 class DirectoryOutputData(OutputData):
     @classmethod
