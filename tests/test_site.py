@@ -1,4 +1,5 @@
 import os
+import pytest
 from uuid import uuid4, UUID
 from deepomatic.cli.lib.site import SiteManager
 
@@ -230,6 +231,7 @@ class TestSite(object):
             manager.uninstall(site_id)
             assert(site_id not in manager.list())
 
+    @pytest.mark.skip()
     def test_site(self, no_error_logs):
         with app_version() as (app_version_id, app_id):
             args = "site create -n test_si -d xyz -v {}".format(app_version_id)
@@ -245,6 +247,7 @@ class TestSite(object):
             message = call_deepo(args)
             assert message == 'Site{} deleted'.format(site_id)
 
+    @pytest.mark.skip()
     def test_site_deployment_manifest(self, no_error_logs):
         for service in ['customer-api', 'camera-server']:
             with site() as (site_id, app_version_id, app_id):
