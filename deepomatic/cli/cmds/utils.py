@@ -110,7 +110,7 @@ def setup_model_cmd_line_parser(mode, cmd, inference_parsers):
         group.add_argument('-o', '--outputs', required=True, nargs='+', help="Output path, either an image (*{}),"
                            " a video (*{}), a json (*.json), a jsonl (*.jsonl) or a directory."
                            .format(', *'.join(SUPPORTED_IMAGE_OUTPUT_FORMAT),
-                                                                                                       ', *'.join(SUPPORTED_VIDEO_OUTPUT_FORMAT)))
+                                   ', *'.join(SUPPORTED_VIDEO_OUTPUT_FORMAT)))
         group.add_argument('--output_fps', type=int, help="FPS used for output video reconstruction.", default=None)
 
     # Define output group for draw blur noop
