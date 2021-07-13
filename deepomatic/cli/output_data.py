@@ -372,6 +372,7 @@ class JsonOutputData(OutputData):
                 json_path = self._descriptor
             save_json_to_file(predictions, json_path, self._write_mode)
 
+
 class JsonlOutputData(JsonOutputData):
     @classmethod
     def is_valid(cls, descriptor):
@@ -398,6 +399,7 @@ class JsonlOutputData(JsonOutputData):
         # Nothing to do at the end
         # In this implementation the file is opened / closed at each frame
         pass
+
 
 class DirectoryOutputData(OutputData):
     @classmethod
