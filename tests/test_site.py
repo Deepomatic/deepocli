@@ -288,7 +288,9 @@ class TestSite(object):
                                           'metadata', 'tasks', 'inputs'])
 
         image_url = "https://storage.googleapis.com/dp-product/documentation/ftth/pto-seule.jpg"
-        args = "site work-order infer -i {} --api_url {} -e image_input@image@{} context@text@pto-photometre -m foo:bar".format(work_order_id, customer_api_url, image_url)
+        args = "site work-order infer -i {} --api_url {} -e image_input@image@{} context@text@pto-photometre -m foo:bar".format(
+            work_order_id, customer_api_url, image_url
+        )
         result = call_deepo(args, api_key=customer_api_key)
         assert len(result['tasks']) > 0
 
