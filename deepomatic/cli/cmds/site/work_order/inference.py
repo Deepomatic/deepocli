@@ -59,13 +59,13 @@ class BuildCustomerAPIInput(argparse.Action):
 
 class InferCommand(Command):
     """
-        Make an inference on an intervention
+        Make an inference on a work order
     """
 
     def setup(self, subparsers):
         parser = super(InferCommand, self).setup(subparsers)
         parser.add_argument('-u', "--api_url", required=True, type=str, help="url of your Customer api")
-        parser.add_argument('-i', '--intervention_id', required=True, type=str, help="Intervention id")
+        parser.add_argument('-i', '--work_order_id', required=True, type=str, help="Work order id")
         parser.add_argument('-e', "--entries", dest='entries',
                             action=BuildCustomerAPIInput, nargs="+", metavar="NAME@TYPE@VAL",
                             help='Inputs that will be passed to the CustomerAPI. They should be in this format name@type@value',
@@ -75,5 +75,5 @@ class InferCommand(Command):
                             help='Metadata for the inference in format name:value')
         return parser
 
-    def run(self, api_url, intervention_id, entries, metadata, **kwargs):
-        return SiteManager().make_inference(api_url, intervention_id, entries, metadata)
+    def run(self, api_url, work_order_id, entries, metadata, **kwargs):
+        return SiteManager().make_work_order_inference(api_url, work_order_id, entries, metadata)
