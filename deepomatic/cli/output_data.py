@@ -42,8 +42,8 @@ def get_output(descriptor, kwargs):
             return VideoOutputData(descriptor, **kwargs)
         elif JsonOutputData.is_valid(descriptor):
             return JsonOutputData(descriptor, **kwargs)
-        elif JsonlOutputData.is_valid(descriptor):
-            return JsonlOutputData(descriptor, **kwargs)
+        elif JsonLinesOutputData.is_valid(descriptor):
+            return JsonLinesOutputData(descriptor, **kwargs)
         elif DirectoryOutputData.is_valid(descriptor):
             return DirectoryOutputData(descriptor, **kwargs)
         elif descriptor == 'stdout':
@@ -373,14 +373,14 @@ class JsonOutputData(OutputData):
             save_json_to_file(predictions, json_path, self._write_mode)
 
 
-class JsonlOutputData(JsonOutputData):
+class JsonLinesOutputData(JsonOutputData):
     @classmethod
     def is_valid(cls, descriptor):
         _, ext = os.path.splitext(descriptor)
         return ext.lower() == '.jsonl'
 
     def __init__(self, descriptor, **kwargs):
-        super(JsonlOutputData, self).__init__(descriptor, **kwargs)
+        super(JsonLinesOutputData, self).__init__(descriptor, **kwargs)
 
         # Enforce wildcard_type to None, because wildcards do not make sense for jsonl output
         if self._wildcard_type is not WildCardType.NONE:
@@ -391,9 +391,18 @@ class JsonlOutputData(JsonOutputData):
         self._all_predictions = None
 
         self._write_mode = 'a'
-        # clear the file before appending
+        # ask whether the file should be overwritten or not
         if os.path.exists(self._descriptor):
-            open(self._descriptor, 'w').close()
+            should_overwrite = None # TODO: cli flag (not kwargs.get('overwrite'))
+            while should_overwrite is None:
+                overwrite = input("{} already exists. Overwrite? Y = yes, N = no\n".format(self._descriptor))
+                if overwrite.lower() == 'y':
+                    should_overwrite = True
+                elif overwrite.lower() == 'n':
+                    should_overwrite = False
+
+            if should_overwrite:
+                open(self._descriptor, 'w').close()
 
     def close(self):
         # Nothing to do at the end
