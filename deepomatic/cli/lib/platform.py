@@ -86,7 +86,19 @@ class EngagePlatformManager(object):
             ENGAGE_API_URL = os.environ['ENGAGE_API_URL']
         except KeyError as e:
             raise SystemExit(e, "environment variable ENGAGE_API_URL is missing.")
-        self.engage_client = client_cls(host=ENGAGE_API_URL, version="")
+
+        try:
+            slug = os.environ['ORGANIZATION_SLUG']
+            FS_URL_PREFIX = f'engage/fs/on-site/orgs/{slug}'
+        except KeyError as e:
+            raise SystemExit(e, "environment variable ORGANIZATION_SLUG is missing.")
+
+        user_agent_prefix = ""
+        self.engage_client = client_cls(host=ENGAGE_API_URL,
+                                        user_agent_prefix=user_agent_prefix,
+                                        version="")
+
+        self.apps_workflow_endpoint = f'{FS_URL_PREFIX}/apps-workflow'
 
     def create(self, name, workflow_path, custom_nodes_path):
         data_app = {"name": name}
@@ -96,9 +108,9 @@ class EngagePlatformManager(object):
             if custom_nodes_path is not None:
                 with open(custom_nodes_path, 'r') as c:
                     files['custom_nodes_py'] = c
-                    ret = self.engage_client.post('/apps-workflow', data=data_app, files=files, content_type='multipart/mixed')
+                    ret = self.engage_client.post(f'{self.apps_workflow_endpoint}', data=data_app, files=files, content_type='multipart/mixed')
             else:
-                ret = self.engage_client.post('/apps-workflow', data=data_app, files=files, content_type='multipart/mixed')
+                ret = self.engage_client.post(f'{self.apps_workflow_endpoint}', data=data_app, files=files, content_type='multipart/mixed')
 
         drive_app_id = ret['drive_app_id']
         engage_app_id = ret['engage_app_id']
@@ -107,18 +119,18 @@ class EngagePlatformManager(object):
 
     def update(self, id, workflow_path, custom_nodes_path):
         # TODO: Not yet implemented in Engage
+        # with open(workflow_path, 'r') as w:
+        #     files = {'workflow_yaml': w}
+        #     if custom_nodes_path is not None:
+        #         with open(custom_nodes_path, 'r') as c:
+        #             files['custom_nodes_py'] = c
+        #             ret = self.engage_client.patch(f'{self.apps_workflow_endpoint}/{id}', data=data_app, files=files, content_type='multipart/mixed')
+        #     else:
+        #         ret = self.engage_client.patch(f'/apps-workflow{id}', data=data_app, files=files, content_type='multipart/mixed')
+        #         ret = self.engage_client.patch(f'{self.apps_workflow_endpoint}/{id}', data=data_app, files=files, content_type='multipart/mixed')
+        # return "Engage App {} updated".format(ret['id'])
         return ""
 
-        with open(workflow_path, 'r') as w:
-            files = {'workflow_yaml': w}
-            if custom_nodes_path is not None:
-                with open(custom_nodes_path, 'r') as c:
-                    files['custom_nodes_py'] = c
-                    ret = self.engage_client.patch(f'/apps-workflow/{id}', data=data_app, files=files, content_type='multipart/mixed')
-            else:
-                ret = self.engage_client.patch(f'/apps-workflow{id}', data=data_app, files=files, content_type='multipart/mixed')
-        return "EngageApp {} updated".format(ret['id'])
-
     def delete(self, id):
-        self.engage_client.delete(f'/apps-workflow/{id}')
+        self.engage_client.delete(f'{self.apps_workflow_endpoint}/{id}')
         return "Engage App {} deleted".format(id)
