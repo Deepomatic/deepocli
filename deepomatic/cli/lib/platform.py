@@ -1,4 +1,3 @@
-import yaml
 import os
 import logging
 
@@ -93,7 +92,7 @@ class EngagePlatformManager(object):
         except KeyError as e:
             raise SystemExit(e, "environment variable ORGANIZATION_SLUG is missing.")
 
-        user_agent_prefix = ""
+        user_agent_prefix = "deepocli"
         self.engage_client = client_cls(host=ENGAGE_API_URL,
                                         user_agent_prefix=user_agent_prefix,
                                         version="")
@@ -108,9 +107,11 @@ class EngagePlatformManager(object):
             if custom_nodes_path is not None:
                 with open(custom_nodes_path, 'r') as c:
                     files['custom_nodes_py'] = c
-                    ret = self.engage_client.post(f'{self.apps_workflow_endpoint}', data=data_app, files=files, content_type='multipart/mixed')
+                    ret = self.engage_client.post(f'{self.apps_workflow_endpoint}',
+                                                  data=data_app, files=files, content_type='multipart/mixed')
             else:
-                ret = self.engage_client.post(f'{self.apps_workflow_endpoint}', data=data_app, files=files, content_type='multipart/mixed')
+                ret = self.engage_client.post(f'{self.apps_workflow_endpoint}',
+                                              data=data_app, files=files, content_type='multipart/mixed')
 
         drive_app_id = ret['drive_app_id']
         engage_app_id = ret['engage_app_id']
@@ -124,10 +125,13 @@ class EngagePlatformManager(object):
         #     if custom_nodes_path is not None:
         #         with open(custom_nodes_path, 'r') as c:
         #             files['custom_nodes_py'] = c
-        #             ret = self.engage_client.patch(f'{self.apps_workflow_endpoint}/{id}', data=data_app, files=files, content_type='multipart/mixed')
+        #             ret = self.engage_client.patch(f'{self.apps_workflow_endpoint}/{id}',
+        #                                            data=data_app, files=files, content_type='multipart/mixed')
         #     else:
-        #         ret = self.engage_client.patch(f'/apps-workflow{id}', data=data_app, files=files, content_type='multipart/mixed')
-        #         ret = self.engage_client.patch(f'{self.apps_workflow_endpoint}/{id}', data=data_app, files=files, content_type='multipart/mixed')
+        #         ret = self.engage_client.patch(f'/apps-workflow{id}', data=data_app,
+        #                                        files=files, content_type='multipart/mixed')
+        #         ret = self.engage_client.patch(f'{self.apps_workflow_endpoint}/{id}',
+        #                                        data=data_app, files=files, content_type='multipart/mixed')
         # return "Engage App {} updated".format(ret['id'])
         return ""
 
