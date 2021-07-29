@@ -88,7 +88,7 @@ class EngagePlatformManager(object):
 
         try:
             slug = os.environ['ORGANIZATION_SLUG']
-            FS_URL_PREFIX = f'engage/fs/on-site/orgs/{slug}'
+            FS_URL_PREFIX = "engage/fs/on-site/orgs/{}".format(slug)
         except KeyError as e:
             raise SystemExit(e, "environment variable ORGANIZATION_SLUG is missing.")
 
@@ -97,7 +97,7 @@ class EngagePlatformManager(object):
                                         user_agent_prefix=user_agent_prefix,
                                         version="")
 
-        self.apps_workflow_endpoint = f'{FS_URL_PREFIX}/apps-workflow'
+        self.apps_workflow_endpoint = "{}/apps-workflow".format(FS_URL_PREFIX)
 
     def create(self, name, workflow_path, custom_nodes_path):
         data_app = {"name": name}
@@ -107,10 +107,10 @@ class EngagePlatformManager(object):
             if custom_nodes_path is not None:
                 with open(custom_nodes_path, 'r') as c:
                     files['custom_nodes_py'] = c
-                    ret = self.engage_client.post(f'{self.apps_workflow_endpoint}',
+                    ret = self.engage_client.post('{}'.format(self.apps_workflow_endpoint),
                                                   data=data_app, files=files, content_type='multipart/mixed')
             else:
-                ret = self.engage_client.post(f'{self.apps_workflow_endpoint}',
+                ret = self.engage_client.post('{}'.format(self.apps_workflow_endpoint),
                                               data=data_app, files=files, content_type='multipart/mixed')
 
         drive_app_id = ret['drive_app_id']
@@ -136,5 +136,5 @@ class EngagePlatformManager(object):
         return ""
 
     def delete(self, id):
-        self.engage_client.delete(f'{self.apps_workflow_endpoint}/{id}')
+        self.engage_client.delete('{}/{}'.format(self.apps_workflow_endpoint, id))
         return "Engage App {} deleted".format(id)
