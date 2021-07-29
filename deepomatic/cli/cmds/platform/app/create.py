@@ -1,4 +1,4 @@
-from ...utils import Command, valid_path, valid_json
+from ...utils import Command, valid_json
 from ..utils import PlatformManager
 
 
