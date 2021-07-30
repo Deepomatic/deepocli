@@ -116,9 +116,11 @@ class TestPlatform(object):
     def test_engage_app(self, no_error_logs):
         args = "platform engage-app create -n test -w {} -c {}".format(WORKFLOW_PATH, CUSTOM_NODES_PATH)
         result = call_deepo(args)
-        message, app_id = result.split(':')
-        assert 'New Engage App created with id' in message
+        assert 'New Engage App created with id' in result
+        assert 'New Drive App created with id' in result
+        engage_part, drive_part = result.split('.')
+        _, engage_app_id = engage_part.split(':')
 
-        args = "platform engage-app delete --id {}".format(app_id)
+        args = "platform engage-app delete --id {}".format(engage_app_id)
         message = call_deepo(args)
-        assert message == 'Engage App {} deleted'.format(app_id)
+        assert message == 'Engage App{} deleted'.format(engage_app_id)
