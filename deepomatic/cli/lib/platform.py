@@ -1,4 +1,5 @@
 import os
+import yaml
 import logging
 
 try:
@@ -100,8 +101,15 @@ class EngagePlatformManager(object):
         self.apps_workflow_endpoint = "{}/apps-workflow".format(FS_URL_PREFIX)
 
     def create(self, name, workflow_path, custom_nodes_path):
-        data_app = {"name": name}
 
+        with open(workflow_path, 'r') as f:
+            workflow = yaml.safe_load(f)
+        app_specs = [{
+            "queue_name": "{}.forward".format(node['name']),
+            "recognition_spec_id": node['args']['model_id']
+        } for node in workflow['workflow']['steps'] if node["type"] == "Inference"]
+
+        data_app = {"name": name, "app_specs": app_specs}
         with open(workflow_path, 'r') as w:
             files = {'workflow_yaml': w}
             if custom_nodes_path is not None:
