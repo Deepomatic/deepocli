@@ -86,11 +86,6 @@ class TestPlatform(object):
         message, app_id = result.split(':')
         assert message == 'New app created with id'
 
-        args += ' -w ' + WORKFLOW_PATH
-        with pytest.raises(ValueError):
-            # workflow yaml and specs are exclusive
-            result = call_deepo(args)
-
     @pytest.mark.skip()
     def test_appversion(self, no_error_logs):
         with app() as app_id:
