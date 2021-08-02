@@ -396,9 +396,12 @@ class JsonLinesOutputData(JsonOutputData):
             should_overwrite = None  # TODO: cli flag (not kwargs.get('overwrite'))
             while should_overwrite is None:
                 overwrite = input("{} already exists. Overwrite? Y = yes, N = no\n".format(self._descriptor))
-                if overwrite.lower() == 'y':
+                answer = overwrite.lower()
+                if len(overwrite) == 0:
+                    continue
+                if answer[0] == 'y':
                     should_overwrite = True
-                elif overwrite.lower() == 'n':
+                elif answer[0] == 'n':
                     should_overwrite = False
 
             if should_overwrite:
