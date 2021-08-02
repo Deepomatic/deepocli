@@ -181,43 +181,44 @@ class SiteManager(object):
                 pass
             p.wait()
 
-    def make_intervention_url(self, base_url):
-        return "{}/interventions".format(base_url)
+    def make_work_order_url(self, base_url):
+        return "{}/v0.2/work-orders".format(base_url)
 
-    def create_intervention(self, base_url, name, metadata):
-        intervention_url = self.make_intervention_url(base_url)
-        data = {'name': name,
-                'metadata': metadata
-                }
-
-        res = self.session.post(intervention_url + '/', data=json.dumps(data))
+    def create_work_order(self, base_url, name, metadata):
+        work_order_url = self.make_work_order_url(base_url)
+        data = {
+            'name': name,
+            'metadata': metadata
+        }
+        res = self.session.post(work_order_url + '/', data=json.dumps(data))
         if res.status_code == 201:
             return res.json()['id']
         else:
             return res.text
 
-    def status_intervention(self, base_url, intervention_id):
-        intervention_url = self.make_intervention_url(base_url)
-        res = self.session.get('{}/{}'.format(intervention_url, intervention_id))
+    def status_work_order(self, base_url, work_order_id):
+        work_order_url = self.make_work_order_url(base_url)
+        res = self.session.get('{}/{}'.format(work_order_url, work_order_id))
         if res.status_code == 200:
             return res.json()
         else:
             return res.text
 
-    def delete_intervention(self, base_url, intervention_id):
-        intervention_url = self.make_intervention_url(base_url)
-        res = self.session.delete('{}/{}'.format(intervention_url, intervention_id))
+    def delete_work_order(self, base_url, work_order_id):
+        work_order_url = self.make_work_order_url(base_url)
+        res = self.session.delete('{}/{}'.format(work_order_url, work_order_id))
         if res.status_code == 204:
-            return "Intervention deleted"
+            return "Work order deleted"
         else:
             return res.text
 
-    def make_inference(self, base_url, intervention_id, entries, metadata):
-        intervention_url = self.make_intervention_url(base_url)
-        input_data_url = "{}/{}/input_data".format(intervention_url, intervention_id)
-        data = {'inputs': entries,
-                "metadata": metadata}
-
+    def make_work_order_inference(self, base_url, work_order_id, entries, metadata):
+        work_order_url = self.make_work_order_url(base_url)
+        input_data_url = "{}/{}/analyze".format(work_order_url, work_order_id)
+        data = {
+            'inputs': entries,
+            "metadata": metadata
+        }
         res = self.session.post(input_data_url + '/', data=json.dumps(data))
         if res.status_code == 200:
             return res.json()

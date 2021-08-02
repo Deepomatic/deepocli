@@ -1,9 +1,9 @@
 from ...utils import Command
 
 
-class InterventionCommand(Command):
+class WorkOrderCommand(Command):
     """
-        Intervention related commands
+        Work order related commands
     """
 
     from .create import CreateCommand
