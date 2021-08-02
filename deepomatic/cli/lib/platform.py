@@ -127,7 +127,6 @@ class EngagePlatformManager(object):
         return "New Engage App created with id: {}. New Drive App created with id: {}".format(engage_app_id, drive_app_id)
 
     def update(self, id, workflow_path, custom_nodes_path):
-        raise NotImplementedError()
         # TODO: Not yet implemented in Engage
         # with open(workflow_path, 'r') as w:
         #     files = {'workflow_yaml': w}
@@ -142,7 +141,7 @@ class EngagePlatformManager(object):
         #         ret = self.engage_client.patch(f'{self.apps_workflow_endpoint}/{id}',
         #                                        data=data_app, files=files, content_type='multipart/mixed')
         # return "Engage App {} updated".format(ret['id'])
-        return ""
+        raise NotImplementedError()
 
     def delete(self, id):
         self.engage_client.delete('{}/{}'.format(self.apps_workflow_endpoint, id))
