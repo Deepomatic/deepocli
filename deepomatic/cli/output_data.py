@@ -393,7 +393,7 @@ class JsonLinesOutputData(JsonOutputData):
         self._write_mode = 'a'
         # ask whether the file should be overwritten or not
         if os.path.exists(self._descriptor):
-            should_overwrite = None # TODO: cli flag (not kwargs.get('overwrite'))
+            should_overwrite = None  # TODO: cli flag (not kwargs.get('overwrite'))
             while should_overwrite is None:
                 overwrite = input("{} already exists. Overwrite? Y = yes, N = no\n".format(self._descriptor))
                 if overwrite.lower() == 'y':
