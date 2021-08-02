@@ -9,7 +9,7 @@ except ImportError:
 
 from deepomatic.api.http_helper import HTTPHelper
 
-
+from .add_images import DEFAULT_USER_AGENT_PREFIX
 LOGGER = logging.getLogger(__name__)
 
 
@@ -93,7 +93,7 @@ class EngagePlatformManager(object):
         except KeyError as e:
             raise SystemExit(e, "environment variable ORGANIZATION_SLUG is missing.")
 
-        user_agent_prefix = "deepocli"
+        user_agent_prefix = DEFAULT_USER_AGENT_PREFIX
         self.engage_client = client_cls(host=ENGAGE_API_URL,
                                         user_agent_prefix=user_agent_prefix,
                                         version="")
@@ -127,6 +127,7 @@ class EngagePlatformManager(object):
         return "New Engage App created with id: {}. New Drive App created with id: {}".format(engage_app_id, drive_app_id)
 
     def update(self, id, workflow_path, custom_nodes_path):
+        raise NotImplementedError()
         # TODO: Not yet implemented in Engage
         # with open(workflow_path, 'r') as w:
         #     files = {'workflow_yaml': w}
