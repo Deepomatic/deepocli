@@ -1,5 +1,6 @@
 import os
-from uuid import uuid4
+import pytest
+from uuid import uuid4, UUID
 from deepomatic.cli.lib.site import SiteManager
 
 from contextlib import contextmanager
@@ -230,6 +231,7 @@ class TestSite(object):
             manager.uninstall(site_id)
             assert(site_id not in manager.list())
 
+    @pytest.mark.skip()
     def test_site(self, no_error_logs):
         with app_version() as (app_version_id, app_id):
             args = "site create -n test_si -d xyz -v {}".format(app_version_id)
@@ -245,6 +247,7 @@ class TestSite(object):
             message = call_deepo(args)
             assert message == 'Site{} deleted'.format(site_id)
 
+    @pytest.mark.skip()
     def test_site_deployment_manifest(self, no_error_logs):
         for service in ['customer-api', 'camera-server']:
             with site() as (site_id, app_version_id, app_id):
@@ -270,17 +273,27 @@ class TestSite(object):
                 if service == 'customer-api':
                     assert 'kind: Ingress' in message
 
-    def test_intervention(self, no_error_logs):
-        args = "site intervention create -n ciao --api_url {} -m hello:2".format(customer_api_url)
+    def test_work_order(self, no_error_logs):
+        args = "site work-order create -n ciao --api_url {} -m hello:2".format(customer_api_url)
         result = call_deepo(args, api_key=customer_api_key)
-        intervention_id = result
-        assert len(intervention_id) == 36
+        work_order_id = result
+        assert UUID(work_order_id, version=4) is not None
 
-        args = "site intervention status -i {} --api_url {}".format(intervention_id, customer_api_url)
+        args = "site work-order status -i {} --api_url {}".format(work_order_id, customer_api_url)
         result = call_deepo(args, api_key=customer_api_key)
-        assert set(result.keys()) == set(['id', 'name', 'config_id', 'questions', 'answers', 'site_id',
-                                          'app_version_id', 'create_date', 'workflow_parameters', 'update_date',
-                                          'review_date', 'tags', 'assigned_user_id', 'enabled', 'metadata'])
-        args = "site intervention delete -i {} --api_url {}".format(intervention_id, customer_api_url)
+        assert set(result.keys()) == set(['id', 'name', 'site_id', 'review_date',
+                                          'first_analysis_id', 'latest_analysis_id',
+                                          'create_date', 'update_date', 'tags',
+                                          'assigned_user_id', 'engage_app_id', 'parameters',
+                                          'metadata', 'tasks', 'inputs'])
+
+        image_url = "https://storage.googleapis.com/dp-product/documentation/ftth/pto-seule.jpg"
+        args = "site work-order infer -i {} --api_url {} -e image_input@image@{} context@text@pto-photometre -m foo:bar".format(
+            work_order_id, customer_api_url, image_url
+        )
         result = call_deepo(args, api_key=customer_api_key)
-        assert result == 'Intervention deleted'
+        assert len(result['tasks']) > 0
+
+        args = "site work-order delete -i {} --api_url {}".format(work_order_id, customer_api_url)
+        result = call_deepo(args, api_key=customer_api_key)
+        assert result == 'Work order deleted'

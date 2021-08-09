@@ -25,5 +25,5 @@ class SiteCommand(Command):
     from .delete import DeleteCommand
     from .manifest import ManifestCommand
 
-    from .intervention import InterventionCommand
+    from .work_order import WorkOrderCommand
     from .model import ModelCommand
