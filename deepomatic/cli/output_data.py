@@ -7,13 +7,16 @@ import cv2
 import logging
 import traceback
 from .thread_base import Thread
-from .common import Empty, write_frame_to_disk, SUPPORTED_IMAGE_OUTPUT_FORMAT, SUPPORTED_VIDEO_OUTPUT_FORMAT
+from .workflow.rpc_workflow import requires_deepomatic_rpc, import_rpc_package
+from .common import Empty, Queue, write_frame_to_disk, urlparse, SUPPORTED_IMAGE_OUTPUT_FORMAT, SUPPORTED_VIDEO_OUTPUT_FORMAT
 from .cmds.studio_helpers.vulcan2studio import transform_json_from_vulcan_to_studio
-from .exceptions import DeepoUnknownOutputError, DeepoSaveJsonToFileError
+from .exceptions import DeepoUnknownOutputError, DeepoSaveJsonToFileError, DeepoCLIException
 
 
 LOGGER = logging.getLogger(__name__)
 DEFAULT_OUTPUT_FPS = 25
+
+rpc, protobuf = import_rpc_package()
 
 try:
     # https://stackoverflow.com/questions/908331/how-to-write-binary-data-to-stdout-in-python-3
@@ -42,6 +45,8 @@ def get_output(descriptor, kwargs):
             return JsonOutputData(descriptor, **kwargs)
         elif DirectoryOutputData.is_valid(descriptor):
             return DirectoryOutputData(descriptor, **kwargs)
+        elif GRPCOutputData.is_valid(descriptor):
+            return GRPCOutputData(descriptor, **kwargs)
         elif descriptor == 'stdout':
             return StdOutputData(**kwargs)
         elif descriptor == 'window':
@@ -412,3 +417,68 @@ class DirectoryOutputData(OutputData):
         # Finally write the image to file with its name
         path = os.path.join(root_dir, "{}{}".format(frame.name, ext))
         write_frame_to_disk(frame, path)
+
+
+@requires_deepomatic_rpc
+class GRPCOutputData(OutputData):
+    class DeepoServiceStub(object):
+        def __init__(self, channel, path):
+            """Constructor.
+            Args:
+            channel: A grpc.Channel.
+            """
+            self.stream = channel.stream_unary(
+                path,
+                request_serializer=rpc.buffers.protobuf.cli.Message_pb2.Message.SerializeToString,
+                response_deserializer=rpc.buffers.protobuf.cli.Message_pb2.Message.FromString,
+            )
+
+    @classmethod
+    def is_valid(cls, descriptor):
+        return descriptor.startswith('grpc://')
+
+    def __init__(self, descriptor, **kwargs):
+        super(GRPCOutputData, self).__init__(descriptor, **kwargs)
+        try:
+            parsed = urlparse.urlparse(descriptor)
+            self._grpc_url = parsed.netloc
+            self._grpc_path = parsed.path if parsed.path else '/deepomatic.cli.DeepoService/Stream'
+        except (ValueError, KeyError):
+            raise DeepoCLIException("Cannot parse the descriptor for grpc output. It should have the `grpc://HOST:PORT` format")
+
+        self._queue = Queue()
+
+        try:
+            import grpc
+        except ImportError:
+            raise DeepoCLIException("gRPC is not installed")
+        try:
+            self._channel = grpc.insecure_channel('%s' % self._grpc_url)
+            grpc.channel_ready_future(self._channel).result(timeout=5)
+            self._stub = GRPCOutputData.DeepoServiceStub(self._channel, self._grpc_path)
+            self._stream = self._stub.stream.future(iter(self._queue.get, None))
+        except grpc.FutureTimeoutError:
+            raise DeepoCLIException("Cannot connect to gRPC server at %s" % self._grpc_url)
+
+    def close(self):
+        if self._channel is not None:
+            self._channel.close()
+            self._channel = None
+            self._stub = None
+            self._queue = None
+
+    def output_frame(self, frame):
+        if frame.output_image is None:
+            LOGGER.warning('No frame to output.')
+        else:
+            message = rpc.buffers.protobuf.cli.Message_pb2.Message()
+            protobuf.json_format.ParseDict({
+                'result': {
+                    'v07_recognition': frame.predictions
+                },
+                'command': {
+                }
+            }, message)
+            image_input = rpc.v07_ImageInput(source=rpc.BINARY_IMAGE_PREFIX + frame.buf_bytes)
+            message.command.input_mix.CopyFrom(rpc.helpers.v07_proto.create_images_input_mix([image_input]))
+            self._queue.put(message)

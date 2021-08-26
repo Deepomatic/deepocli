@@ -2,14 +2,17 @@ import io
 import os
 import cv2
 import logging
-try:
-    import Queue as queue
-except ImportError:
-    import queue as queue
 
-Full = queue.Full
-Queue = queue.Queue
-Empty = queue.Empty
+try:
+    from Queue import Empty, Full, Queue, LifoQueue
+except ImportError:
+    from queue import Empty, Full, Queue, LifoQueue  # noqa: F401
+
+try:
+    import urlparse
+except ImportError:
+    import urllib.parse as urlparse  # noqa: F401
+
 
 LOGGER = logging.getLogger(__name__)
 SUPPORTED_IMAGE_INPUT_FORMAT = ['.bmp', '.jpeg', '.jpg', '.jpe', '.png', '.tif', '.tiff']
