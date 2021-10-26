@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import os
 import io
 from setuptools import find_packages, setup
