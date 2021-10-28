@@ -73,7 +73,7 @@ def check_directory(directory,
                         assert len(data) == 0 or 'outputs' in data[0]
         elif path.endswith(('.jpg', '.jpeg')):
             nb_image += 1
-        elif path.endswith('.mp4'):
+        elif path.endswith(tuple(SUPPORTED_VIDEO_OUTPUT_FORMAT)):
             nb_video += 1
         elif os.path.isdir(os.path.join(directory, path)):
             nb_subdir += 1
