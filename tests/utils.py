@@ -6,6 +6,7 @@ import tempfile
 import requests
 from contextlib import contextmanager
 from deepomatic.cli.cli_parser import run
+from deepomatic.cli.common import SUPPORTED_VIDEO_OUTPUT_FORMAT
 
 
 # Define outputs
