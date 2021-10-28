@@ -111,6 +111,7 @@ def setup_model_cmd_line_parser(mode, cmd, inference_parsers):
                            " a video (*{}), a json (*.json) or a directory.".format(', *'.join(SUPPORTED_IMAGE_OUTPUT_FORMAT),
                                                                                     ', *'.join(SUPPORTED_VIDEO_OUTPUT_FORMAT)))
         group.add_argument('--output_fps', type=int, help="FPS used for output video reconstruction.", default=None)
+        group.add_argument('--fourcc', type=str, help="Codec used for output video reconstruction.", choices=set([fourcc for l in SUPPORTED_FOURCC.values() for fourcc in l]), default=None)
 
     # Define output group for draw blur noop
     if cmd in ['draw', 'blur', 'noop']:

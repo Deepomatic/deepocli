@@ -18,7 +18,11 @@ SUPPORTED_FILE_INPUT_FORMAT = SUPPORTED_IMAGE_INPUT_FORMAT + SUPPORTED_VIDEO_INP
 SUPPORTED_PROTOCOLS_INPUT = ['rtsp', 'http', 'https']
 SUPPORTED_IMAGE_OUTPUT_FORMAT = SUPPORTED_IMAGE_INPUT_FORMAT
 SUPPORTED_VIDEO_OUTPUT_FORMAT = ['.avi', '.mp4']
-
+SUPPORTED_FOURCC = {
+    **{f: [] for f in SUPPORTED_VIDEO_OUTPUT_FORMAT}
+    '.mp4': ['mp4v', 'avc1'],
+    '.avi': ['XVID', 'MJPG']
+}
 
 class TqdmToLogger(io.StringIO):
     """Tqdm output stream to play nice with logger."""
