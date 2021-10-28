@@ -14,6 +14,8 @@ OUTPUTS = {
     'WINDOW': 'window',
     'IMAGE': 'image_output%04d.jpg',
     'VIDEO': 'video_output.mp4',
+    'VIDEO_MP4': 'video_output.mp4',
+    'VIDEO_AVI': 'video_output.avi',
     'INT_WILDCARD_JSON': 'test_output%04d.json',
     'STR_WILDCARD_JSON': 'test_output%s.json',
     'NO_WILDCARD_JSON': 'test_output.json',

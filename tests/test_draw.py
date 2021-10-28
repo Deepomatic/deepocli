@@ -1,6 +1,6 @@
 import pytest
 from utils import init_files_setup, run_cmd, OUTPUTS
-
+from deepomatic.cli.common import SUPPORTED_FOURCC
 
 # ------- Files setup ------------------------------------------------------------------------------------------------ #
 
@@ -107,6 +107,13 @@ def test_e2e_image_draw_image_threshold(no_error_logs):
 def test_e2e_video_draw_video_fps(no_error_logs):
     run_draw(INPUTS['VIDEO'], [OUTPUTS['VIDEO']], expect_nb_video=1, extra_opts=['--output_fps', '2'])
     run_draw(INPUTS['VIDEO'], [OUTPUTS['VIDEO']], expect_nb_video=1, extra_opts=['--input_fps', '2'])
+
+
+def test_e2e_video_draw_video_fourcc(no_error_logs):
+    for ext, supported_fourcc in SUPPORTED_FOURCC.items():
+        output = 'VIDEO' + ext.upper().replace('.', '_')
+        for fourcc in supported_fourcc:
+            run_draw(INPUTS['VIDEO'], [output], expect_nb_video=1, extra_opts=['--fourcc', fourcc])
 
 
 @pytest.mark.skip(reason="window not handled by test")
