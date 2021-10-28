@@ -114,7 +114,6 @@ def setup_model_cmd_line_parser(mode, cmd, inference_parsers):
         group.add_argument('--fourcc', type=str, help="Codec used for output video reconstruction.",
                            choices=set([fourcc for fourccs in SUPPORTED_FOURCC.values() for fourcc in fourccs]), default=None)
 
-
     # Define output group for draw blur noop
     if cmd in ['draw', 'blur', 'noop']:
         group = output_groups[cmd]
