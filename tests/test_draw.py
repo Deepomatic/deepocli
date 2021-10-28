@@ -113,7 +113,7 @@ def test_e2e_video_draw_video_fourcc(no_error_logs):
     for ext, supported_fourcc in SUPPORTED_FOURCC.items():
         output = 'VIDEO' + ext.upper().replace('.', '_')
         for fourcc in supported_fourcc:
-            run_draw(INPUTS['VIDEO'], [output], expect_nb_video=1, extra_opts=['--fourcc', fourcc])
+            run_draw(INPUTS['VIDEO'], [OUTPUTS[output]], expect_nb_video=1, extra_opts=['--fourcc', fourcc])
 
 
 @pytest.mark.skip(reason="window not handled by test")
