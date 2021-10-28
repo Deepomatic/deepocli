@@ -24,6 +24,7 @@ SUPPORTED_FOURCC = {
     '.avi': ['XVID', 'MJPG']
 }
 
+
 class TqdmToLogger(io.StringIO):
     """Tqdm output stream to play nice with logger."""
     logger = None

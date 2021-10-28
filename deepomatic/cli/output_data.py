@@ -207,7 +207,8 @@ class VideoOutputData(OutputData):
         # if fourcc is provided, try to use it
         if kwargs.get('fourcc') is not None:
             fourcc = kwargs['fourcc']
-        else: # default to the first supported fourcc
+        else:
+            # default to the first supported fourcc
             fourcc = FOURCC[0]
 
         if fourcc not in FOURCC:
