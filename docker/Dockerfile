@@ -9,6 +9,8 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-ins
 
 RUN pip3 install --upgrade pip
 
+WORKDIR /tmp/build
+
 ADD ./install.sh .
 
 RUN ./install.sh
