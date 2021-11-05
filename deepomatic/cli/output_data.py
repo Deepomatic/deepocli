@@ -212,7 +212,7 @@ class VideoOutputData(OutputData):
             fourcc = FOURCC[0]
 
         if fourcc not in FOURCC:
-            raise Exception("Unsupported fourcc {} for extension {}. Try one of {}".format(fourcc, ext, ', '.join(SUPPORTED_FOURCC[ext])))
+            LOGGER.warning("Unsupported fourcc {} for extension {}. If the video is not outputted, you may try one of {}".format(fourcc, ext, ', '.join(SUPPORTED_FOURCC[ext])))
         self._fourcc = cv2.VideoWriter_fourcc(*fourcc)
         self._fps = kwargs['output_fps']
         self._writer = None
