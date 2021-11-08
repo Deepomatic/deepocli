@@ -281,11 +281,11 @@ class TestSite(object):
 
         args = "site work-order status -i {} --api_url {}".format(work_order_id, customer_api_url)
         result = call_deepo(args, api_key=customer_api_key)
-        assert set(result.keys()) == set(['id', 'name', 'site_id', 'review_date',
+        assert set(result.keys()) >= set(['id', 'name', 'site_id', 'review_date',
                                           'first_analysis_id', 'latest_analysis_id',
                                           'create_date', 'update_date', 'tags',
                                           'assigned_user_id', 'engage_app_id', 'parameters',
-                                          'metadata', 'tasks', 'inputs'])
+                                          'metadata', 'tasks', 'task_groups', 'inputs'])
 
         image_url = "https://storage.googleapis.com/dp-product/documentation/ftth/pto-seule.jpg"
         args = "site work-order infer -i {} --api_url {} -e image_input@image@{} context@text@pto-photometre -m foo:bar".format(
