@@ -29,7 +29,7 @@ def run_infer(*args, **kwargs):
         (OUTPUTS['ALL'], {
             'expect_nb_json': 3,
             'expect_nb_image': 1,
-            'expect_nb_video': 1,
+            'expect_nb_video': 2,
             'expect_nb_subdir': 1,
             'expect_subir': {OUTPUTS['DIR']: {'expect_nb_image': 1}}
         })
@@ -55,7 +55,7 @@ def test_e2e_image_infer(outputs, expected, no_error_logs):
         (OUTPUTS['ALL'], {
             'expect_nb_json': 43,
             'expect_nb_image': 21,
-            'expect_nb_video': 1,
+            'expect_nb_video': 2,
             'expect_nb_subdir': 1,
             'expect_subir': {OUTPUTS['DIR']: {'expect_nb_image': 21}}
         })
@@ -81,7 +81,7 @@ def test_e2e_video_infer(outputs, expected, no_error_logs):
         (OUTPUTS['ALL'], {
             'expect_nb_json': 5,
             'expect_nb_image': 2,
-            'expect_nb_video': 1,
+            'expect_nb_video': 2,
             'expect_nb_subdir': 1,
             'expect_subir': {OUTPUTS['DIR']: {'expect_nb_image': 2, 'expect_nb_subdir': 1}}
         })
