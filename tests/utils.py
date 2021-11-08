@@ -6,6 +6,7 @@ import tempfile
 import requests
 from contextlib import contextmanager
 from deepomatic.cli.cli_parser import run
+from deepomatic.cli.common import SUPPORTED_VIDEO_OUTPUT_FORMAT
 
 
 # Define outputs
@@ -14,6 +15,8 @@ OUTPUTS = {
     'WINDOW': 'window',
     'IMAGE': 'image_output%04d.jpg',
     'VIDEO': 'video_output.mp4',
+    'VIDEO_MP4': 'video_output.mp4',
+    'VIDEO_AVI': 'video_output.avi',
     'INT_WILDCARD_JSON': 'test_output%04d.json',
     'STR_WILDCARD_JSON': 'test_output%s.json',
     'NO_WILDCARD_JSON': 'test_output.json',
@@ -71,7 +74,7 @@ def check_directory(directory,
                         assert len(data) == 0 or 'outputs' in data[0]
         elif path.endswith(('.jpg', '.jpeg')):
             nb_image += 1
-        elif path.endswith('.mp4'):
+        elif path.endswith(tuple(SUPPORTED_VIDEO_OUTPUT_FORMAT)):
             nb_video += 1
         elif os.path.isdir(os.path.join(directory, path)):
             nb_subdir += 1

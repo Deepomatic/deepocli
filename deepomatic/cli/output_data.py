@@ -7,7 +7,7 @@ import cv2
 import logging
 import traceback
 from .thread_base import Thread
-from .common import Empty, write_frame_to_disk, SUPPORTED_IMAGE_OUTPUT_FORMAT, SUPPORTED_VIDEO_OUTPUT_FORMAT
+from .common import Empty, write_frame_to_disk, SUPPORTED_IMAGE_OUTPUT_FORMAT, SUPPORTED_VIDEO_OUTPUT_FORMAT, SUPPORTED_FOURCC
 from .cmds.studio_helpers.vulcan2studio import transform_json_from_vulcan_to_studio
 from .exceptions import DeepoUnknownOutputError, DeepoSaveJsonToFileError
 
@@ -200,13 +200,21 @@ class VideoOutputData(OutputData):
     def __init__(self, descriptor, **kwargs):
         super(VideoOutputData, self).__init__(descriptor, **kwargs)
         ext = os.path.splitext(descriptor)[1].lower()
-        if ext == '.avi':
-            fourcc = cv2.VideoWriter_fourcc('X', 'V', 'I', 'D')
-        elif ext == '.mp4':
-            fourcc = cv2.VideoWriter_fourcc('m', 'p', '4', 'v')
-        else:
+        if ext not in SUPPORTED_FOURCC:
             raise Exception("Unsupported video output extension {}".format(ext))
-        self._fourcc = fourcc
+
+        FOURCC = SUPPORTED_FOURCC[ext]
+        # if fourcc is provided, try to use it
+        if kwargs.get('fourcc') is not None:
+            fourcc = kwargs['fourcc']
+        else:
+            # default to the first supported fourcc
+            fourcc = FOURCC[0]
+
+        if fourcc not in FOURCC:
+            LOGGER.warning("The specified fourcc {} might not be muxable into the container format {}".format(fourcc, ext))
+
+        self._fourcc = cv2.VideoWriter_fourcc(*fourcc)
         self._fps = kwargs['output_fps']
         self._writer = None
 

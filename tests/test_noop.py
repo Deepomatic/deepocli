@@ -1,6 +1,6 @@
 import pytest
 from utils import init_files_setup, run_cmd, OUTPUTS
-
+from deepomatic.cli.common import SUPPORTED_FOURCC
 
 # ------- Files setup ------------------------------------------------------------------------------------------------ #
 
@@ -43,6 +43,15 @@ def test_e2e_image_infer(outputs, expected, no_error_logs):
 )
 def test_e2e_video_infer(outputs, expected, no_error_logs):
     run_noop(INPUTS['VIDEO'], outputs, **expected)
+
+
+def test_e2e_video_noop_video_fourcc(no_error_logs):
+    SKIP = ['avc1']
+    for ext, supported_fourcc in SUPPORTED_FOURCC.items():
+        output = 'VIDEO' + ext.upper().replace('.', '_')
+        for fourcc in supported_fourcc:
+            if fourcc not in SKIP:
+                run_noop(INPUTS['VIDEO'], [OUTPUTS[output]], expect_nb_video=1, extra_opts=['--fourcc', fourcc])
 
 
 # # ------- Directory Input Tests -------------------------------------------------------------------------------------- #
