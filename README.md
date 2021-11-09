@@ -88,14 +88,17 @@ If you want more freedom on the encoding settings we suggest piping the CLI to `
 In both case you need to tell `ffmpeg` or `cvlc` about the resolution, framerate and color space of the input stream.
 You can use `ffprobe` or `mediainfo` to get the resolution and framerate of your input video.
 The color space (chroma) does not depend on your input video but on our CLI which by default output BGR color space.
-It is not supported by `cvlc`, thus you will need to ask our CLI to convert it to `RGB`.
 
-Example using `ffmpeg`:
+#### Example using `ffmpeg`
+
 ```bash
 deepo platform model noop -i $input_video -o stdout | ffmpeg -f rawvideo -pixel_format bgr24 -video_size 1280x720 -framerate 15 -i - -c:v h264 $output_video
 ```
 
-Example using `cvlc`:
+#### Example using `cvlc`
+
+BGR color space is not supported by `cvlc`, you will need to ask our CLI to convert the stream to `RGB`.
+
 ```bash
 deepo platform model noop -i $input_video -o stdout --output_color_space RGB | cvlc --demux=rawvideo --rawvid-fps=15 --rawvid-width=1280 --rawvid-height=720 --rawvid-chroma=RV24 - --sout "#transcode{vcodec=h264}:std{access=file,dst=$output_video}"
 ```
