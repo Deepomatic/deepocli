@@ -1,19 +1,21 @@
 # -*- coding: utf-8 -*-
 
 import os
+import numpy as np
 import sys
 import json
 import cv2
 import logging
 import traceback
 from .thread_base import Thread
-from .common import Empty, write_frame_to_disk, SUPPORTED_IMAGE_OUTPUT_FORMAT, SUPPORTED_VIDEO_OUTPUT_FORMAT, SUPPORTED_FOURCC
+from .common import Empty, write_frame_to_disk, SUPPORTED_IMAGE_OUTPUT_FORMAT, SUPPORTED_VIDEO_OUTPUT_FORMAT, SUPPORTED_FOURCC, BGR_TO_COLOR_SPACE
 from .cmds.studio_helpers.vulcan2studio import transform_json_from_vulcan_to_studio
 from .exceptions import DeepoUnknownOutputError, DeepoSaveJsonToFileError
 
 
 LOGGER = logging.getLogger(__name__)
 DEFAULT_OUTPUT_FPS = 25
+
 
 try:
     # https://stackoverflow.com/questions/908331/how-to-write-binary-data-to-stdout-in-python-3
@@ -73,6 +75,13 @@ class OutputThread(Thread):
         super(OutputThread, self).__init__(exit_event, input_queue,
                                            output_queue, current_messages)
         self.args = kwargs
+        # Opencv images are BGR by default, no need to convert
+        output_color_space_str = kwargs.get('output_color_space')
+        if output_color_space_str is None or output_color_space_str == 'BGR':
+            self.output_color_space = None
+        else:
+            self.output_color_space = BGR_TO_COLOR_SPACE[output_color_space_str]
+
         self.on_progress = on_progress
         self.postprocessing = postprocessing
         self.frames_to_check_first = {}
@@ -141,6 +150,10 @@ class OutputThread(Thread):
             self.postprocessing(frame)
         else:
             frame.output_image = frame.image  # we output the original image
+
+        # Opencv images are BGR by default
+        if self.output_color_space is not None:
+            frame.output_image = cv2.cvtColor(frame.output_image, self.output_color_space)
 
         for output in self.outputs:
             output.output_frame(frame)
@@ -243,7 +256,8 @@ class StdOutputData(OutputData):
         if frame.output_image is None:
             print(json.dumps(frame.predictions))
         else:
-            write_bytes_to_stdout(frame.output_image[:, :, ::-1].tobytes())
+            write_bytes_to_stdout(frame.output_image.tobytes())
+
 
 
 class DisplayOutputData(OutputData):
