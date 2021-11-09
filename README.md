@@ -97,7 +97,7 @@ deepo platform model noop -i $input_video -o stdout | ffmpeg -f rawvideo -pixel_
 
 #### Example using `cvlc`
 
-BGR color space is not supported by `cvlc`, you will need to ask our CLI to convert the stream to `RGB`.
+BGR color space is not supported by `cvlc`, so we have to convert the stream to `RGB`.
 
 ```bash
 deepo platform model noop -i $input_video -o stdout --output_color_space RGB | cvlc --demux=rawvideo --rawvid-fps=15 --rawvid-width=1280 --rawvid-height=720 --rawvid-chroma=RV24 - --sout "#transcode{vcodec=h264}:std{access=file,dst=$output_video}"
