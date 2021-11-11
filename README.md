@@ -84,15 +84,17 @@ If you are on windows, there is an alternative using [openh264](https://github.c
 
 ### Piping to ffmpeg or cvlc
 
-If you want more freedom on the encoding settings we suggest piping the CLI to `ffmpeg` or `cvlc` by using the option `-o stdout`.
+If you want more freedom on the encoding settings, we suggest piping the CLI to `ffmpeg` or `cvlc` by using the option `-o stdout`.
 In both case you need to tell `ffmpeg` or `cvlc` about the resolution, framerate and color space of the input stream.
 You can use `ffprobe` or `mediainfo` to get the resolution and framerate of your input video.
 The color space (chroma) does not depend on your input video but on our CLI which by default output BGR color space.
 
+Again, make sure you can legally use the codec specified in the command.
+
 #### Example using `ffmpeg`
 
 ```bash
-deepo platform model noop -i $input_video_path -o stdout | ffmpeg -f rawvideo -pixel_format bgr24 -video_size 1280x720 -framerate 15 -i - -c:v h264 $output_video_path
+deepo platform model noop -i $input_video_path -o stdout | ffmpeg -f rawvideo -pixel_format bgr24 -video_size 1280x720 -framerate 15 -i - -c:v $codec $output_video_path
 ```
 
 #### Example using `cvlc`
@@ -100,7 +102,7 @@ deepo platform model noop -i $input_video_path -o stdout | ffmpeg -f rawvideo -p
 BGR color space is not supported by `cvlc`, so we have to convert the stream to `RGB`.
 
 ```bash
-deepo platform model noop -i $input_video_path -o stdout --output_color_space RGB | cvlc --demux=rawvideo --rawvid-fps=15 --rawvid-width=1280 --rawvid-height=720 --rawvid-chroma=RV24 - --sout "#transcode{vcodec=h264}:std{access=file,dst=$output_video_path}" vlc://quit
+deepo platform model noop -i $input_video_path -o stdout --output_color_space RGB | cvlc --demux=rawvideo --rawvid-fps=15 --rawvid-width=1280 --rawvid-height=720 --rawvid-chroma=RV24 - --sout "#transcode{vcodec=$codec}:std{access=file,dst=$output_video_path}" vlc://quit
 ```
 
 
