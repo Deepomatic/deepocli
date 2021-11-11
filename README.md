@@ -92,7 +92,7 @@ The color space (chroma) does not depend on your input video but on our CLI whic
 #### Example using `ffmpeg`
 
 ```bash
-deepo platform model noop -i $input_video -o stdout | ffmpeg -f rawvideo -pixel_format bgr24 -video_size 1280x720 -framerate 15 -i - -c:v h264 $output_video
+deepo platform model noop -i $input_video_path -o stdout | ffmpeg -f rawvideo -pixel_format bgr24 -video_size 1280x720 -framerate 15 -i - -c:v h264 $output_video_path
 ```
 
 #### Example using `cvlc`
@@ -100,7 +100,7 @@ deepo platform model noop -i $input_video -o stdout | ffmpeg -f rawvideo -pixel_
 BGR color space is not supported by `cvlc`, so we have to convert the stream to `RGB`.
 
 ```bash
-deepo platform model noop -i $input_video -o stdout --output_color_space RGB | cvlc --demux=rawvideo --rawvid-fps=15 --rawvid-width=1280 --rawvid-height=720 --rawvid-chroma=RV24 - --sout "#transcode{vcodec=h264}:std{access=file,dst=$output_video}"
+deepo platform model noop -i $input_video_path -o stdout --output_color_space RGB | cvlc --demux=rawvideo --rawvid-fps=15 --rawvid-width=1280 --rawvid-height=720 --rawvid-chroma=RV24 - --sout "#transcode{vcodec=h264}:std{access=file,dst=$output_video_path}" vlc://quit
 ```
 
 
