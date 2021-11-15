@@ -7,8 +7,7 @@ import cv2
 import logging
 import traceback
 from .thread_base import Thread
-from .common import (Empty, write_frame_to_disk, SUPPORTED_IMAGE_OUTPUT_FORMAT,
-                     SUPPORTED_VIDEO_OUTPUT_FORMAT, SUPPORTED_FOURCC, BGR_TO_COLOR_SPACE)
+from .common import (Empty, write_frame_to_disk, SUPPORTED_IMAGE_OUTPUT_FORMAT, SUPPORTED_VIDEO_OUTPUT_FORMAT, SUPPORTED_FOURCC, BGR_TO_COLOR_SPACE
 from .cmds.studio_helpers.vulcan2studio import transform_json_from_vulcan_to_studio
 from .exceptions import DeepoUnknownOutputError, DeepoSaveJsonToFileError
 
@@ -152,7 +151,7 @@ class OutputThread(Thread):
             frame.output_image = frame.image  # we output the original image
 
         # Opencv images are BGR by default
-        if self.output_color_space is not None:
+        if self.output_color_space is not None and frame.output_image is not None:
             frame.output_image = cv2.cvtColor(frame.output_image, self.output_color_space)
 
         for output in self.outputs:
