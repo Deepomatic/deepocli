@@ -50,7 +50,6 @@ pip install $dist_dirname/deepomatic_cli-*.whl \
       --ignore-installed --upgrade
 
 
-
 # unit tests
 main_pyversion="${PYENV_VERSION%.*}"
 pytest --junit-xml=junit-py/${main_pyversion}.xml --cov=deepomatic/ \
@@ -58,14 +57,9 @@ pytest --junit-xml=junit-py/${main_pyversion}.xml --cov=deepomatic/ \
        --cov-report html:cover-py/${main_pyversion} --color=yes \
        -vv
 
-if [ "$main_pyversion" == '2.7' ]; then
-    # The checks below will not work in 2.7 but it's ok
-    # we will drop the support quite soon
-    exit 0;
-fi
 
 # Check that opencv can be found for all those platforms
-opencv=$(grep opencv-python requirements.txt | grep "> '2.7'")
+opencv=$(grep opencv-python requirements.txt)
 platforms="
 macosx_10_9_intel
 macosx_10_9_x86_64
