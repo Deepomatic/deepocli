@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
 
 import os
-import numpy as np
 import sys
 import json
 import cv2
 import logging
 import traceback
 from .thread_base import Thread
-from .common import Empty, write_frame_to_disk, SUPPORTED_IMAGE_OUTPUT_FORMAT, SUPPORTED_VIDEO_OUTPUT_FORMAT, SUPPORTED_FOURCC, BGR_TO_COLOR_SPACE
+from .common import (Empty, write_frame_to_disk, SUPPORTED_IMAGE_OUTPUT_FORMAT,
+                     SUPPORTED_VIDEO_OUTPUT_FORMAT, SUPPORTED_FOURCC, BGR_TO_COLOR_SPACE)
 from .cmds.studio_helpers.vulcan2studio import transform_json_from_vulcan_to_studio
 from .exceptions import DeepoUnknownOutputError, DeepoSaveJsonToFileError
 
@@ -257,7 +257,6 @@ class StdOutputData(OutputData):
             print(json.dumps(frame.predictions))
         else:
             write_bytes_to_stdout(frame.output_image.tobytes())
-
 
 
 class DisplayOutputData(OutputData):
