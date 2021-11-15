@@ -115,7 +115,7 @@ def setup_model_cmd_line_parser(mode, cmd, inference_parsers):
         group.add_argument('--fourcc', type=str, help="Codec used for output video reconstruction.",
                            choices=set([fourcc for fourccs in SUPPORTED_FOURCC.values() for fourcc in fourccs]), default=None)
         group.add_argument('--output_color_space', type=str,
-                           help="Only useful for option `-o stdout`. Convert the outputed frame into the specified color space.",
+                           help="Mainly useful for option `-o stdout`. Convert the outputed frame into the specified color space.",
                            choices=SUPPORTED_VIDEO_OUTPUT_COLOR_SPACE, default='BGR')
 
     # Define output group for draw blur noop
