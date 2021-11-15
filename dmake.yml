@@ -29,7 +29,9 @@ docker:
       - requirements.txt
       - README.md
     install_scripts:
-      - deploy/deepomatic-cli/install.sh
+      - deploy/deepomatic-cli/install_apt.sh
+      - deploy/deepomatic-cli/install_pyenv.sh
+      - deploy/deepomatic-cli/install_reqs.sh
 
 services:
   - service_name: deepocli
@@ -45,19 +47,17 @@ services:
       commands:
         - deploy/deepomatic-cli/run_tests.sh
       junit_report:
-        - junit-py/2.7.xml
-        - junit-py/3.5.xml
         - junit-py/3.6.xml
         - junit-py/3.7.xml
         - junit-py/3.8.xml
         - junit-py/3.9.xml
+        - junit-py/3.10.xml
       cobertura_report:
-        - coverage-py/2.7.xml
-        - coverage-py/3.5.xml
         - coverage-py/3.6.xml
         - coverage-py/3.7.xml
         - coverage-py/3.8.xml
         - coverage-py/3.9.xml
+        - coverage-py/3.10.xml
       html_report:
-        directory: cover-py/3.6
+        directory: cover-py/3.8
         title: deepomatic-cli-python HTML coverage report
