@@ -84,7 +84,7 @@ If you are on windows, there is an alternative using [openh264](https://github.c
 
 ### Piping to ffmpeg or cvlc
 
-If you want more freedom on the encoding settings, we suggest piping the CLI to `ffmpeg` or `cvlc` by using the option `-o stdout`.
+If you want more freedom on the encoding settings, we suggest piping the CLI to `ffmpeg` or `cvlc` by using the option `-o stdout` (working with infer, draw, blur and noop commands).
 In both case you need to tell `ffmpeg` or `cvlc` about the resolution, framerate and color space of the input stream.
 You can use `ffprobe` or `mediainfo` to get the resolution and framerate of your input video.
 The color space (chroma) does not depend on your input video but on our CLI which by default output BGR color space.
