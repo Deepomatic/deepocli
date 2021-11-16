@@ -94,7 +94,7 @@ Again, make sure you can legally use the codec specified in the command.
 #### Example using `ffmpeg`
 
 ```bash
-deepo platform model noop -i $input_video_path -o stdout | ffmpeg -f rawvideo -pixel_format bgr24 -video_size 1280x720 -framerate 15 -i - -c:v $codec $output_video_path
+deepo platform model draw -i $input_video_path -o stdout -r $model_id | ffmpeg -f rawvideo -pixel_format bgr24 -video_size 1280x720 -framerate 15 -i - -c:v $codec $output_video_path
 ```
 
 #### Example using `cvlc`
