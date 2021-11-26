@@ -1,15 +1,21 @@
-import pytest
-import yaml
+from contextlib import contextmanager
 import json
 import os.path
+import yaml
+
+import pytest
+
+from deepomatic.api.exceptions import ClientError
 from deepomatic.cli.cli_parser import run
-from contextlib import contextmanager
+
 from utils import modified_environ
 
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 WORKFLOW_PATH = ROOT + '/workflow.yaml'
+WORKFLOW2_PATH = ROOT + '/workflow.yaml'
 CUSTOM_NODES_PATH = ROOT + '/custom_nodes.py'
+APP_ID_LEN = 36
 
 
 def call_deepo(args, api_key=None):
@@ -47,18 +53,30 @@ def drive_app():
 
 
 @contextmanager
-def app_version():
-    with drive_app() as app_id:
-        args = "platform app-version create -n test_av -d abc -a {} -r 44363 44364".format(app_id)
-        result = call_deepo(args)
-        _, app_version_id = result.split(':')
+def engage_app():
+    args = "platform engage-app create -n test"
+    result = call_deepo(args)
 
-        yield app_version_id.strip(), app_id
-        args = "platform app-version delete --id {}".format(app_version_id)
-        result = call_deepo(args)
+    engage_part, drive_part, _ = result.split('.')
+    _, engage_app_id = engage_part.split(':')
+    engage_app_id = engage_app_id.strip()
+    _, drive_app_id = drive_part.split(':')
+    drive_app_id = drive_app_id.strip()
+
+    assert 'New Engage App created with id: ' in result
+    assert 'Associated Drive App id: ' in result
+    assert len(drive_app_id) == APP_ID_LEN
+    assert len(engage_app_id) == APP_ID_LEN
+
+    yield engage_app_id
+
+    args = "platform engage-app delete --id {}".format(engage_app_id)
+    message = call_deepo(args)
+    assert message == 'Engage App {} deleted'.format(engage_app_id)
 
 
 class TestPlatform(object):
+
     def test_drive_app(no_error_logs):
         args = "platform app create -n test -d abc"
         with pytest.raises(ValueError):
@@ -87,21 +105,44 @@ class TestPlatform(object):
         message = call_deepo(args)
         assert message == 'App {} deleted'.format(app_id)
 
-    def test_appversion(self, no_error_logs):
-        with drive_app() as app_id:
-            args = "platform app-version create -n test_av -d abc -a {} -r 44363 44364".format(app_id)
-            result = call_deepo(args)
-            message, app_version_id = result.split(':')
-            app_version_id = app_version_id.strip()
-            assert message == 'New app version created with id'
+    def test_engage_app_version(self, no_error_logs):
+        """Test engage-app-version create command.
 
-            args = "platform app-version update --id {} -d ciao".format(app_version_id)
-            message = call_deepo(args)
-            assert message == 'App version {} updated'.format(app_version_id)
+        Scenarii:
+            * create first EngageAppVersion without previous_engage_app_version_id
+            * use a modified workflow.yaml file and create a second EngageAppVersion
+            with previous_engage_app_version_id from step1 command.
+            * try to create new EngageAppVersion with previous_engage_app_version from
+            step1: should fail
+        """
+        engage_app_version_cmd = "platform app-version create -a {} -w {} -c {} -r 44363 44364"
+        engage_app_version_previous_cmd = engage_app_version_cmd + " -p {}"
 
-            args = "platform app-version delete --id {}".format(app_version_id)
-            message = call_deepo(args)
-            assert message == 'App version {} deleted'.format(app_version_id)
+        with engage_app() as engage_app_id:
+            # Output of create command: New app version 'v<major.minor>' created with id: <id>
+            result = call_deepo(
+                engage_app_version_cmd.format(engage_app_id, WORKFLOW_PATH, CUSTOM_NODES_PATH)
+            )
+            engage_app_version_id = result[-36:]
+            assert result[0:18] == 'New app version \'v'
+            assert result[17:21] == "v1.0"
+
+            result = call_deepo(
+                engage_app_version_previous_cmd.format(
+                    engage_app_id, WORKFLOW2_PATH, CUSTOM_NODES_PATH, engage_app_version_id
+                )
+            )
+            assert result[0:18] == 'New app version \'v'
+            assert result[17:21] == "v1.1"
+
+            with pytest.raises(ClientError) as err:
+                result = call_deepo(
+                    engage_app_version_previous_cmd.format(
+                        engage_app_id, WORKFLOW_PATH, CUSTOM_NODES_PATH, engage_app_version_id
+                    )
+                )
+                assert "Bad status code 400" in err
+                assert "Version already exists v1.1" in err
 
     def test_service(self, no_error_logs):
         for service in ['customer-api', 'camera-server']:
@@ -115,23 +156,3 @@ class TestPlatform(object):
                 args = "platform service delete --id {}".format(service_id)
                 message = call_deepo(args)
                 assert message == 'Service {} deleted'.format(service_id)
-
-    def test_engage_app(self, no_error_logs):
-        args = "platform engage-app create -n test -w {} -c {}".format(WORKFLOW_PATH, CUSTOM_NODES_PATH)
-        result = call_deepo(args)
-        assert 'New Engage App created with id' in result
-        assert 'New Drive App created with id' in result
-        engage_part, drive_part = result.split('.')
-        _, engage_app_id = engage_part.split(':')
-        engage_app_id = engage_app_id.strip()
-
-        _, drive_app_id = drive_part.split(':')
-        drive_app_id = drive_app_id.strip()
-
-        args = "platform engage-app delete --id {}".format(engage_app_id)
-        message = call_deepo(args)
-        assert message == 'Engage App {} deleted'.format(engage_app_id)
-
-        args = "platform app delete --id {}".format(drive_app_id)
-        message = call_deepo(args)
-        assert message == 'App {} deleted'.format(drive_app_id)

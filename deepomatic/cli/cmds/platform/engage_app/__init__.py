@@ -8,4 +8,3 @@ class EngageAppCommand(Command):
 
     from .create import CreateCommand
     from .delete import DeleteCommand
-    from .update import UpdateCommand
