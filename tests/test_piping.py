@@ -15,6 +15,7 @@ DEEPOCLI_TO_FFMPEG_PIXEL_FORMAT = {
     'GRAY': 'gray',
 }
 
+
 @pytest.mark.parametrize(
     'infer_cmd,color_space,expected_hash', [
         ('infer', 'BGR', 'cafba1802a615d7c00122444937c7ea81e084db0cabc5bce18143dffe3534822'),
@@ -42,7 +43,8 @@ def test_piping_ffmpeg(infer_cmd, color_space, expected_hash):
         cli_args = '-r ' + DEFAULT_RECOGNITION
     else:
         cli_args = ''
-    cmd_base = 'deepo platform model {} -i {} {} -o stdout --output_color_space {} | ffmpeg -f rawvideo -pixel_format {} -video_size 640x360 -framerate 23.98 -i - -c:v {} {}'
+    cmd_base = ('deepo platform model {} -i {} {} -o stdout --output_color_space {} | '
+                'ffmpeg -f rawvideo -pixel_format {} -video_size 640x360 -framerate 23.98 -i - -c:v {} {}')
     codec = 'mpeg4'
 
     ffmpeg_pixel_format = DEEPOCLI_TO_FFMPEG_PIXEL_FORMAT[color_space]
@@ -60,4 +62,4 @@ def test_piping_ffmpeg(infer_cmd, color_space, expected_hash):
             assert hashlib.sha256(f.read()).hexdigest() == expected_hash
     finally:
         if os.path.exists(output_video):
-           os.remove(output_video)
+            os.remove(output_video)
