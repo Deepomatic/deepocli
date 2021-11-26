@@ -59,6 +59,5 @@ def test_piping_ffmpeg(infer_cmd, color_space, expected_hash):
         with open(output_video, 'rb') as f:
             assert hashlib.sha256(f.read()).hexdigest() == expected_hash
     finally:
-        pass
-        #if os.path.exists(output_video):
-        #    os.remove(output_video)
+        if os.path.exists(output_video):
+           os.remove(output_video)
