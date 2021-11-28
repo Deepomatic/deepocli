@@ -8,6 +8,7 @@ from contextlib import contextmanager
 from deepomatic.cli.cli_parser import run
 from deepomatic.cli.common import SUPPORTED_VIDEO_OUTPUT_FORMAT
 
+DEFAULT_RECOGNITION = '44411'
 
 # Define outputs
 OUTPUTS = {
@@ -187,8 +188,9 @@ def init_files_setup():
     return INPUTS
 
 
-def run_cmd(cmds, inp, outputs, *args, **kwargs):
-    reco_opts = [] if 'noop' in cmds else ['-r', '44411']
+@contextmanager
+def ctx_run_cmd(cmds, inp, outputs, *args, **kwargs):
+    reco_opts = [] if 'noop' in cmds else ['-r', DEFAULT_RECOGNITION]
     extra_opts = kwargs.pop('extra_opts', [])
     absolute_outputs = []
     with create_tmp_dir() as tmpdir:
@@ -203,6 +205,12 @@ def run_cmd(cmds, inp, outputs, *args, **kwargs):
                 absolute_outputs.append(os.path.join(tmpdir, output))
         run(cmds + ['-i', inp, '-o'] + absolute_outputs + reco_opts + extra_opts)
         check_directory(tmpdir, *args, **kwargs)
+        yield tmpdir
+
+
+def run_cmd(*args, **kwargs):
+    with ctx_run_cmd(*args, **kwargs):
+        pass
 
 
 @contextmanager

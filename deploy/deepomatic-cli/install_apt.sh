@@ -19,6 +19,7 @@ apt-get update && apt-get install -y --no-install-recommends \
                           libssl-dev \
                           liblzma-dev \
                           zlib1g-dev \
+                          ffmpeg \
                           tk-dev
 
 rm -rf /var/lib/apt/lists/* /tmp/* || :

@@ -1,5 +1,7 @@
+import glob
+from PIL import Image
 import pytest
-from utils import init_files_setup, run_cmd, OUTPUTS
+from utils import init_files_setup, run_cmd, ctx_run_cmd, OUTPUTS
 from deepomatic.cli.common import SUPPORTED_FOURCC
 
 # ------- Files setup ------------------------------------------------------------------------------------------------ #
@@ -7,10 +9,11 @@ from deepomatic.cli.common import SUPPORTED_FOURCC
 
 # Retrieve INPUTS
 INPUTS = init_files_setup()
+CMD_PREFIX = ['platform', 'model', 'noop']
 
 
 def run_noop(*args, **kwargs):
-    run_cmd(['platform', 'model', 'noop'], *args, **kwargs)
+    run_cmd(CMD_PREFIX, *args, **kwargs)
 
 
 # ------- Image Input Tests ------------------------------------------------------------------------------------------ #
@@ -52,6 +55,14 @@ def test_e2e_video_noop_video_fourcc(no_error_logs):
         for fourcc in supported_fourcc:
             if fourcc not in SKIP:
                 run_noop(INPUTS['VIDEO'], [OUTPUTS[output]], expect_nb_video=1, extra_opts=['--fourcc', fourcc])
+
+
+def test_e2e_video_noop_color_space(no_error_logs):
+    with ctx_run_cmd(CMD_PREFIX, INPUTS['VIDEO'], [OUTPUTS['IMAGE']],
+                     extra_opts=['--output_color_space', 'GRAY'], expect_nb_image=21) as tmpdir:
+        images = glob.glob('{}/*.jpg'.format(tmpdir))
+        image = Image.open(images[0])
+        assert image.mode == 'L'
 
 
 # # ------- Directory Input Tests -------------------------------------------------------------------------------------- #
