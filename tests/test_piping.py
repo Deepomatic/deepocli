@@ -1,13 +1,10 @@
 import os
-import time
 import pytest
 import numpy
 import subprocess
 import tempfile
-import hashlib
 import uuid
 import cv2
-import logging
 from skimage.metrics import structural_similarity
 from utils import init_files_setup, DEFAULT_RECOGNITION
 
@@ -113,4 +110,4 @@ def test_piping_ffmpeg(infer_cmd, color_space, check_fn, check_args):
         check_fn(video_filename, output_video, *check_args)
     finally:
         if os.path.exists(output_video):
-           os.remove(output_video)
+            os.remove(output_video)
