@@ -102,7 +102,7 @@ def test_piping_ffmpeg(infer_cmd, color_space, check_fn, check_args):
     video_filename = INPUTS['VIDEO']
     _, suffix = os.path.splitext(video_filename)
 
-    basename = str(uuid.uuid4()) + suffix
+    basename = '{}_{}{}'.format(infer_cmd, str(uuid.uuid4()), suffix)
     output_video = os.path.join(tempfile.gettempdir(), basename)
     try:
         cmd = cmd_base.format(infer_cmd, video_filename, cli_args, color_space, ffmpeg_pixel_format, codec, output_video)
