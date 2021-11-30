@@ -51,6 +51,7 @@ def drive_app():
     args = "platform app delete --id {}".format(app_id)
     result = call_deepo(args)
 
+
 @contextmanager
 def app_version():
     with drive_app() as app_id:
@@ -62,6 +63,7 @@ def app_version():
 
         args = "platform app-version delete --id {}".format(app_version_id)
         result = call_deepo(args)
+
 
 @contextmanager
 def engage_app():
