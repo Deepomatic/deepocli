@@ -13,7 +13,7 @@ from utils import modified_environ
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 WORKFLOW_PATH = ROOT + '/workflow.yaml'
-WORKFLOW2_PATH = ROOT + '/workflow.yaml'
+WORKFLOW2_PATH = ROOT + '/workflow2.yaml'
 CUSTOM_NODES_PATH = ROOT + '/custom_nodes.py'
 APP_ID_LEN = 36
 
@@ -125,6 +125,7 @@ class TestPlatform(object):
             with previous_engage_app_version_id from step1 command.
             * try to create new EngageAppVersion with previous_engage_app_version from
             step1: should fail
+            * create new major app version by giving no previous_engage_app_version_id
         """
         engage_app_version_cmd = "platform app-version create -a {} -w {} -c {} -r 44363 44364"
         engage_app_version_previous_cmd = engage_app_version_cmd + " -p {}"
@@ -154,6 +155,13 @@ class TestPlatform(object):
                 )
                 assert "Bad status code 400" in err
                 assert "Version already exists v1.1" in err
+
+            result = call_deepo(
+                engage_app_version_cmd.format(engage_app_id, WORKFLOW_PATH, CUSTOM_NODES_PATH)
+            )
+            engage_app_version_id = result[-36:]
+            assert result[0:18] == 'New app version \'v'
+            assert result[17:21] == "v2.0"
 
     def test_service(self, no_error_logs):
         for service in ['customer-api', 'camera-server']:
