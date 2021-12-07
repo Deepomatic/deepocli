@@ -42,6 +42,34 @@ class PlatformManager(object):
         self.drive_client.delete('/apps/{}'.format(app_id))
         return "App {} deleted".format(app_id)
 
+    def create_app_version(self, app_id, name, description, version_ids):
+        data = {
+            'app_id': app_id,
+            'name': name,
+            'recognition_version_ids': version_ids
+        }
+        if description is not None:
+            data['desc'] = description
+
+        ret = self.drive_client.post('/app-versions', data=data)
+        return "New app version created with id: {}".format(ret['id'])
+
+    def update_app_version(self, app_version_id, name, description):
+        data = {}
+
+        if name is not None:
+            data['name'] = name
+
+        if description is not None:
+            data['desc'] = description
+
+        ret = self.drive_client.patch('/app-versions/{}'.format(app_version_id), data=data)
+        return "App version {} updated".format(ret['id'])
+
+    def delete_app_version(self, app_version_id):
+        self.drive_client.delete('/app-versions/{}'.format(app_version_id))
+        return "App version {} deleted".format(app_version_id)
+
     def create_service(self, **data):
         ret = self.drive_client.post('/services', data=data)
         return "New service created with id: {}".format(ret['id'])

@@ -1,7 +1,7 @@
 from ...utils import Command
 
 
-class EngageAppVersionCommand(Command):
+class AppVersionCommand(Command):
     """
         App version related commands
     """

@@ -118,6 +118,22 @@ class TestPlatform(object):
         message = call_deepo(args)
         assert message == 'App {} deleted'.format(app_id)
 
+    def test_appversion(self, no_error_logs):
+        with drive_app() as app_id:
+            args = "platform app-version create -n test_av -d abc -a {} -r 44363 44364".format(app_id)
+            result = call_deepo(args)
+            message, app_version_id = result.split(':')
+            app_version_id = app_version_id.strip()
+            assert message == 'New app version created with id'
+
+            args = "platform app-version update --id {} -d ciao".format(app_version_id)
+            message = call_deepo(args)
+            assert message == 'App version {} updated'.format(app_version_id)
+
+            args = "platform app-version delete --id {}".format(app_version_id)
+            message = call_deepo(args)
+            assert message == 'App version {} deleted'.format(app_version_id)
+
     def test_engage_app_version(self, no_error_logs):
         """Test engage-app-version create command.
 
