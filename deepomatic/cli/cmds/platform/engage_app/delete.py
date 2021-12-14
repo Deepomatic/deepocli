@@ -3,9 +3,7 @@ from ..utils import EngagePlatformManager
 
 
 class DeleteCommand(Command):
-    """
-        Delete an Engage App
-    """
+    """Delete an Engage App."""
 
     def setup(self, subparsers):
         parser = super(DeleteCommand, self).setup(subparsers)

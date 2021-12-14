@@ -9,6 +9,8 @@ except ImportError:
 from deepomatic.api.http_helper import HTTPHelper
 
 from .add_images import DEFAULT_USER_AGENT_PREFIX
+
+
 LOGGER = logging.getLogger(__name__)
 
 
@@ -93,15 +95,21 @@ class EngagePlatformManager(object):
             raise SystemExit(e, "environment variable ORGANIZATION_SLUG is missing.")
 
         user_agent_prefix = DEFAULT_USER_AGENT_PREFIX
-        self.engage_client = client_cls(host=ENGAGE_API_URL,
-                                        user_agent_prefix=user_agent_prefix,
-                                        version="")
+        self.engage_client = client_cls(
+            host=ENGAGE_API_URL,
+            user_agent_prefix=user_agent_prefix,
+            version=""
+        )
 
         self.engage_app_endpoint = "{}/apps".format(FS_URL_PREFIX)
+        self.version_clone_endpoint = FS_URL_PREFIX + "/app-versions/{}/clone"
 
     def create_app(self, name):
         data = {"name": name}
-        response = self.engage_client.post('{}'.format(self.engage_app_endpoint), data=data)
+        response = self.engage_client.post(
+            '{}'.format(self.engage_app_endpoint),
+            data=data
+        )
 
         return "New Engage App created with id: {}. Associated Drive App id: {}.".format(
             response['id'],
@@ -117,36 +125,51 @@ class EngagePlatformManager(object):
                            workflow_path,
                            custom_nodes_path,
                            recognition_version_ids,
-                           previous_engage_app_version_id):
-        data_app = {
-            'recognition_version_ids': recognition_version_ids
-        }
+                           base_major_version):
 
-        if previous_engage_app_version_id:
-            data_app['previous_app_version_id'] = previous_engage_app_version_id
+        data = {'recognition_version_ids': recognition_version_ids}
+
+        if base_major_version:
+            data['base_major_version'] = base_major_version
 
         with open(workflow_path, 'r') as worflow_file:
             files = {'workflow_yaml': worflow_file}
+
             if custom_nodes_path is not None:
                 with open(custom_nodes_path, 'r') as custom_nodes_file:
                     files['custom_nodes_py'] = custom_nodes_file
-                    ret = self.engage_client.post(
+                    response = self.engage_client.post(
                         '{}/{}/versions'.format(self.engage_app_endpoint, app_id),
-                        data=data_app,
+                        data=data,
                         files=files,
                         content_type='multipart/mixed'
                     )
-
             else:
-                ret = self.engage_client.post(
+                response = self.engage_client.post(
                     '{}/{}/versions'.format(self.engage_app_endpoint, app_id),
-                    data=data_app,
+                    data=data,
                     files=files,
                     content_type='multipart/mixed'
                 )
 
         return "New app version 'v{}.{}' created with id: {}".format(
-            ret['major'],
-            ret['minor'],
-            ret['id']
+            response['major'],
+            response['minor'],
+            response['id']
+        )
+
+    def clone_app_version(self, version_id, recognition_version_ids):
+        data = {'recognition_version_ids': recognition_version_ids}
+
+        response = self.engage_client.post(
+            '{}'.format(
+                self.version_clone_endpoint.format(version_id)
+            ),
+            data=data
+        )
+
+        return "Cloned from {}. New Engage App created with id: {}. Associated Drive App id: {}.".format(
+            version_id,
+            response['id'],
+            response['drive_app_id']
         )

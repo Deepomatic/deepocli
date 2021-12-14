@@ -3,9 +3,7 @@ from ..utils import EngagePlatformManager
 
 
 class CreateCommand(Command):
-    """
-        Create a new Engage App
-    """
+    """Create a new Engage App."""
 
     def setup(self, subparsers):
         parser = super(CreateCommand, self).setup(subparsers)

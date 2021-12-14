@@ -13,13 +13,19 @@ workflow:
         name: aeroplane_count
         type: Number
 
+    - name: number_of_aeroplane2
+      output_of: aeroplane_counter
+      concept:
+        name: aeroplane_count
+        type: Number
+
   steps:
     - name: classifier
       type: Inference
       inputs:
         - test_image
       args:
-        model_id: 53638
+        model_id: 91711
         concepts:
           - coucou
 
@@ -28,6 +34,6 @@ workflow:
       inputs:
         - test_image
       args:
-        model_id: 53639
+        model_id: 91711
         concepts:
           - aeroplane

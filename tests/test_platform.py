@@ -137,29 +137,39 @@ class TestPlatform(object):
     def test_engage_app_version(self, no_error_logs):
         """Test engage-app-version create command.
 
+        workflow2: must include breaking change (testing major/minor)
+
         Scenarii:
-            * create first EngageAppVersion without previous_engage_app_version_id
-            * use a modified workflow.yaml file and create a second EngageAppVersion
-            with previous_engage_app_version_id from step1 command.
-            * try to create new EngageAppVersion with previous_engage_app_version from
-            step1: should fail
-            * create new major app version by giving no previous_engage_app_version_id
+            * create first EngageAppVersion without base_major_version
+            * create a second EngageAppVersion without base_major_version
+            * create a third EngageAppVersion
+            with base_engage_app_version from step1
+            * create new EngageAppVersion with base_major_version with
+            workflow2: should fail (forbiden, should be a major)
+            * create new major app version by giving no base_major_version
+            and workflow2
         """
-        engage_app_version_cmd = "platform app-version create -a {} -w {} -c {} -r 44363 44364"
-        engage_app_version_previous_cmd = engage_app_version_cmd + " -p {}"
+        engage_app_version_cmd = "platform app-version create -a {} -w {} -c {} -r 75384 75385"
+        engage_app_version_major = engage_app_version_cmd + " --base_major_version {}"
 
         with engage_app() as engage_app_id:
             # Output of create command: New app version 'v<major.minor>' created with id: <id>
             result = call_deepo(
-                engage_app_version_cmd.format(engage_app_id, WORKFLOW_PATH, CUSTOM_NODES_PATH)
+                engage_app_version_cmd.format(
+                    engage_app_id,
+                    WORKFLOW_PATH,
+                    CUSTOM_NODES_PATH
+                )
             )
-            engage_app_version_id = result[-36:]
             assert result[0:18] == 'New app version \'v'
             assert result[17:21] == "v1.0"
 
             result = call_deepo(
-                engage_app_version_previous_cmd.format(
-                    engage_app_id, WORKFLOW2_PATH, CUSTOM_NODES_PATH, engage_app_version_id
+                engage_app_version_major.format(
+                    engage_app_id,
+                    WORKFLOW_PATH,
+                    CUSTOM_NODES_PATH,
+                    result[19]
                 )
             )
             assert result[0:18] == 'New app version \'v'
@@ -167,17 +177,23 @@ class TestPlatform(object):
 
             with pytest.raises(ClientError) as err:
                 result = call_deepo(
-                    engage_app_version_previous_cmd.format(
-                        engage_app_id, WORKFLOW_PATH, CUSTOM_NODES_PATH, engage_app_version_id
+                    engage_app_version_major.format(
+                        engage_app_id,
+                        WORKFLOW_PATH2,
+                        CUSTOM_NODES_PATH,
+                        result[19]
                     )
                 )
                 assert "Bad status code 400" in err
                 assert "Version already exists v1.1" in err
 
             result = call_deepo(
-                engage_app_version_cmd.format(engage_app_id, WORKFLOW_PATH, CUSTOM_NODES_PATH)
+                engage_app_version_cmd.format(
+                    engage_app_id,
+                    WORKFLOW_PATH2,
+                    CUSTOM_NODES_PATH
+                )
             )
-            engage_app_version_id = result[-36:]
             assert result[0:18] == 'New app version \'v'
             assert result[17:21] == "v2.0"
 

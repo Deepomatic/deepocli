@@ -3,16 +3,14 @@ from ..utils import EngagePlatformManager
 
 
 class CreateCommand(Command):
-    """
-        Create a new app-version
-    """
+    """Create a new app-version."""
 
     def setup(self, subparsers):
         parser = super(CreateCommand, self).setup(subparsers)
         parser.add_argument('-w', '--workflow', required=True, type=valid_path, help="Path to the workflow yaml file")
         parser.add_argument('-c', '--custom_nodes', type=valid_path, help="Path to the custom nodes python file")
         parser.add_argument('-a', '--app_id', required=True, type=str, help="App id for this Engage AppVersion")
-        parser.add_argument('-p', '--previous_engage_app_version_id', default=None, type=str, help="Previous Engage AppVersion id")
+        parser.add_argument('-p', '--base_major_version', default=None, type=str, help="Previous major Engage AppVersion")
         parser.add_argument('-r', '--recognition-version-ids', required=True, nargs="*", type=int,
                             help="List of Recognition Version Id, one for each Recognition Spec in the App", default=[])
         return parser
@@ -22,7 +20,7 @@ class CreateCommand(Command):
             workflow,
             custom_nodes,
             recognition_version_ids,
-            previous_engage_app_version_id,
+            base_major_version,
             **kwargs):
 
         return EngagePlatformManager().create_app_version(
@@ -30,5 +28,5 @@ class CreateCommand(Command):
             workflow,
             custom_nodes,
             recognition_version_ids,
-            previous_engage_app_version_id
+            base_major_version
         )
