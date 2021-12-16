@@ -67,6 +67,10 @@ def app_version():
 
 @contextmanager
 def engage_app():
+    """Context manager around engage_app creation command.
+
+    Take care of engage_app delete.
+    """
     args = "platform engage-app create -n test"
     result = call_deepo(args)
 
@@ -86,6 +90,31 @@ def engage_app():
     args = "platform engage-app delete --id {}".format(engage_app_id)
     message = call_deepo(args)
     assert message == 'Engage App {} deleted'.format(engage_app_id)
+
+
+def engage_app_version_wrapper(engage_app_id,
+                               workflow,
+                               custom_node=None,
+                               from_major=None):
+    """Wrapper around engage_app_version create command.
+
+    Return:
+        version (str), engage_app_version_id (str)
+    """
+    args = f"platform engage-app-version create -a {engage_app_id} -w {workflow} -r 75384 75385"
+    if custom_node:
+        args += f" -c {custom_node}"
+    if from_major:
+        args += f" --base_major_version {from_major}"
+
+    result = call_deepo(args)
+    _, rhs = result.split(':')
+    engage_app_version_id = rhs.strip()
+
+    assert len(engage_app_version_id) == APP_ID_LEN
+    assert result[0:18] == 'New app version \'v'
+
+    return result[18:21], engage_app_version_id
 
 
 class TestPlatform(object):
@@ -149,53 +178,61 @@ class TestPlatform(object):
             * create new major app version by giving no base_major_version
             and workflow2
         """
-        engage_app_version_cmd = "platform app-version create -a {} -w {} -c {} -r 75384 75385"
-        engage_app_version_major = engage_app_version_cmd + " --base_major_version {}"
-
         with engage_app() as engage_app_id:
             # Output of create command: New app version 'v<major.minor>' created with id: <id>
-            result = call_deepo(
-                engage_app_version_cmd.format(
-                    engage_app_id,
-                    WORKFLOW_PATH,
-                    CUSTOM_NODES_PATH
-                )
+            version1, engage_app_version_id1 = engage_app_version_wrapper(
+                engage_app_id=engage_app_id,
+                workflow=WORKFLOW_PATH,
+                custom_node=CUSTOM_NODES_PATH
             )
-            assert result[0:18] == 'New app version \'v'
-            assert result[17:21] == "v1.0"
+            assert version1 == "1.0"
 
-            result = call_deepo(
-                engage_app_version_major.format(
-                    engage_app_id,
-                    WORKFLOW_PATH,
-                    CUSTOM_NODES_PATH,
-                    result[19]
-                )
+            version2, engage_app_version_id2 = engage_app_version_wrapper(
+                engage_app_id=engage_app_id,
+                workflow=WORKFLOW_PATH,
+                custom_node=CUSTOM_NODES_PATH
             )
-            assert result[0:18] == 'New app version \'v'
-            assert result[17:21] == "v1.1"
+            assert version2 == "2.0"
+            assert engage_app_version_id1 != engage_app_version_id2
+
+            version, _ = engage_app_version_wrapper(
+                engage_app_id=engage_app_id,
+                workflow=WORKFLOW_PATH,
+                custom_node=CUSTOM_NODES_PATH,
+                from_major=version1[0]
+            )
+            assert version == "1.1"
 
             with pytest.raises(ClientError) as err:
-                result = call_deepo(
-                    engage_app_version_major.format(
-                        engage_app_id,
-                        WORKFLOW_PATH2,
-                        CUSTOM_NODES_PATH,
-                        result[19]
-                    )
+                engage_app_version_wrapper(
+                    engage_app_id=engage_app_id,
+                    workflow=WORKFLOW2_PATH,
+                    custom_node=CUSTOM_NODES_PATH,
+                    from_major=version[0]
                 )
                 assert "Bad status code 400" in err
-                assert "Version already exists v1.1" in err
+                assert f"Version already exists v{version}" in err
 
-            result = call_deepo(
-                engage_app_version_cmd.format(
-                    engage_app_id,
-                    WORKFLOW_PATH2,
-                    CUSTOM_NODES_PATH
-                )
+            version, _ = engage_app_version_wrapper(
+                engage_app_id=engage_app_id,
+                workflow=WORKFLOW2_PATH,
+                custom_node=CUSTOM_NODES_PATH
             )
-            assert result[0:18] == 'New app version \'v'
-            assert result[17:21] == "v2.0"
+            assert version == "3.0"
+
+    def test_engage_app_version_clone(self, no_error_logs):
+        """Test engage-app-version clone command."""
+
+        clone_cmd = "platform engage-app-version clone --version_id {} -r 75384 75385"
+
+        with engage_app() as engage_app_id:
+            _, engage_app_version_id = engage_app_version_wrapper(
+                engage_app_id=engage_app_id,
+                workflow=WORKFLOW_PATH,
+                custom_node=CUSTOM_NODES_PATH
+            )
+            result = call_deepo(clone_cmd.format(engage_app_version_id))
+            assert result == "Clone"
 
     def test_service(self, no_error_logs):
         for service in ['customer-api', 'camera-server']:
