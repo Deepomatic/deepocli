@@ -220,6 +220,8 @@ class TestPlatform(object):
             )
             assert version == "3.0"
 
+    # TODO: Endpoint not yet implemented. Remove xfail when it's done.
+    @pytest.mark.xfail(raises=ClientError)
     def test_engage_app_version_clone(self, no_error_logs):
         """Test engage-app-version clone command."""
 
