@@ -66,12 +66,14 @@ def app_version():
 
 
 @contextmanager
-def engage_app():
+def engage_app(application_type=None):
     """Context manager around engage_app creation command.
 
     Take care of engage_app delete.
     """
     args = "platform engage-app create -n test"
+    if application_type:
+        args += f" --application_type {application_type}"
     result = call_deepo(args)
 
     engage_part, drive_part, _ = result.split('.')
@@ -162,6 +164,22 @@ class TestPlatform(object):
             args = "platform app-version delete --id {}".format(app_version_id)
             message = call_deepo(args)
             assert message == 'App version {} deleted'.format(app_version_id)
+
+    def test_engage_app(self, no_error_logs):
+        """Test engage-app create command."""
+        application_types = ["WORKFLOW", "INFERENCE", "VIDEO", "FIELD_SERVICES", None]
+        unvalid_application_type = "NOT_A_VALID_TYPE"
+
+        for application_type in application_types:
+            with engage_app(application_type):
+                pass
+
+        with pytest.raises(ClientError) as err:
+            with engage_app(unvalid_application_type):
+                pass
+            assert "Bad status code 400" in err
+            assert f"Unknown value \'{unvalid_application_type}\'" in err
+
 
     def test_engage_app_version(self, no_error_logs):
         """Test engage-app-version create command.

@@ -104,8 +104,12 @@ class EngagePlatformManager(object):
         self.engage_app_endpoint = "{}/apps".format(FS_URL_PREFIX)
         self.version_clone_endpoint = FS_URL_PREFIX + "/app-versions/{}/clone"
 
-    def create_app(self, name):
+    def create_app(self, name, application_type):
         data = {"name": name}
+
+        if application_type:
+            data.update({"application_type": application_type})
+
         response = self.engage_client.post(
             '{}'.format(self.engage_app_endpoint),
             data=data
