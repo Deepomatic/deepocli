@@ -40,6 +40,9 @@ class Command(object):
         parser.add_argument('--verbose', dest='verbose', action='store_true',
                             help='Increase output verbosity.')
 
+        parser.add_argument('--json-output', dest='json_output', action='store_true',
+                            help='Use json to format output.')
+
         return parser
 
     def run(self, *args, **kwargs):

@@ -54,5 +54,16 @@ def run(args):
 
     result = args.func(vars(args))
     if result:
-        print(result)
+        # FIXME: Probably worth using a dataclass or a wrapper around result
+        # We want to have Exception raising when --json-output is used with unsuported command.
+        if args.json_output:
+            print(result)
+            assert isinstance(result, (tuple)), argparse.ArgumentTypeError("--json-output not available for this command.")
+            _, data = result
+            print(data)
+        else:
+            # Let it crash.
+            assert not isinstance(result, (tuple))
+            print(result)
+
     return result
