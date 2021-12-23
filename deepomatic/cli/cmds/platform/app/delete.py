@@ -1,8 +1,8 @@
-from ...utils import Command
+from ...utils import PlatformCommand
 from ..utils import PlatformManager
 
 
-class DeleteCommand(Command):
+class DeleteCommand(PlatformCommand):
     """
         Delete an app
     """

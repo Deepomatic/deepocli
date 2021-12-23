@@ -53,17 +53,19 @@ def run(args):
     logging.basicConfig(level=log_level, format=log_format)
 
     result = args.func(vars(args))
+
     if result:
         # FIXME: Probably worth using a dataclass or a wrapper around result
         # We want to have Exception raising when --json-output is used with unsuported command.
         if args.json_output:
-            print(result)
             assert isinstance(result, (tuple)), argparse.ArgumentTypeError("--json-output not available for this command.")
             _, data = result
             print(data)
         else:
-            # Let it crash.
-            assert not isinstance(result, (tuple))
-            print(result)
+            if not isinstance(result, (tuple)):
+                print(result)
+            else:
+                messages, data = result
+                print("\n".join(messages).format(**data))
 
     return result

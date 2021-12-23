@@ -1,8 +1,8 @@
-from ...utils import Command
+from ...utils import PlatformCommand
 from ..utils import EngagePlatformManager
 
 
-class CreateCommand(Command):
+class CreateCommand(PlatformCommand):
     """Create a new Engage App."""
 
     def setup(self, subparsers):

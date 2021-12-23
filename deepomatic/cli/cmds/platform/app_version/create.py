@@ -1,8 +1,8 @@
-from ...utils import Command
+from ...utils import PlatformCommand
 from ..utils import PlatformManager
 
 
-class CreateCommand(Command):
+class CreateCommand(PlatformCommand):
     """
         Create a new app-version
     """

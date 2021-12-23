@@ -1,8 +1,8 @@
-from ...utils import Command, valid_json
+from ...utils import PlatformCommand, valid_json
 from ..utils import PlatformManager
 
 
-class CreateCommand(Command):
+class CreateCommand(PlatformCommand):
     """
         Create a new app
     """

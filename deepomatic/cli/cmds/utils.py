@@ -3,6 +3,7 @@ import logging
 import argparse
 import os
 import re
+from dataclasses import dataclass
 
 from deepomatic.cli.cmds import parser_helpers
 from deepomatic.cli.common import (SUPPORTED_IMAGE_INPUT_FORMAT, SUPPORTED_IMAGE_OUTPUT_FORMAT,
@@ -11,6 +12,27 @@ from deepomatic.cli.common import (SUPPORTED_IMAGE_INPUT_FORMAT, SUPPORTED_IMAGE
                                    SUPPORTED_VIDEO_OUTPUT_COLOR_SPACE)
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass
+class PlatformCommandResult:
+    """Wrapper arround PlatformCommand results.
+
+    Provide a way to keep human readable messages and raw data separate.
+
+    Attributes:
+        messages (list(str)): List of string with formatter placeholders.
+            Will be concat with '\n'.join().
+        data (dict): Dict with keys matching messages placeholders.
+    """
+    messages: list()
+    data: dict()
+
+    def to_str(self):
+        return "\n".join(messages).format(data)
+
+    def to_json(self):
+        return data
 
 
 class Command(object):
@@ -40,13 +62,27 @@ class Command(object):
         parser.add_argument('--verbose', dest='verbose', action='store_true',
                             help='Increase output verbosity.')
 
-        parser.add_argument('--json-output', dest='json_output', action='store_true',
-                            help='Use json to format output.')
-
         return parser
 
     def run(self, *args, **kwargs):
         print(type(self).__name__, args, kwargs)
+
+
+class PlatformCommand():
+    """Wrapper around Platform Command.
+
+    Add possiblity to format output as json.
+    """
+
+    def setup(self, subparsers):
+        parser = super().setup(subparsers)
+        parser.add_argument(
+            '--json-output',
+            dest='json_output',
+            action='store_true',
+            help='Use json to format output.'
+        )
+        return parser
 
 
 def valid_path(file_path):

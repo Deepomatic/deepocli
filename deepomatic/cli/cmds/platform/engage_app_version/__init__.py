@@ -1,7 +1,7 @@
-from ...utils import Command
+from ...utils import PlatformCommand
 
 
-class EngageAppVersionCommand(Command):
+class EngageAppVersionCommand(PlatformCommand):
     """App version related commands."""
 
     from .create import CreateCommand

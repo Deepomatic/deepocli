@@ -7,6 +7,7 @@ except ImportError:
     FileExistsError = OSError
 
 from deepomatic.api.http_helper import HTTPHelper
+from deepomatic.cli.cmds.utils import PlatformCommandResult
 
 from .add_images import DEFAULT_USER_AGENT_PREFIX
 
@@ -26,7 +27,10 @@ class PlatformManager(object):
         data_app = {'name': name, 'desc': description, 'app_specs': app_specs}
         ret = self.drive_client.post('/apps', data=data_app)
         app_id = ret['id']
-        return "New app created with id: {}".format(app_id)
+        return PlatformCommandResult(
+            ["[created] drive_app_id: {drive_app_id}"],
+            {"drive_app_id": app_id}
+        )
 
     def update_app(self, app_id, name, description):
         data = {}
@@ -38,11 +42,11 @@ class PlatformManager(object):
             data['desc'] = description
 
         ret = self.drive_client.patch('/apps/{}'.format(app_id), data=data)
-        return "App {} updated".format(ret['id'])
+        return ("[updated] drive_app_id: {drive_app_id}",), {"drive_app_id": ret["id"]}
 
     def delete_app(self, app_id):
         self.drive_client.delete('/apps/{}'.format(app_id))
-        return "App {} deleted".format(app_id)
+        return ("[deleted] drive_app_id: {drive_app_id}",), {"drive_app_id": app_id}
 
     def create_app_version(self, app_id, name, description, version_ids):
         data = {
@@ -54,7 +58,7 @@ class PlatformManager(object):
             data['desc'] = description
 
         ret = self.drive_client.post('/app-versions', data=data)
-        return "New app version created with id: {}".format(ret['id'])
+        return ("[created] drive_app_version_id: {drive_app_version_id}",), {"drive_app_version_id": ret['id']}
 
     def update_app_version(self, app_version_id, name, description):
         data = {}
@@ -66,19 +70,19 @@ class PlatformManager(object):
             data['desc'] = description
 
         ret = self.drive_client.patch('/app-versions/{}'.format(app_version_id), data=data)
-        return "App version {} updated".format(ret['id'])
+        return ("[updated] drive_app_version_id: {drive_app_version_id}",), {"drive_app_version_id": ret['id']}
 
     def delete_app_version(self, app_version_id):
         self.drive_client.delete('/app-versions/{}'.format(app_version_id))
-        return "App version {} deleted".format(app_version_id)
+        return ("[deleted] drive_app_version_id: {drive_app_version_id}",), {"drive_app_version_id": app_id}
 
     def create_service(self, **data):
         ret = self.drive_client.post('/services', data=data)
-        return "New service created with id: {}".format(ret['id'])
+        return ("[created] service_id: {service_id}",), {"service_id": ret["id"]}
 
     def delete_service(self, service_id):
         self.drive_client.delete('/services/{}'.format(service_id))
-        return "Service {} deleted".format(service_id)
+        return ("[deleted] service_id: {service_id}",), {"service_id": service_id}
 
 
 class EngagePlatformManager(object):
@@ -115,14 +119,17 @@ class EngagePlatformManager(object):
             data=data
         )
 
-        return "New Engage App created with id: {}. Associated Drive App id: {}.".format(
-            response['id'],
-            response['drive_app_id']
+        return (
+            ("[created] engage_app_id: {engage_app_id}", "[created] drive_app_id: {drive_app_id}"),
+            {
+                "engage_app_id": response['id'],
+                "drive_app_id": response['drive_app_id']
+            }
         )
 
     def delete_app(self, app_id):
         self.engage_client.delete('{}/{}'.format(self.engage_app_endpoint, app_id))
-        return "Engage App {} deleted".format(app_id)
+        return ("[deleted] engage_app_id: {engage_app_id}",), {"engage_app_id": app_id}
 
     def create_app_version(self,
                            app_id,
@@ -156,10 +163,13 @@ class EngagePlatformManager(object):
                     content_type='multipart/mixed'
                 )
 
-        return "New app version 'v{}.{}' created with id: {}".format(
-            response['major'],
-            response['minor'],
-            response['id']
+        return (
+            ("[created] engage_app_version_id: {engage_app_version_id} (v{major}.{minor})",),
+            {
+                "major": response['major'],
+                "minor": response['minor'],
+                "engage_app_version_id": response['id']
+            }
         )
 
     def clone_app_version(self, version_id, recognition_version_ids):
@@ -172,8 +182,10 @@ class EngagePlatformManager(object):
             data=data
         )
 
-        return "Cloned from {}. New Engage App created with id: {}. Associated Drive App id: {}.".format(
-            version_id,
-            response['id'],
-            response['drive_app_id']
+        return (
+            ("[cloned] from engage_app_version_id {version_id} to engage_app_version_id {engage_app_version_id}",),
+            {
+                "version_id": version_id,
+                "engage_app_version_id": response['id']
+            }
         )

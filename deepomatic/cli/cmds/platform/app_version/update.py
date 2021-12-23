@@ -1,8 +1,8 @@
-from ...utils import Command
+from ...utils import PlatformCommand
 from ..utils import PlatformManager
 
 
-class UpdateCommand(Command):
+class UpdateCommand(PlatformCommand):
     """
         Update an existing app version
     """

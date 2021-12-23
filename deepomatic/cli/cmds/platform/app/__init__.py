@@ -1,7 +1,7 @@
-from ...utils import Command
+from ...utils import PlatformCommand
 
 
-class AppCommand(Command):
+class AppCommand(PlatformCommand):
     """
         App related commands
     """

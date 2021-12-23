@@ -1,7 +1,7 @@
-from ...utils import Command
+from ...utils import PlatformCommand
 
 
-class AppVersionCommand(Command):
+class AppVersionCommand(PlatformCommand):
     """
         App version related commands
     """

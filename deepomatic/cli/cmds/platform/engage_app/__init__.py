@@ -1,7 +1,7 @@
-from ...utils import Command
+from ...utils import PlatformCommand
 
 
-class EngageAppCommand(Command):
+class EngageAppCommand(PlatformCommand):
     """
         Engage App related commands
     """
