@@ -3,11 +3,11 @@ from ..utils import EngagePlatformManager
 
 
 class CreateCommand(Command):
-    """Create a new Engage App."""
+    """Create a new EngageApp."""
 
     def setup(self, subparsers):
         parser = super(CreateCommand, self).setup(subparsers)
-        parser.add_argument('-n', '--name', required=True, type=str, help="Engage App name")
+        parser.add_argument('-n', '--name', required=True, type=str, help="EngageApp name")
         parser.add_argument(
             '-t',
             '--application_type',

@@ -14,19 +14,19 @@ from .add_images import DEFAULT_USER_AGENT_PREFIX
 LOGGER = logging.getLogger(__name__)
 
 
-class PlatformManager(object):
+class DrivePlatformManager(object):
     def __init__(self, client_cls=HTTPHelper):
         self.drive_client = client_cls()
 
-    def create_app(self, name, description, app_specs):
-        if app_specs is None:
-            raise ValueError('Specs are mandatory for non workflow apps.')
-        # creating an app from scratch
-        # require to add the services manually
-        data_app = {'name': name, 'desc': description, 'app_specs': app_specs}
+    def create_app(self, name, description, services):
+        data_app = {
+            'name': name,
+            'desc': description,
+            'services': [{"name": service} for service in services]
+        }
         ret = self.drive_client.post('/apps', data=data_app)
         app_id = ret['id']
-        return "New app created with id: {}".format(app_id)
+        return "DriveApp created with id: {}".format(app_id)
 
     def update_app(self, app_id, name, description):
         data = {}
@@ -38,23 +38,26 @@ class PlatformManager(object):
             data['desc'] = description
 
         ret = self.drive_client.patch('/apps/{}'.format(app_id), data=data)
-        return "App {} updated".format(ret['id'])
+        return "DriveApp {} updated".format(ret['id'])
 
     def delete_app(self, app_id):
         self.drive_client.delete('/apps/{}'.format(app_id))
-        return "App {} deleted".format(app_id)
+        return "DriveApp {} deleted".format(app_id)
 
-    def create_app_version(self, app_id, name, description, version_ids):
+    def create_app_version(self, app_id, name, description, app_specs, version_ids):
         data = {
             'app_id': app_id,
             'name': name,
-            'recognition_version_ids': version_ids
+            'app_specs': app_specs,
+            'recognition_version_ids': version_ids,
+            # FIXME: To update when endpoint are updated.
+            'resources': []
         }
         if description is not None:
             data['desc'] = description
 
         ret = self.drive_client.post('/app-versions', data=data)
-        return "New app version created with id: {}".format(ret['id'])
+        return "DriveApp version created with id: {}".format(ret['id'])
 
     def update_app_version(self, app_version_id, name, description):
         data = {}
@@ -66,19 +69,11 @@ class PlatformManager(object):
             data['desc'] = description
 
         ret = self.drive_client.patch('/app-versions/{}'.format(app_version_id), data=data)
-        return "App version {} updated".format(ret['id'])
+        return "DriveApp version {} updated".format(ret['id'])
 
     def delete_app_version(self, app_version_id):
         self.drive_client.delete('/app-versions/{}'.format(app_version_id))
-        return "App version {} deleted".format(app_version_id)
-
-    def create_service(self, **data):
-        ret = self.drive_client.post('/services', data=data)
-        return "New service created with id: {}".format(ret['id'])
-
-    def delete_service(self, service_id):
-        self.drive_client.delete('/services/{}'.format(service_id))
-        return "Service {} deleted".format(service_id)
+        return "DriveApp version {} deleted".format(app_version_id)
 
 
 class EngagePlatformManager(object):

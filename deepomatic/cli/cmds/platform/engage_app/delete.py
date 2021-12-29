@@ -3,11 +3,11 @@ from ..utils import EngagePlatformManager
 
 
 class DeleteCommand(Command):
-    """Delete an Engage App."""
+    """Delete an EngageApp."""
 
     def setup(self, subparsers):
         parser = super(DeleteCommand, self).setup(subparsers)
-        parser.add_argument('-i', '--id', required=True, type=str, help="Engage App id")
+        parser.add_argument('-i', '--id', required=True, type=str, help="EngageApp id")
         return parser
 
     def run(self, id, **kwargs):

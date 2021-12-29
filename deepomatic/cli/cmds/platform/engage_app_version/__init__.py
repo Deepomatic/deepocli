@@ -2,7 +2,7 @@ from ...utils import Command
 
 
 class EngageAppVersionCommand(Command):
-    """App version related commands."""
+    """EngageAppVersion related commands."""
 
     from .create import CreateCommand
     from .create_from import CreateFromCommand

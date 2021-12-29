@@ -37,6 +37,21 @@ def call_deepo(args, api_key=None):
 
 @contextmanager
 def drive_app():
+    args = "platform drive-app create -n test -d abc -s worker-nn -s workflow-server"
+    result = call_deepo(args)
+    msg, app_id = result.split(':')
+    app_id = app_id.strip()
+    assert msg == "DriveApp created with id"
+
+    try:
+        yield app_id
+    finally:
+        args = "platform drive-app delete --id {}".format(app_id)
+        result = call_deepo(args)
+
+
+@contextmanager
+def drive_app_version(drive_app_id):
     with open(WORKFLOW_PATH, 'r') as f:
         workflow = yaml.safe_load(f)
 
@@ -45,30 +60,20 @@ def drive_app():
         "recognition_spec_id": node['args']['model_id']
     } for node in workflow['workflow']['steps'] if node["type"] == "Inference"]
 
-    args = "platform app create -n test -d abc -s {}".format(json.dumps(app_specs, indent=None, separators=(',', ':')))
+    args = "platform drive-app-version create -n test_av -d abc -a {} -r {} -s {}".format(
+        drive_app_id,
+        RECOG_MODELS,
+        json.dumps(app_specs, indent=None, separators=(',', ':'))
+    )
     result = call_deepo(args)
-    msg, app_id = result.split(':')
-    assert msg == "New app created with id"
+    _, app_version_id = result.split(':')
+    app_version_id = app_version_id.strip()
 
     try:
-        yield app_id
+        yield app_version_id
     finally:
-        args = "platform app delete --id {}".format(app_id)
+        args = "platform drive-app-version delete --id {}".format(app_version_id)
         result = call_deepo(args)
-
-
-@contextmanager
-def app_version():
-    with drive_app() as app_id:
-        args = "platform app-version create -n test_av -d abc -a {} -r {}".format(app_id, RECOG_MODELS)
-        result = call_deepo(args)
-        _, app_version_id = result.split(':')
-
-        try:
-            yield app_version_id.strip(), app_id
-        finally:
-            args = "platform app-version delete --id {}".format(app_version_id)
-            result = call_deepo(args)
 
 
 @contextmanager
@@ -135,48 +140,17 @@ def engage_app_version_wrapper(engage_app_id,
 class TestPlatform(object):
 
     def test_drive_app(no_error_logs):
-        args = "platform app create -n test -d abc"
-        with pytest.raises(ValueError):
-            # mandatory app specs
-            result = call_deepo(args)
-
-        with open(WORKFLOW_PATH, 'r') as f:
-            workflow = yaml.safe_load(f)
-
-        app_specs = [{
-            "queue_name": "{}.forward".format(node['name']),
-            "recognition_spec_id": node['args']['model_id']
-        } for node in workflow['workflow']['steps'] if node["type"] == "Inference"]
-
-        args = "platform app create -n test -d abc -s {}".format(json.dumps(app_specs, indent=None, separators=(',', ':')))
-        result = call_deepo(args)
-        message, app_id = result.split(':')
-        app_id = app_id.strip()
-        assert message == 'New app created with id'
-
-        args = "platform app update --id {} -d ciao".format(app_id)
-        message = call_deepo(args)
-        assert message == 'App {} updated'.format(app_id)
-
-        args = "platform app delete --id {}".format(app_id)
-        message = call_deepo(args)
-        assert message == 'App {} deleted'.format(app_id)
-
-    def test_appversion(self, no_error_logs):
-        with drive_app() as app_id:
-            args = "platform app-version create -n test_av -d abc -a {} -r {}".format(app_id, RECOG_MODELS)
-            result = call_deepo(args)
-            message, app_version_id = result.split(':')
-            app_version_id = app_version_id.strip()
-            assert message == 'New app version created with id'
-
-            args = "platform app-version update --id {} -d ciao".format(app_version_id)
+        with drive_app() as drive_app_id:
+            args = "platform drive-app update --id {} -d ciao".format(drive_app_id)
             message = call_deepo(args)
-            assert message == 'App version {} updated'.format(app_version_id)
+            assert message == 'DriveApp {} updated'.format(drive_app_id)
 
-            args = "platform app-version delete --id {}".format(app_version_id)
-            message = call_deepo(args)
-            assert message == 'App version {} deleted'.format(app_version_id)
+    def test_drive_app_version(self, no_error_logs):
+        with drive_app() as drive_app_id:
+            with drive_app_version(drive_app_id) as drive_app_version_id:
+                args = f"platform drive-app-version update --id {drive_app_version_id} -d ciao"
+                message = call_deepo(args)
+                assert message == f"DriveApp version {drive_app_version_id} updated"
 
     def test_engage_app(self, no_error_logs):
         """Test engage-app create command."""
@@ -260,6 +234,7 @@ class TestPlatform(object):
             * Create an EngageApp version with --workflow, --from, -r, -c
         """
         create_from_cmd = "platform engage-app-version create-from --from {}"
+        msg_match = "EngageApp version created with id: "
 
         with engage_app() as engage_app_id:
             _, engage_app_version_id = engage_app_version_wrapper(
@@ -268,26 +243,12 @@ class TestPlatform(object):
                 custom_node=CUSTOM_NODES_PATH
             )
             result = call_deepo(create_from_cmd.format(engage_app_version_id))
-            assert result.startswith("EngageApp version created with id: ")
+            assert result.startswith(msg_match)
 
             create_from_cmd += f" -w {WORKFLOW_PATH}"
             result = call_deepo(create_from_cmd.format(engage_app_version_id))
-            assert result.startswith("EngageApp version created with id: ")
+            assert result.startswith(msg_match)
 
             create_from_cmd += f" -c {CUSTOM_NODES_PATH} -r {RECOG_MODELS}"
             result = call_deepo(create_from_cmd.format(engage_app_version_id))
-            assert result.startswith("EngageApp version created with id: ")
-
-    @pytest.mark.skip("Deprecated. Remove when service command are removed.")
-    def test_service(self, no_error_logs):
-        for service in ['customer-api', 'camera-server']:
-            with drive_app() as app_id:
-                args = "platform service create -a {} -n {}".format(app_id, service)
-                result = call_deepo(args)
-                message, service_id = result.split(':')
-                service_id = service_id.strip()
-                assert message == 'New service created with id'
-
-                args = "platform service delete --id {}".format(service_id)
-                message = call_deepo(args)
-                assert message == 'Service {} deleted'.format(service_id)
+            assert result.startswith(msg_match)
