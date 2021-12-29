@@ -278,6 +278,7 @@ class TestPlatform(object):
             result = call_deepo(create_from_cmd.format(engage_app_version_id))
             assert result.startswith("EngageApp version created with id: ")
 
+    @pytest.mark.skip("Deprecated. Remove when service command are removed.")
     def test_service(self, no_error_logs):
         for service in ['customer-api', 'camera-server']:
             with drive_app() as app_id:

@@ -56,7 +56,7 @@ class SiteManager(object):
         if description is not None:
             data['desc'] = description
 
-        ret = self._client.get('/apps/61613479-385f-4f6e-9672-fc153eefcbcb')
+        ret = self._client.post('/sites', data=data)
         return "New site created with id: {}".format(ret['id'])
 
     def update(self, site_id, app_version_id):

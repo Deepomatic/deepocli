@@ -108,7 +108,7 @@ class EngagePlatformManager(object):
         data = {"name": name}
 
         if application_type:
-            data.update({"application_type": application_type})
+            data["application_type"] = application_type
 
         response = self.engage_client.post(
             '{}'.format(self.engage_app_endpoint),
