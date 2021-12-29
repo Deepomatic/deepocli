@@ -185,10 +185,12 @@ class TestPlatform(object):
 
         for application_type in application_types:
             with engage_app(application_type):
+                # No assert here, everything is tested in `engage_app`
                 pass
 
         with pytest.raises(ClientError):
             with engage_app(unvalid_application_type):
+                # No assert here
                 pass
 
     def test_engage_app_version(self, no_error_logs):
