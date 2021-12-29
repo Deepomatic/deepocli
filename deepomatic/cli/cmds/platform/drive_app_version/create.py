@@ -9,7 +9,7 @@ class CreateCommand(Command):
         parser = super(CreateCommand, self).setup(subparsers)
         parser.add_argument('-n', '--name', required=True, type=str, help="DriveAppVersion name")
         parser.add_argument('-d', '--description', type=str, help="DriveAppVersion description")
-        parser.add_argument('-a', '--app_id', required=True, type=str, help="DriveApp id for this DriveAppVersion")
+        parser.add_argument('-i', '--drive_app_id', required=True, type=str, help="DriveApp id for this DriveAppVersion")
         parser.add_argument('-s', '--app_specs', default=None, required=True,
                             type=valid_json, help="""
                             JSON specs for the app (if workflow not provided).
@@ -20,9 +20,9 @@ class CreateCommand(Command):
                             help="List of Recognition Version Id, one for each Recognition Spec in the App", default=[])
         return parser
 
-    def run(self, app_id, name, description, app_specs, recognition_version_ids, **kwargs):
+    def run(self, drive_app_id, name, description, app_specs, recognition_version_ids, **kwargs):
         return DrivePlatformManager().create_app_version(
-            app_id,
+            drive_app_id,
             name,
             description,
             app_specs,

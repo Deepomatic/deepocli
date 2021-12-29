@@ -155,6 +155,7 @@ class EngagePlatformManager(object):
 
     def create_app_version_from(self,
                                 origin,
+                                base_major_version,
                                 workflow_path,
                                 custom_nodes_path,
                                 recognition_version_ids):
@@ -164,7 +165,10 @@ class EngagePlatformManager(object):
 
         if recognition_version_ids:
             data['recognition_version_ids'] = recognition_version_ids
-            kwargs['data'] = data
+        if base_major_version:
+            data['base_major_version'] = base_major_version
+        kwargs['data'] = data
+
         try:
             if workflow_path:
                 files['workflow_yaml'] = open(workflow_path, 'r')

@@ -46,7 +46,7 @@ def drive_app():
     try:
         yield app_id
     finally:
-        args = "platform drive-app delete --id {}".format(app_id)
+        args = "platform drive-app delete -i {}".format(app_id)
         result = call_deepo(args)
 
 
@@ -60,7 +60,7 @@ def drive_app_version(drive_app_id):
         "recognition_spec_id": node['args']['model_id']
     } for node in workflow['workflow']['steps'] if node["type"] == "Inference"]
 
-    args = "platform drive-app-version create -n test_av -d abc -a {} -r {} -s {}".format(
+    args = "platform drive-app-version create -n test_av -d abc -i {} -r {} -s {}".format(
         drive_app_id,
         RECOG_MODELS,
         json.dumps(app_specs, indent=None, separators=(',', ':'))
@@ -72,7 +72,7 @@ def drive_app_version(drive_app_id):
     try:
         yield app_version_id
     finally:
-        args = "platform drive-app-version delete --id {}".format(app_version_id)
+        args = "platform drive-app-version delete -v {}".format(app_version_id)
         result = call_deepo(args)
 
 
@@ -101,7 +101,7 @@ def engage_app(application_type=None):
     try:
         yield engage_app_id
     finally:
-        args = f"platform engage-app delete --id {engage_app_id}"
+        args = f"platform engage-app delete -i {engage_app_id}"
         result = call_deepo(args)
         assert result == f'EngageApp {engage_app_id} deleted'
 
@@ -115,7 +115,7 @@ def engage_app_version_wrapper(engage_app_id,
     Return:
         version (str), engage_app_version_id (str)
     """
-    args = f"platform engage-app-version create -a {engage_app_id} -w {workflow} -r {RECOG_MODELS}"
+    args = f"platform engage-app-version create -i {engage_app_id} -w {workflow} -r {RECOG_MODELS}"
     if custom_node:
         args += f" -c {custom_node}"
     if from_major:
@@ -141,14 +141,14 @@ class TestPlatform(object):
 
     def test_drive_app(no_error_logs):
         with drive_app() as drive_app_id:
-            args = "platform drive-app update --id {} -d ciao".format(drive_app_id)
+            args = "platform drive-app update -i {} -d ciao".format(drive_app_id)
             message = call_deepo(args)
             assert message == 'DriveApp {} updated'.format(drive_app_id)
 
     def test_drive_app_version(self, no_error_logs):
         with drive_app() as drive_app_id:
             with drive_app_version(drive_app_id) as drive_app_version_id:
-                args = f"platform drive-app-version update --id {drive_app_version_id} -d ciao"
+                args = f"platform drive-app-version update -v {drive_app_version_id} -d ciao"
                 message = call_deepo(args)
                 assert message == f"DriveApp version {drive_app_version_id} updated"
 
