@@ -11,4 +11,4 @@ class DeleteCommand(Command):
         return parser
 
     def run(self, engage_app_id, **kwargs):
-        return EngagePlatformManager().delete_app(engage_app_id)
+        return EngagePlatformManager().delete_app_version(engage_app_id)

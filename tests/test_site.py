@@ -4,7 +4,7 @@ from uuid import uuid4, UUID
 from deepomatic.cli.lib.site import SiteManager
 
 from contextlib import contextmanager
-from test_platform import app_version, call_deepo
+from test_platform import drive_app, drive_app_version, call_deepo
 import tempfile
 import shutil
 
@@ -149,13 +149,16 @@ def setup():
 
 @contextmanager
 def site():
-    with app_version() as (app_version_id, app_id):
-        args = "site create -n test_si -d xyz -v {}".format(app_version_id)
-        result = call_deepo(args)
-        _, site_id = result.split(':')
+    with drive_app() as drive_app_id:
+        with drive_app_version(drive_app_id) as drive_app_version_id:
+            args = "site create -n test_si -d xyz -v {}".format(drive_app_version_id)
+            result = call_deepo(args)
+            _, site_id = result.split(':')
 
-        yield site_id.strip(), app_version_id, app_id
-        call_deepo("site delete --id {}".format(site_id))
+            try:
+                yield site_id.strip(), drive_app_version_id, drive_app_id
+            finally:
+                call_deepo("site delete --id {}".format(site_id))
 
 
 class TestSite(object):
@@ -231,28 +234,28 @@ class TestSite(object):
             manager.uninstall(site_id)
             assert(site_id not in manager.list())
 
-    @pytest.mark.skip()
     def test_site(self, no_error_logs):
-        with app_version() as (app_version_id, app_id):
-            args = "site create -n test_si -d xyz -v {}".format(app_version_id)
-            result = call_deepo(args)
-            message, site_id = result.split(':')
-            assert message == 'New site created with id'
+        with drive_app() as drive_app_id:
+            with drive_app_version(drive_app_id) as drive_app_version_id:
+                args = "site create -n test_si -d xyz -v {}".format(drive_app_version_id)
+                result = call_deepo(args)
+                message, site_id = result.split(':')
+                assert message == 'New site created with id'
 
-            args = "site update --id {} --app_version_id {}".format(site_id, app_version_id)
-            message = call_deepo(args)
-            assert message == 'Site{} updated'.format(site_id)
+                args = "site update --site_id {} --drive_app_version_id {}".format(site_id, drive_app_version_id)
+                message = call_deepo(args)
+                assert message == 'Site{} updated'.format(site_id)
 
-            args = "site delete --id {}".format(site_id)
-            message = call_deepo(args)
-            assert message == 'Site{} deleted'.format(site_id)
+                args = "site delete --site_id {}".format(site_id)
+                message = call_deepo(args)
+                assert message == 'Site{} deleted'.format(site_id)
 
-    @pytest.mark.skip()
+    @pytest.mark.skip("Service creation deprecated.")
     def test_site_deployment_manifest(self, no_error_logs):
         for service in ['customer-api', 'camera-server']:
             with site() as (site_id, app_version_id, app_id):
                 # add extra service
-                call_deepo("platform service create -a {} -n {}".format(app_id, service))
+                call_deepo("platform service create -i {} -n {}".format(app_id, service))
 
                 args = "site manifest -i {} -t docker-compose".format(site_id)
                 message = call_deepo(args)
