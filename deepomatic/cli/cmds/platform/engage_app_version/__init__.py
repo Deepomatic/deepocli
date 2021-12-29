@@ -5,5 +5,5 @@ class EngageAppVersionCommand(Command):
     """App version related commands."""
 
     from .create import CreateCommand
-    from .clone import CloneCommand
+    from .create_from import CreateFromCommand
     from .delete import DeleteCommand
