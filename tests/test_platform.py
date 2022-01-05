@@ -15,6 +15,13 @@ ROOT = os.path.dirname(os.path.abspath(__file__))
 WORKFLOW_PATH = ROOT + '/workflow.yaml'
 WORKFLOW2_PATH = ROOT + '/workflow2.yaml'
 CUSTOM_NODES_PATH = ROOT + '/custom_nodes.py'
+<<<<<<< HEAD
+=======
+RECOG_MODELS = "44363 44364"
+# Keep this to ease test on staging:
+# RECOG_MODELS = "75384 75385"
+# /!\ use correct model id in workflow: `model_id: 91711`
+>>>>>>> master
 APP_ID_LEN = 36
 
 
@@ -33,6 +40,21 @@ def call_deepo(args, api_key=None):
 
 @contextmanager
 def drive_app():
+    args = "platform drive-app create -n test -d abc -s worker-nn -s workflow-server"
+    result = call_deepo(args)
+    msg, app_id = result.split(':')
+    app_id = app_id.strip()
+    assert msg == "DriveApp created with id"
+
+    try:
+        yield app_id
+    finally:
+        args = "platform drive-app delete -i {}".format(app_id)
+        result = call_deepo(args)
+
+
+@contextmanager
+def drive_app_version(drive_app_id):
     with open(WORKFLOW_PATH, 'r') as f:
         workflow = yaml.safe_load(f)
 
@@ -41,30 +63,59 @@ def drive_app():
         "recognition_spec_id": node['args']['model_id']
     } for node in workflow['workflow']['steps'] if node["type"] == "Inference"]
 
-    args = "platform app create -n test -d abc -s {}".format(json.dumps(app_specs, indent=None, separators=(',', ':')))
+    args = "platform drive-app-version create -n test_av -d abc -i {} -r {} -s {}".format(
+        drive_app_id,
+        RECOG_MODELS,
+        json.dumps(app_specs, indent=None, separators=(',', ':'))
+    )
     result = call_deepo(args)
-    msg, app_id = result.split(':')
-    assert msg == "New app created with id"
+    _, app_version_id = result.split(':')
+    app_version_id = app_version_id.strip()
 
-    yield app_id
-
-    args = "platform app delete --id {}".format(app_id)
-    result = call_deepo(args)
+    try:
+        yield app_version_id
+    finally:
+        args = "platform drive-app-version delete -v {}".format(app_version_id)
+        result = call_deepo(args)
 
 
 @contextmanager
-def app_version():
-    with drive_app() as app_id:
-        args = "platform app-version create -n test_av -d abc -a {} -r 44363 44364".format(app_id)
-        result = call_deepo(args)
-        _, app_version_id = result.split(':')
+def engage_app(application_type=None):
+    """Context manager around engage_app creation command.
 
+    Take care of engage_app delete.
+    """
+    args = "platform engage-app create -n test"
+    if application_type:
+        args += f" --application_type {application_type}"
+    result = call_deepo(args)
+
+    lhs, rhs = result.split('.')
+    _, engage_app_id = lhs.split(':')
+    engage_app_id = engage_app_id.strip()
+    _, drive_app_id = rhs.split(':')
+    drive_app_id = drive_app_id.strip()
+
+    assert 'EngageApp created with id: ' in result
+    assert 'DriveApp id: ' in result
+    assert len(drive_app_id) == APP_ID_LEN
+    assert len(engage_app_id) == APP_ID_LEN
+
+<<<<<<< HEAD
         yield app_version_id.strip(), app_id
 
         args = "platform app-version delete --id {}".format(app_version_id)
+=======
+    try:
+        yield engage_app_id
+    finally:
+        args = f"platform engage-app delete -i {engage_app_id}"
+>>>>>>> master
         result = call_deepo(args)
+        assert result == f'EngageApp {engage_app_id} deleted'
 
 
+<<<<<<< HEAD
 @contextmanager
 def engage_app(application_type=None):
     """Context manager around engage_app creation command.
@@ -94,6 +145,8 @@ def engage_app(application_type=None):
     assert message == 'Engage App {} deleted'.format(engage_app_id)
 
 
+=======
+>>>>>>> master
 def engage_app_version_wrapper(engage_app_id,
                                workflow,
                                custom_node=None,
@@ -103,11 +156,16 @@ def engage_app_version_wrapper(engage_app_id,
     Return:
         version (str), engage_app_version_id (str)
     """
+<<<<<<< HEAD
     args = f"platform engage-app-version create -a {engage_app_id} -w {workflow} -r 75384 75385"
+=======
+    args = f"platform engage-app-version create -i {engage_app_id} -w {workflow} -r {RECOG_MODELS}"
+>>>>>>> master
     if custom_node:
         args += f" -c {custom_node}"
     if from_major:
         args += f" --base_major_version {from_major}"
+<<<<<<< HEAD
 
     result = call_deepo(args)
     _, rhs = result.split(':')
@@ -126,43 +184,32 @@ class TestPlatform(object):
         with pytest.raises(ValueError):
             # mandatory app specs
             result = call_deepo(args)
+=======
+>>>>>>> master
 
-        with open(WORKFLOW_PATH, 'r') as f:
-            workflow = yaml.safe_load(f)
+    result = call_deepo(args)
+    lhs, rhs = result.rsplit('.', 1)
+    _, engage_app_version_id = lhs.split(':')
+    _, drive_app_version_id = rhs.split(':')
+    engage_app_version_id = engage_app_version_id.strip()
+    drive_app_version_id = drive_app_version_id.strip()
+    version_number = result[20:23]
 
-        app_specs = [{
-            "queue_name": "{}.forward".format(node['name']),
-            "recognition_spec_id": node['args']['model_id']
-        } for node in workflow['workflow']['steps'] if node["type"] == "Inference"]
+    assert len(engage_app_version_id) == APP_ID_LEN
+    assert len(drive_app_version_id) == APP_ID_LEN
+    assert result.startswith('EngageApp version \'v')
+    assert "DriveApp version id: " in result
 
-        args = "platform app create -n test -d abc -s {}".format(json.dumps(app_specs, indent=None, separators=(',', ':')))
-        result = call_deepo(args)
-        message, app_id = result.split(':')
-        app_id = app_id.strip()
-        assert message == 'New app created with id'
+    return version_number, engage_app_version_id
 
-        args = "platform app update --id {} -d ciao".format(app_id)
-        message = call_deepo(args)
-        assert message == 'App {} updated'.format(app_id)
 
-        args = "platform app delete --id {}".format(app_id)
-        message = call_deepo(args)
-        assert message == 'App {} deleted'.format(app_id)
+class TestPlatform(object):
 
-    def test_appversion(self, no_error_logs):
-        with drive_app() as app_id:
-            args = "platform app-version create -n test_av -d abc -a {} -r 44363 44364".format(app_id)
-            result = call_deepo(args)
-            message, app_version_id = result.split(':')
-            app_version_id = app_version_id.strip()
-            assert message == 'New app version created with id'
-
-            args = "platform app-version update --id {} -d ciao".format(app_version_id)
+    def test_drive_app(no_error_logs):
+        with drive_app() as drive_app_id:
+            args = "platform drive-app update -i {} -d ciao".format(drive_app_id)
             message = call_deepo(args)
-            assert message == 'App version {} updated'.format(app_version_id)
-
-            args = "platform app-version delete --id {}".format(app_version_id)
-            message = call_deepo(args)
+<<<<<<< HEAD
             assert message == 'App version {} deleted'.format(app_version_id)
 
     def test_engage_app(self, no_error_logs):
@@ -266,3 +313,114 @@ class TestPlatform(object):
                 args = "platform service delete --id {}".format(service_id)
                 message = call_deepo(args)
                 assert message == 'Service {} deleted'.format(service_id)
+=======
+            assert message == 'DriveApp {} updated'.format(drive_app_id)
+
+    def test_drive_app_version(self, no_error_logs):
+        with drive_app() as drive_app_id:
+            with drive_app_version(drive_app_id) as drive_app_version_id:
+                args = f"platform drive-app-version update -v {drive_app_version_id} -d ciao"
+                message = call_deepo(args)
+                assert message == f"DriveApp version {drive_app_version_id} updated"
+
+    def test_engage_app(self, no_error_logs):
+        """Test engage-app create command."""
+        application_types = ["WORKFLOW", "INFERENCE", "VIDEO", "FIELD_SERVICES", None]
+        unvalid_application_type = "NOT_A_VALID_TYPE"
+
+        for application_type in application_types:
+            with engage_app(application_type):
+                # No assert here, everything is tested in `engage_app`
+                pass
+
+        with pytest.raises(ClientError):
+            with engage_app(unvalid_application_type):
+                # No assert here
+                pass
+
+    def test_engage_app_version(self, no_error_logs):
+        """Test engage-app-version create command.
+
+        workflow2: must include breaking change (testing major/minor)
+
+        Scenario:
+            * create first EngageAppVersion without base_major_version
+            * create a second EngageAppVersion without base_major_version
+            * create a third EngageAppVersion
+            with base_engage_app_version from step1
+            * create new EngageAppVersion with base_major_version with
+            workflow2: should fail (forbiden, should be a major)
+            * create new major app version by giving no base_major_version
+            and workflow2
+        """
+        with engage_app() as engage_app_id:
+            # Output of create command: New app version 'v<major.minor>' created with id: <id>
+            version_number1, engage_app_version_id1 = engage_app_version_wrapper(
+                engage_app_id=engage_app_id,
+                workflow=WORKFLOW_PATH,
+                custom_node=CUSTOM_NODES_PATH
+            )
+            assert version_number1 == "1.0"
+
+            version_number2, engage_app_version_id2 = engage_app_version_wrapper(
+                engage_app_id=engage_app_id,
+                workflow=WORKFLOW_PATH,
+                custom_node=CUSTOM_NODES_PATH
+            )
+            assert version_number2 == "2.0"
+            assert engage_app_version_id1 != engage_app_version_id2
+
+            version_number, _ = engage_app_version_wrapper(
+                engage_app_id=engage_app_id,
+                workflow=WORKFLOW_PATH,
+                custom_node=CUSTOM_NODES_PATH,
+                from_major=version_number1[0]
+            )
+            assert version_number == "1.1"
+
+            with pytest.raises(ClientError):
+                engage_app_version_wrapper(
+                    engage_app_id=engage_app_id,
+                    workflow=WORKFLOW2_PATH,
+                    custom_node=CUSTOM_NODES_PATH,
+                    from_major=version_number[0]
+                )
+
+            version_number, _ = engage_app_version_wrapper(
+                engage_app_id=engage_app_id,
+                workflow=WORKFLOW2_PATH,
+                custom_node=CUSTOM_NODES_PATH
+            )
+            assert version_number == "3.0"
+
+    def test_engage_app_version_from(self, no_error_logs):
+        """Test engage-app-version create-from command.
+
+        Test various arguments being present or not.
+        Should work from no args to all args beging present.
+
+        Scenario:
+            * Create an EngageApp version with --from
+            * Create an EngageApp version with --workflow and --from
+            * Create an EngageApp version with --workflow, --from, -r, -c
+        """
+        create_from_cmd = "platform engage-app-version create-from --from {}"
+        msg_match = "EngageApp version created with id: "
+
+        with engage_app() as engage_app_id:
+            _, engage_app_version_id = engage_app_version_wrapper(
+                engage_app_id=engage_app_id,
+                workflow=WORKFLOW_PATH,
+                custom_node=CUSTOM_NODES_PATH
+            )
+            result = call_deepo(create_from_cmd.format(engage_app_version_id))
+            assert result.startswith(msg_match)
+
+            create_from_cmd += f" -w {WORKFLOW_PATH}"
+            result = call_deepo(create_from_cmd.format(engage_app_version_id))
+            assert result.startswith(msg_match)
+
+            create_from_cmd += f" -c {CUSTOM_NODES_PATH} -r {RECOG_MODELS}"
+            result = call_deepo(create_from_cmd.format(engage_app_version_id))
+            assert result.startswith(msg_match)
+>>>>>>> master

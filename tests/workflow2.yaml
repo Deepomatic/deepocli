@@ -25,7 +25,7 @@ workflow:
       inputs:
         - test_image
       args:
-        model_id: 91711
+        model_id: 53638
         concepts:
           - coucou
 
@@ -34,6 +34,6 @@ workflow:
       inputs:
         - test_image
       args:
-        model_id: 91711
+        model_id: 53639
         concepts:
           - aeroplane

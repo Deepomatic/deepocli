@@ -1,13 +1,13 @@
-from ...utils import PlatformCommand
+from ...utils import Command
 from ..utils import EngagePlatformManager
 
 
-class CreateCommand(PlatformCommand):
-    """Create a new Engage App."""
+class CreateCommand(Command):
+    """Create a new EngageApp."""
 
     def setup(self, subparsers):
         parser = super(CreateCommand, self).setup(subparsers)
-        parser.add_argument('-n', '--name', required=True, type=str, help="Engage App name")
+        parser.add_argument('-n', '--name', required=True, type=str, help="EngageApp name")
         parser.add_argument(
             '-t',
             '--application_type',

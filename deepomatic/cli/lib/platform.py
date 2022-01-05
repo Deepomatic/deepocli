@@ -15,16 +15,16 @@ from .add_images import DEFAULT_USER_AGENT_PREFIX
 LOGGER = logging.getLogger(__name__)
 
 
-class PlatformManager(object):
+class DrivePlatformManager(object):
     def __init__(self, client_cls=HTTPHelper):
         self.drive_client = client_cls()
 
-    def create_app(self, name, description, app_specs):
-        if app_specs is None:
-            raise ValueError('Specs are mandatory for non workflow apps.')
-        # creating an app from scratch
-        # require to add the services manually
-        data_app = {'name': name, 'desc': description, 'app_specs': app_specs}
+    def create_app(self, name, description, services):
+        data_app = {
+            'name': name,
+            'desc': description,
+            'services': [{"name": service} for service in services]
+        }
         ret = self.drive_client.post('/apps', data=data_app)
         app_id = ret['id']
         return PlatformCommandResult(
@@ -48,11 +48,14 @@ class PlatformManager(object):
         self.drive_client.delete('/apps/{}'.format(app_id))
         return ("[deleted] drive_app_id: {drive_app_id}",), {"drive_app_id": app_id}
 
-    def create_app_version(self, app_id, name, description, version_ids):
+    def create_app_version(self, app_id, name, description, app_specs, version_ids):
         data = {
             'app_id': app_id,
             'name': name,
-            'recognition_version_ids': version_ids
+            'app_specs': app_specs,
+            'recognition_version_ids': version_ids,
+            # FIXME: To update when endpoint are updated.
+            'resources': []
         }
         if description is not None:
             data['desc'] = description
@@ -106,13 +109,13 @@ class EngagePlatformManager(object):
         )
 
         self.engage_app_endpoint = "{}/apps".format(FS_URL_PREFIX)
-        self.version_clone_endpoint = FS_URL_PREFIX + "/app-versions/{}/clone"
+        self.version_create_from_endpoint = FS_URL_PREFIX + "/app-versions/{}/create-from"
 
     def create_app(self, name, application_type):
         data = {"name": name}
 
         if application_type:
-            data.update({"application_type": application_type})
+            data["application_type"] = application_type
 
         response = self.engage_client.post(
             '{}'.format(self.engage_app_endpoint),
@@ -131,6 +134,7 @@ class EngagePlatformManager(object):
         self.engage_client.delete('{}/{}'.format(self.engage_app_endpoint, app_id))
         return ("[deleted] engage_app_id: {engage_app_id}",), {"engage_app_id": app_id}
 
+    # FIXME
     def create_app_version(self,
                            app_id,
                            workflow_path,
@@ -143,49 +147,64 @@ class EngagePlatformManager(object):
         if base_major_version:
             data['base_major_version'] = base_major_version
 
-        with open(workflow_path, 'r') as worflow_file:
-            files = {'workflow_yaml': worflow_file}
+        try:
+            files = {'workflow_yaml': open(workflow_path, 'r')}
+            if custom_nodes_path:
+                files['custom_nodes_py'] = open(custom_nodes_path, 'r')
 
-            if custom_nodes_path is not None:
-                with open(custom_nodes_path, 'r') as custom_nodes_file:
-                    files['custom_nodes_py'] = custom_nodes_file
-                    response = self.engage_client.post(
-                        '{}/{}/versions'.format(self.engage_app_endpoint, app_id),
-                        data=data,
-                        files=files,
-                        content_type='multipart/mixed'
-                    )
-            else:
-                response = self.engage_client.post(
-                    '{}/{}/versions'.format(self.engage_app_endpoint, app_id),
-                    data=data,
-                    files=files,
-                    content_type='multipart/mixed'
-                )
+            response = self.engage_client.post(
+                '{}/{}/versions'.format(self.engage_app_endpoint, app_id),
+                data=data,
+                files=files,
+                content_type='multipart/mixed'
+            )
+        finally:
+            for file in files.values():
+                file.close()
 
-        return (
-            ("[created] engage_app_version_id: {engage_app_version_id} (v{major}.{minor})",),
-            {
-                "major": response['major'],
-                "minor": response['minor'],
-                "engage_app_version_id": response['id']
-            }
+        return "EngageApp version 'v{}.{}' created with id: {}. DriveApp version id: {}".format(
+            response['major'],
+            response['minor'],
+            response['id'],
+            response['drive_app_version_id']
         )
 
-    def clone_app_version(self, version_id, recognition_version_ids):
-        data = {'recognition_version_ids': recognition_version_ids}
+    # FIXME
+    def create_app_version_from(self,
+                                origin,
+                                base_major_version,
+                                workflow_path,
+                                custom_nodes_path,
+                                recognition_version_ids):
+        data = {}
+        files = {}
+        kwargs = {}
 
-        response = self.engage_client.post(
-            '{}'.format(
-                self.version_clone_endpoint.format(version_id)
-            ),
-            data=data
-        )
+        if recognition_version_ids:
+            data['recognition_version_ids'] = recognition_version_ids
+        if base_major_version:
+            data['base_major_version'] = base_major_version
+        kwargs['data'] = data
 
-        return (
-            ("[cloned] from engage_app_version_id {version_id} to engage_app_version_id {engage_app_version_id}",),
-            {
-                "version_id": version_id,
-                "engage_app_version_id": response['id']
-            }
+        try:
+            if workflow_path:
+                files['workflow_yaml'] = open(workflow_path, 'r')
+            if custom_nodes_path:
+                files['custom_nodes_py'] = open(custom_nodes_path, 'r')
+            if files:
+                kwargs['files'] = files
+                kwargs['content_type'] = "multipart/mixed"
+
+            response = self.engage_client.post(
+                self.version_create_from_endpoint.format(origin),
+                **kwargs
+            )
+        finally:
+            for file in files.values():
+                file.close()
+
+        return "EngageApp version created with id: {} from {}. DriveApp version id: {}".format(
+            response['id'],
+            origin,
+            response['drive_app_version_id']
         )
