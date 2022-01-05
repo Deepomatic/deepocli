@@ -94,20 +94,6 @@ class DrivePlatformManager(object):
             {"drive_app_version_id": app_id}
         )
 
-    def create_service(self, **data):
-        ret = self.drive_client.post('/services', data=data)
-        return PlatformCommandResult(
-            ["[created] service_id: {service_id}"],
-            {"service_id": ret["id"]}
-        )
-
-    def delete_service(self, service_id):
-        self.drive_client.delete('/services/{}'.format(service_id))
-        return PlatformCommandResult(
-            ["[deleted] service_id: {service_id}"],
-            {"service_id": service_id}
-        )
-
 
 class EngagePlatformManager(object):
     def __init__(self, client_cls=HTTPHelper):
