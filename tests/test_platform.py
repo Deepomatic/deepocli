@@ -123,7 +123,7 @@ def engage_app_version_wrapper(engage_app_id,
     minor = result.get("minor")
     assert result.get("drive_app_version_id")
 
-    return "{}.{}".format(major, minor), engage_app_version_id
+    return f"{major}.{minor}", engage_app_version_id
 
 
 class TestPlatform(object):
