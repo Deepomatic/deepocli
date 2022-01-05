@@ -28,7 +28,7 @@ workflow:
       inputs:
         - test_image
       args:
-        model_id: 53638
+        model_id: 53639
         concepts:
           - aeroplane
 
