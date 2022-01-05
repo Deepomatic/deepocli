@@ -2,7 +2,7 @@ from ...utils import PlatformCommand
 from ..utils import EngagePlatformManager
 
 
-class DeleteCommand(Command):
+class DeleteCommand(PlatformCommand):
     """Delete an EngageApp."""
 
     def setup(self, subparsers):

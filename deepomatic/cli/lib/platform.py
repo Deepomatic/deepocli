@@ -42,11 +42,17 @@ class DrivePlatformManager(object):
             data['desc'] = description
 
         ret = self.drive_client.patch('/apps/{}'.format(app_id), data=data)
-        return ("[updated] drive_app_id: {drive_app_id}",), {"drive_app_id": ret["id"]}
+        return PlatformCommandResult(
+            ["[updated] drive_app_id: {drive_app_id}"],
+            {"drive_app_id": ret["id"]}
+        )
 
     def delete_app(self, app_id):
         self.drive_client.delete('/apps/{}'.format(app_id))
-        return ("[deleted] drive_app_id: {drive_app_id}",), {"drive_app_id": app_id}
+        return PlatformCommandResult(
+            ["[deleted] drive_app_id: {drive_app_id}"],
+            {"drive_app_id": app_id}
+        )
 
     def create_app_version(self, app_id, name, description, app_specs, version_ids):
         data = {
@@ -61,7 +67,10 @@ class DrivePlatformManager(object):
             data['desc'] = description
 
         ret = self.drive_client.post('/app-versions', data=data)
-        return ("[created] drive_app_version_id: {drive_app_version_id}",), {"drive_app_version_id": ret['id']}
+        return PlatformCommandResult(
+            ["[created] drive_app_version_id: {drive_app_version_id}"],
+            {"drive_app_version_id": ret['id']}
+        )
 
     def update_app_version(self, app_version_id, name, description):
         data = {}
@@ -73,19 +82,31 @@ class DrivePlatformManager(object):
             data['desc'] = description
 
         ret = self.drive_client.patch('/app-versions/{}'.format(app_version_id), data=data)
-        return ("[updated] drive_app_version_id: {drive_app_version_id}",), {"drive_app_version_id": ret['id']}
+        return PlatformCommandResult(
+            ["[updated] drive_app_version_id: {drive_app_version_id}"],
+            {"drive_app_version_id": ret['id']}
+        )
 
     def delete_app_version(self, app_version_id):
         self.drive_client.delete('/app-versions/{}'.format(app_version_id))
-        return ("[deleted] drive_app_version_id: {drive_app_version_id}",), {"drive_app_version_id": app_id}
+        return PlatformCommandResult(
+            ["[deleted] drive_app_version_id: {drive_app_version_id}"],
+            {"drive_app_version_id": app_id}
+        )
 
     def create_service(self, **data):
         ret = self.drive_client.post('/services', data=data)
-        return ("[created] service_id: {service_id}",), {"service_id": ret["id"]}
+        return PlatformCommandResult(
+            ["[created] service_id: {service_id}"],
+            {"service_id": ret["id"]}
+        )
 
     def delete_service(self, service_id):
         self.drive_client.delete('/services/{}'.format(service_id))
-        return ("[deleted] service_id: {service_id}",), {"service_id": service_id}
+        return PlatformCommandResult(
+            ["[deleted] service_id: {service_id}"],
+            {"service_id": service_id}
+        )
 
 
 class EngagePlatformManager(object):
@@ -122,8 +143,11 @@ class EngagePlatformManager(object):
             data=data
         )
 
-        return (
-            ("[created] engage_app_id: {engage_app_id}", "[created] drive_app_id: {drive_app_id}"),
+        return PlatformCommandResult(
+            [
+                "[created] engage_app_id: {engage_app_id}",
+                "[created] drive_app_id: {drive_app_id}",
+            ],
             {
                 "engage_app_id": response['id'],
                 "drive_app_id": response['drive_app_id']
@@ -132,9 +156,11 @@ class EngagePlatformManager(object):
 
     def delete_app(self, app_id):
         self.engage_client.delete('{}/{}'.format(self.engage_app_endpoint, app_id))
-        return ("[deleted] engage_app_id: {engage_app_id}",), {"engage_app_id": app_id}
+        return PlatformCommandResult(
+            ["[deleted] engage_app_id: {engage_app_id}"],
+            {"engage_app_id": app_id}
+        )
 
-    # FIXME
     def create_app_version(self,
                            app_id,
                            workflow_path,
@@ -162,14 +188,19 @@ class EngagePlatformManager(object):
             for file in files.values():
                 file.close()
 
-        return "EngageApp version 'v{}.{}' created with id: {}. DriveApp version id: {}".format(
-            response['major'],
-            response['minor'],
-            response['id'],
-            response['drive_app_version_id']
+        return PlatformCommandResult(
+            [
+                "[created] engage_app_version_id ({major}.{minor}): {engage_app_version_id}",
+                "[created] drive_app_version_id: {drive_app_version_id}"
+            ],
+            {
+                "major": response['major'],
+                "minor": response['minor'],
+                "engage_app_version_id": response['id'],
+                "drive_app_version_id": response['drive_app_version_id']
+            }
         )
 
-    # FIXME
     def create_app_version_from(self,
                                 origin,
                                 base_major_version,
@@ -203,8 +234,16 @@ class EngagePlatformManager(object):
             for file in files.values():
                 file.close()
 
-        return "EngageApp version created with id: {} from {}. DriveApp version id: {}".format(
-            response['id'],
-            origin,
-            response['drive_app_version_id']
+        return PlatformCommandResult(
+            [
+                "[created] engage_app_version_id ({major}.{minor}): {engage_app_version_id} (from: {origin})",
+                "[created] drive_app_version_id: {drive_app_version_id}"
+            ],
+            {
+                "major": response["major"],
+                "minor": response["minor"],
+                "engage_app_version_id": response['id'],
+                "origin": origin,
+                "drive_app_version_id": response['drive_app_version_id']
+            }
         )

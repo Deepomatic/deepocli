@@ -1,8 +1,8 @@
-from ...utils import Command
+from ...utils import PlatformCommand
 from ..utils import DrivePlatformManager
 
 
-class CreateCommand(Command):
+class CreateCommand(PlatformCommand):
     """Create a new DriveApp."""
 
     def setup(self, subparsers):

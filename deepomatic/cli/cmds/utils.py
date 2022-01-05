@@ -11,6 +11,7 @@ from deepomatic.cli.common import (SUPPORTED_IMAGE_INPUT_FORMAT, SUPPORTED_IMAGE
                                    SUPPORTED_VIDEO_OUTPUT_FORMAT, SUPPORTED_FOURCC,
                                    SUPPORTED_VIDEO_OUTPUT_COLOR_SPACE)
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -25,14 +26,14 @@ class PlatformCommandResult:
             Will be concat with '\n'.join().
         data (dict): Dict with keys matching messages placeholders.
     """
-    messages: list()
-    data: dict()
+    messages: list
+    data: dict
 
     def to_str(self):
-        return "\n".join(messages).format(data)
+        return "\n".join(self.messages).format(**self.data)
 
     def to_json(self):
-        return data
+        return self.data
 
 
 class Command(object):
@@ -68,7 +69,7 @@ class Command(object):
         print(type(self).__name__, args, kwargs)
 
 
-class PlatformCommand():
+class PlatformCommand(Command):
     """Wrapper around Platform Command.
 
     Add possiblity to format output as json.

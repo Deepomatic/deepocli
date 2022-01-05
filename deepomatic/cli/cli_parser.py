@@ -4,6 +4,7 @@ import logging
 import argparse
 import argcomplete
 from .cmds import AVAILABLE_COMMANDS
+from .cmds.utils import PlatformCommandResult
 from .version import __version__, __title__
 
 
@@ -55,17 +56,12 @@ def run(args):
     result = args.func(vars(args))
 
     if result:
-        # FIXME: Probably worth using a dataclass or a wrapper around result
-        # We want to have Exception raising when --json-output is used with unsuported command.
-        if args.json_output:
-            assert isinstance(result, (tuple)), argparse.ArgumentTypeError("--json-output not available for this command.")
-            _, data = result
-            print(data)
-        else:
-            if not isinstance(result, (tuple)):
-                print(result)
+        if isinstance(result, PlatformCommandResult):
+            if args.json_output:
+                print(result.to_json())
             else:
-                messages, data = result
-                print("\n".join(messages).format(**data))
+                print(result.to_str())
+        else:
+            print(result)
 
     return result
