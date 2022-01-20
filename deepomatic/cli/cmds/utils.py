@@ -3,7 +3,6 @@ import logging
 import argparse
 import os
 import re
-from dataclasses import dataclass
 
 from deepomatic.cli.cmds import parser_helpers
 from deepomatic.cli.common import (SUPPORTED_IMAGE_INPUT_FORMAT, SUPPORTED_IMAGE_OUTPUT_FORMAT,
@@ -15,25 +14,43 @@ from deepomatic.cli.common import (SUPPORTED_IMAGE_INPUT_FORMAT, SUPPORTED_IMAGE
 logger = logging.getLogger(__name__)
 
 
-@dataclass
-class PlatformCommandResult:
-    """Wrapper arround PlatformCommand results.
-
-    Provide a way to keep human readable messages and raw data separate.
+class CommandResult:
+    """Wrapper arround Command results.
 
     Attributes:
-        messages (list(str)): List of string with formatter placeholders.
-            Will be concat with '\n'.join().
-        data (dict): Dict with keys matching messages placeholders.
+        resource_name (str)
+        extra (str)
+        operation (str)
+        fields_filter (list)
+        data (dict)
     """
-    messages: list
-    data: dict
+    def __init__(self, operation, resource_name, data, fields_filter=None, extra=None):
+        self.operation = operation
+        self.resource_name = resource_name
+        self.data = data
+        self.fields_filter = fields_filter or ['id']
+        self.extra = extra
 
-    def to_str(self):
-        return "\n".join(self.messages).format(**self.data)
+    def __repr__(self):
+        return str(self)
 
-    def to_json(self):
-        return self.data
+    def __str__(self):
+        important_data = [
+            '{}={}'.format(field, self.data[field])
+            for field in self.fields_filter
+        ]
+        message = '[{}] {}: {}'.format(
+            self.operation,
+            self.resource_name,
+            ' '.join(important_data),
+        )
+        if self.extra:
+            message += f' {self.extra}'
+
+        return message
+
+    def to_json_str(self, *dump_args, **dump_kwargs):
+        return json.dumps(self.data, *dump_args, **dump_kwargs)
 
 
 class Command(object):
@@ -81,7 +98,7 @@ class PlatformCommand(Command):
             '--json-output',
             dest='json_output',
             action='store_true',
-            help='Use json to format output.'
+            help='Output raw json from api.'
         )
         return parser
 

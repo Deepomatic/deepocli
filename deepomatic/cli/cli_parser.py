@@ -4,7 +4,7 @@ import logging
 import argparse
 import argcomplete
 from .cmds import AVAILABLE_COMMANDS
-from .cmds.utils import PlatformCommandResult
+from .cmds.utils import CommandResult
 from .version import __version__, __title__
 
 
@@ -56,11 +56,8 @@ def run(args):
     result = args.func(vars(args))
 
     if result:
-        if isinstance(result, PlatformCommandResult):
-            if args.json_output:
-                print(result.to_json())
-            else:
-                print(result.to_str())
+        if isinstance(result, CommandResult) and args.json_output:
+                print(result.to_json_str())
         else:
             print(result)
 
