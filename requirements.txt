@@ -1,4 +1,4 @@
-opencv-python-headless>=3.4.8.29,<5
+opencv-python-headless>=3.4.8.29,<4.3
 tqdm==4.62.3
 requests>=2.19.0,<3  # will not work below in python3
 text-unidecode==1.3
