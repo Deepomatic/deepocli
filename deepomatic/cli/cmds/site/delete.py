@@ -1,8 +1,8 @@
-from ..utils import PlatformCommand
+from ..utils import Command
 from ...lib.site import SiteManager
 
 
-class DeleteCommand(PlatformCommand):
+class DeleteCommand(Command):
     """Delete a Site."""
 
     def setup(self, subparsers):

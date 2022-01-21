@@ -1,8 +1,8 @@
-from ..utils import PlatformCommand
+from ..utils import Command
 from ...lib.site import SiteManager
 
 
-class CreateCommand(PlatformCommand):
+class CreateCommand(Command):
     """Create a new site."""
 
     def setup(self, subparsers):
