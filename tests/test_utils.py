@@ -22,9 +22,9 @@ TESTS = (
 )
 
 
-class TestCommandResult(object):
+class TestCommandResult():
 
-    def test_common_usage(no_error_logs):
+    def test_common_usage():
         for test in TESTS:
             command_result = str(CommandResult(**test))
             assert command_result.startswith("[")
