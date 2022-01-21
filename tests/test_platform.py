@@ -223,6 +223,12 @@ class TestPlatform(object):
             * Create an EngageApp version with --workflow and --from
             * Create an EngageApp version with --workflow, --from, -r, -c
         """
+        def assert_version_from_result(command_result):
+            assert command_result.get("id")
+            assert command_result.get("drive_app_version_id")
+            assert command_result.get("major")
+            assert command_result.get("minor")
+
         create_from_cmd = "platform engage-app-version create-from --from {}"
 
         with engage_app() as engage_app_id:
@@ -232,21 +238,12 @@ class TestPlatform(object):
                 custom_node=CUSTOM_NODES_PATH
             )
             result = call_deepo(create_from_cmd.format(engage_app_version_id))
-            assert result.get("id")
-            assert result.get("drive_app_version_id")
-            assert result.get("major")
-            assert result.get("minor")
+            assert_version_from_result(result)
 
             create_from_cmd += f" -w {WORKFLOW_PATH}"
             result = call_deepo(create_from_cmd.format(engage_app_version_id))
-            assert result.get("id")
-            assert result.get("drive_app_version_id")
-            assert result.get("major")
-            assert result.get("minor")
+            assert_version_from_result(result)
 
             create_from_cmd += f" -c {CUSTOM_NODES_PATH} -r {RECOG_MODELS}"
             result = call_deepo(create_from_cmd.format(engage_app_version_id))
-            assert result.get("id")
-            assert result.get("drive_app_version_id")
-            assert result.get("major")
-            assert result.get("minor")
+            assert_version_from_result(result)

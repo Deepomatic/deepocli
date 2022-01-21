@@ -49,8 +49,8 @@ class CommandResult:
 
         return message
 
-    def to_json_str(self, *dump_args, **dump_kwargs):
-        return json.dumps(self.data, *dump_args, **dump_kwargs)
+    def to_json_str(self, *args, **kwargs):
+        return json.dumps(self.data, *args, **kwargs)
 
 
 class Command(object):
@@ -99,6 +99,13 @@ class PlatformCommand(Command):
             dest='json_output',
             action='store_true',
             help='Output raw json from api.'
+        )
+        parser.add_argument(
+            '--json-output-indent',
+            dest='json_output_indent',
+            default=0,
+            type=int,
+            help='Indentation of json output.'
         )
         return parser
 

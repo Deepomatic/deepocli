@@ -57,7 +57,7 @@ def run(args):
 
     if result:
         if isinstance(result, CommandResult) and args.json_output:
-                print(result.to_json_str())
+                print(result.to_json_str(indent=args.json_output_indent))
         else:
             print(result)
 
