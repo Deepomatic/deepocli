@@ -145,7 +145,7 @@ class BlurImagePostprocessing(object):
             if roi is not None:
                 # Retrieve coordinates
                 xmin, ymin, xmax, ymax = get_coordinates_from_roi(roi, width, height)
-                if (xmax - xmin > 0) and (ymax - ymin > 0):
+                if (xmax > xmin) and (ymax > ymin):
                     # Draw
                     if self._method == 'black':
                         cv2.rectangle(output_image, (xmin, ymin), (xmax, ymax), (0, 0, 0), -1)
@@ -156,10 +156,10 @@ class BlurImagePostprocessing(object):
                     elif self._method == 'pixel':
                         rectangle = output_image[ymin:ymax, xmin:xmax]
                         small = cv2.resize(rectangle, (0, 0),
-                                        fx=1. / min((xmax - xmin), self._strength),
-                                        fy=1. / min((ymax - ymin), self._strength))
+                                           fx=1. / min((xmax - xmin), self._strength),
+                                           fy=1. / min((ymax - ymin), self._strength))
                         rectangle = cv2.resize(small, ((xmax - xmin), (ymax - ymin)),
-                                            interpolation=cv2.INTER_NEAREST)
+                                               interpolation=cv2.INTER_NEAREST)
                         output_image[ymin:ymax, xmin:xmax] = rectangle
 
 
