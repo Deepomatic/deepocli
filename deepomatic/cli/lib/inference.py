@@ -139,6 +139,7 @@ class BlurImagePostprocessing(object):
         output_image = frame.output_image
         height = output_image.shape[0]
         width = output_image.shape[1]
+        skipped_pred = 0
         for pred in frame.predictions['outputs'][0]['labels']['predicted']:
             # Check that we have a bounding box
             roi = pred.get('roi')
@@ -161,6 +162,10 @@ class BlurImagePostprocessing(object):
                         rectangle = cv2.resize(small, ((xmax - xmin), (ymax - ymin)),
                                                interpolation=cv2.INTER_NEAREST)
                         output_image[ymin:ymax, xmin:xmax] = rectangle
+                else:
+                    skipped_pred += 1
+        if skipped_pred > 0:
+            LOGGER.warning("Skipped {} predictions (invalid bbox)".format(skipped_pred))
 
 
 class PrepareInferenceThread(Thread):
