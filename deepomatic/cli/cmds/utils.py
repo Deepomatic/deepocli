@@ -10,7 +10,47 @@ from deepomatic.cli.common import (SUPPORTED_IMAGE_INPUT_FORMAT, SUPPORTED_IMAGE
                                    SUPPORTED_VIDEO_OUTPUT_FORMAT, SUPPORTED_FOURCC,
                                    SUPPORTED_VIDEO_OUTPUT_COLOR_SPACE)
 
+
 logger = logging.getLogger(__name__)
+
+
+class CommandResult:
+    """Wrapper arround Command results.
+
+    Attributes:
+        resource_name (str)
+        extra (str)
+        operation (str)
+        fields_filter (list)
+        data (dict)
+    """
+    def __init__(self, operation, resource_name, data, fields_filter=None, extra=None):
+        self.operation = operation
+        self.resource_name = resource_name
+        self.data = data
+        self.fields_filter = fields_filter or ['id']
+        self.extra = extra
+
+    def __repr__(self):
+        return str(self)
+
+    def __str__(self):
+        important_data = [
+            '{}={}'.format(field, self.data[field])
+            for field in self.fields_filter
+        ]
+        message = '[{}] {}: {}'.format(
+            self.operation,
+            self.resource_name,
+            ' '.join(important_data),
+        )
+        if self.extra:
+            message += f' {self.extra}'
+
+        return message
+
+    def to_json_str(self, *args, **kwargs):
+        return json.dumps(self.data, *args, **kwargs)
 
 
 class Command(object):
@@ -44,6 +84,30 @@ class Command(object):
 
     def run(self, *args, **kwargs):
         print(type(self).__name__, args, kwargs)
+
+
+class PlatformCommand(Command):
+    """Wrapper around Platform Command.
+
+    Add possiblity to format output as json.
+    """
+
+    def setup(self, subparsers):
+        parser = super().setup(subparsers)
+        parser.add_argument(
+            '--json-output',
+            dest='json_output',
+            action='store_true',
+            help='Output raw json from api.'
+        )
+        parser.add_argument(
+            '--json-output-indent',
+            dest='json_output_indent',
+            default=0,
+            type=int,
+            help='Indentation of json output.'
+        )
+        return parser
 
 
 def valid_path(file_path):

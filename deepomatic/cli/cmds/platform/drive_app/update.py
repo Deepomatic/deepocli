@@ -1,8 +1,8 @@
-from ...utils import Command
+from ...utils import PlatformCommand
 from ..utils import DrivePlatformManager
 
 
-class UpdateCommand(Command):
+class UpdateCommand(PlatformCommand):
     """Update an existing DriveApp."""
 
     def setup(self, subparsers):

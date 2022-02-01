@@ -7,6 +7,7 @@ except ImportError:
     FileExistsError = OSError
 
 from deepomatic.api.http_helper import HTTPHelper
+from deepomatic.cli.cmds.utils import CommandResult
 
 from .add_images import DEFAULT_USER_AGENT_PREFIX
 
@@ -25,8 +26,7 @@ class DrivePlatformManager(object):
             'services': [{"name": service} for service in services]
         }
         ret = self.drive_client.post('/apps', data=data_app)
-        app_id = ret['id']
-        return "DriveApp created with id: {}".format(app_id)
+        return CommandResult("created", "drive_app", ret)
 
     def update_app(self, app_id, name, description):
         data = {}
@@ -38,11 +38,11 @@ class DrivePlatformManager(object):
             data['desc'] = description
 
         ret = self.drive_client.patch('/apps/{}'.format(app_id), data=data)
-        return "DriveApp {} updated".format(ret['id'])
+        return CommandResult("updated", "drive_app", ret)
 
     def delete_app(self, app_id):
         self.drive_client.delete('/apps/{}'.format(app_id))
-        return "DriveApp {} deleted".format(app_id)
+        return CommandResult("deleted", "drive_app", {"id": app_id})
 
     def create_app_version(self, app_id, name, description, app_specs, version_ids):
         data = {
@@ -57,7 +57,7 @@ class DrivePlatformManager(object):
             data['desc'] = description
 
         ret = self.drive_client.post('/app-versions', data=data)
-        return "DriveApp version created with id: {}".format(ret['id'])
+        return CommandResult("created", "drive_app_version", ret)
 
     def update_app_version(self, app_version_id, name, description):
         data = {}
@@ -69,11 +69,11 @@ class DrivePlatformManager(object):
             data['desc'] = description
 
         ret = self.drive_client.patch('/app-versions/{}'.format(app_version_id), data=data)
-        return "DriveApp version {} updated".format(ret['id'])
+        return CommandResult("updated", "drive_app_version", ret)
 
     def delete_app_version(self, app_version_id):
         self.drive_client.delete('/app-versions/{}'.format(app_version_id))
-        return "DriveApp version {} deleted".format(app_version_id)
+        return CommandResult("deleted", "drive_app_version", {"id": app_version_id})
 
 
 class EngagePlatformManager(object):
@@ -110,14 +110,11 @@ class EngagePlatformManager(object):
             data=data
         )
 
-        return "EngageApp created with id: {}. DriveApp id: {}".format(
-            response['id'],
-            response['drive_app_id']
-        )
+        return CommandResult("created", "engage_app", response)
 
     def delete_app(self, app_id):
         self.engage_client.delete('{}/{}'.format(self.engage_app_endpoint, app_id))
-        return "EngageApp {} deleted".format(app_id)
+        return CommandResult("deleted", "engage_app", {"id": app_id})
 
     def create_app_version(self,
                            app_id,
@@ -146,11 +143,12 @@ class EngagePlatformManager(object):
             for file in files.values():
                 file.close()
 
-        return "EngageApp version 'v{}.{}' created with id: {}. DriveApp version id: {}".format(
-            response['major'],
-            response['minor'],
-            response['id'],
-            response['drive_app_version_id']
+        return CommandResult(
+            "created",
+            "engage_app_version",
+            response,
+            ["id", "drive_app_version_id"],
+            "version={}.{}".format(response["major"], response["minor"])
         )
 
     def create_app_version_from(self,
@@ -186,8 +184,10 @@ class EngagePlatformManager(object):
             for file in files.values():
                 file.close()
 
-        return "EngageApp version created with id: {} from {}. DriveApp version id: {}".format(
-            response['id'],
-            origin,
-            response['drive_app_version_id']
+        return CommandResult(
+            "created",
+            "engage_app_version",
+            response,
+            ["id", "drive_app_version_id"],
+            "version={}.{} from={}".format(response["major"], response["minor"], origin)
         )

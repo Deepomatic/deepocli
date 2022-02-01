@@ -7,6 +7,7 @@ import pytest
 
 from deepomatic.api.exceptions import ClientError
 from deepomatic.cli.cli_parser import run
+from deepomatic.cli.cmds.utils import CommandResult
 
 from utils import modified_environ
 
@@ -19,35 +20,37 @@ RECOG_MODELS = "44363 44364"
 # Keep this to ease test on staging:
 # RECOG_MODELS = "75384 75385"
 # /!\ use correct model id in workflow: `model_id: 91711`
-APP_ID_LEN = 36
 
 
-def call_deepo(args, api_key=None):
+def call_deepo(args, api_key=None, json_output=True):
     args = args.split()
+    if json_output:
+        args.append("--json-output")
     if api_key:
         with modified_environ(DEEPOMATIC_API_KEY=api_key):
             res = run(args)
     else:
         res = run(args)
-    try:
-        return res.strip()
-    except Exception:
-        return res
+
+    if isinstance(res, CommandResult) and json_output:
+        return res.data
+
+    return res
 
 
 @contextmanager
 def drive_app():
     args = "platform drive-app create -n test -d abc -s worker-nn -s workflow-server"
     result = call_deepo(args)
-    msg, app_id = result.split(':')
-    app_id = app_id.strip()
-    assert msg == "DriveApp created with id"
+
+    drive_app_id = result.get("id")
 
     try:
-        yield app_id
+        yield drive_app_id
     finally:
-        args = "platform drive-app delete -i {}".format(app_id)
+        args = f"platform drive-app delete -i {drive_app_id}"
         result = call_deepo(args)
+        assert result.get("id")
 
 
 @contextmanager
@@ -66,14 +69,15 @@ def drive_app_version(drive_app_id):
         json.dumps(app_specs, indent=None, separators=(',', ':'))
     )
     result = call_deepo(args)
-    _, app_version_id = result.split(':')
-    app_version_id = app_version_id.strip()
+
+    drive_app_version_id = result.get("id")
 
     try:
-        yield app_version_id
+        yield drive_app_version_id
     finally:
-        args = "platform drive-app-version delete -v {}".format(app_version_id)
+        args = f"platform drive-app-version delete -v {drive_app_version_id}"
         result = call_deepo(args)
+        assert result.get("id")
 
 
 @contextmanager
@@ -85,25 +89,17 @@ def engage_app(application_type=None):
     args = "platform engage-app create -n test"
     if application_type:
         args += f" --application_type {application_type}"
+
     result = call_deepo(args)
-
-    lhs, rhs = result.split('.')
-    _, engage_app_id = lhs.split(':')
-    engage_app_id = engage_app_id.strip()
-    _, drive_app_id = rhs.split(':')
-    drive_app_id = drive_app_id.strip()
-
-    assert 'EngageApp created with id: ' in result
-    assert 'DriveApp id: ' in result
-    assert len(drive_app_id) == APP_ID_LEN
-    assert len(engage_app_id) == APP_ID_LEN
+    assert result.get("drive_app_id")
+    engage_app_id = result.get("id")
 
     try:
         yield engage_app_id
     finally:
         args = f"platform engage-app delete -i {engage_app_id}"
         result = call_deepo(args)
-        assert result == f'EngageApp {engage_app_id} deleted'
+        assert result.get("id")
 
 
 def engage_app_version_wrapper(engage_app_id,
@@ -122,19 +118,13 @@ def engage_app_version_wrapper(engage_app_id,
         args += f" --base_major_version {from_major}"
 
     result = call_deepo(args)
-    lhs, rhs = result.rsplit('.', 1)
-    _, engage_app_version_id = lhs.split(':')
-    _, drive_app_version_id = rhs.split(':')
-    engage_app_version_id = engage_app_version_id.strip()
-    drive_app_version_id = drive_app_version_id.strip()
-    version_number = result[20:23]
 
-    assert len(engage_app_version_id) == APP_ID_LEN
-    assert len(drive_app_version_id) == APP_ID_LEN
-    assert result.startswith('EngageApp version \'v')
-    assert "DriveApp version id: " in result
+    engage_app_version_id = result.get("id")
+    major = result.get("major")
+    minor = result.get("minor")
+    assert result.get("drive_app_version_id")
 
-    return version_number, engage_app_version_id
+    return f"{major}.{minor}", engage_app_version_id
 
 
 class TestPlatform(object):
@@ -142,15 +132,15 @@ class TestPlatform(object):
     def test_drive_app(no_error_logs):
         with drive_app() as drive_app_id:
             args = "platform drive-app update -i {} -d ciao".format(drive_app_id)
-            message = call_deepo(args)
-            assert message == 'DriveApp {} updated'.format(drive_app_id)
+            result = call_deepo(args)
+            assert result.get("id")
 
     def test_drive_app_version(self, no_error_logs):
         with drive_app() as drive_app_id:
             with drive_app_version(drive_app_id) as drive_app_version_id:
                 args = f"platform drive-app-version update -v {drive_app_version_id} -d ciao"
-                message = call_deepo(args)
-                assert message == f"DriveApp version {drive_app_version_id} updated"
+                result = call_deepo(args)
+                assert result.get("id")
 
     def test_engage_app(self, no_error_logs):
         """Test engage-app create command."""
@@ -233,8 +223,13 @@ class TestPlatform(object):
             * Create an EngageApp version with --workflow and --from
             * Create an EngageApp version with --workflow, --from, -r, -c
         """
+        def assert_version_from_result(command_result):
+            assert command_result.get("id")
+            assert command_result.get("drive_app_version_id")
+            assert command_result.get("major")
+            assert command_result.get("minor")
+
         create_from_cmd = "platform engage-app-version create-from --from {}"
-        msg_match = "EngageApp version created with id: "
 
         with engage_app() as engage_app_id:
             _, engage_app_version_id = engage_app_version_wrapper(
@@ -243,12 +238,12 @@ class TestPlatform(object):
                 custom_node=CUSTOM_NODES_PATH
             )
             result = call_deepo(create_from_cmd.format(engage_app_version_id))
-            assert result.startswith(msg_match)
+            assert_version_from_result(result)
 
             create_from_cmd += f" -w {WORKFLOW_PATH}"
             result = call_deepo(create_from_cmd.format(engage_app_version_id))
-            assert result.startswith(msg_match)
+            assert_version_from_result(result)
 
             create_from_cmd += f" -c {CUSTOM_NODES_PATH} -r {RECOG_MODELS}"
             result = call_deepo(create_from_cmd.format(engage_app_version_id))
-            assert result.startswith(msg_match)
+            assert_version_from_result(result)

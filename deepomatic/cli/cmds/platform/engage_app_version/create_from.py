@@ -1,8 +1,11 @@
-from ...utils import Command, valid_path
+from ...utils import (
+    PlatformCommand,
+    valid_path
+)
 from ..utils import EngagePlatformManager
 
 
-class CreateFromCommand(Command):
+class CreateFromCommand(PlatformCommand):
     """Create an EngageAppVersion from an other one."""
 
     def setup(self, subparsers):

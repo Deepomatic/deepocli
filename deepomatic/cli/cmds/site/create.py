@@ -3,9 +3,7 @@ from ...lib.site import SiteManager
 
 
 class CreateCommand(Command):
-    """
-        Create a new site
-    """
+    """Create a new site."""
 
     def setup(self, subparsers):
         parser = super(CreateCommand, self).setup(subparsers)
