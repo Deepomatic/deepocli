@@ -10,3 +10,4 @@ class WorkOrderCommand(Command):
     from .status import StatusCommand
     from .inference import InferCommand
     from .delete import DeleteCommand
+    from .batch import BatchCommand

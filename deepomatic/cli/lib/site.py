@@ -8,7 +8,7 @@ import subprocess
 
 from git import Repo
 from deepomatic.api.http_helper import HTTPHelper
-
+from tqdm import tqdm
 
 DEEPOMATIC_SITE_PATH = os.path.join(os.path.expanduser('~'), '.deepomatic', 'sites')
 
@@ -184,6 +184,9 @@ class SiteManager(object):
     def make_work_order_url(self, base_url):
         return "{}/v0.2/work-orders".format(base_url)
 
+    def make_work_order_batch_url(self, base_url):
+        return "{}/v0.2/batches".format(base_url)
+
     def create_work_order(self, base_url, name, metadata):
         work_order_url = self.make_work_order_url(base_url)
         data = {
@@ -222,5 +225,55 @@ class SiteManager(object):
         res = self.session.post(input_data_url + '/', data=json.dumps(data))
         if res.status_code == 200:
             return res.json()
+        else:
+            return res.text
+
+    def create_work_order_batch(self, base_url, file=None, chunk_size=262144 * 10):
+        work_order_batch_url = self.make_work_order_batch_url(base_url)
+        res = self.session.post(work_order_batch_url)
+        response_data = res.json()
+        if file is None:
+            return response_data
+        url = response_data["upload_url"]
+        index = 0
+        offset = 0
+        headers = {
+            'content-type': 'application/octet-stream'
+        }
+        content_size = os.stat(file).st_size
+        with open(file, "rb") as f:
+            with tqdm(total=content_size) as pbar:
+                while True:
+                    chunk = f.read(chunk_size)
+                    if not chunk:
+                        break
+                    offset = index + len(chunk)
+                    headers['Content-Range'] = 'bytes %s-%s/%s' % (index, offset - 1, content_size)
+                    index = offset 
+                    try:
+                        r = requests.put(url, data=chunk, headers=headers)
+                        r.raise_for_status()
+                    except Exception as e:
+                        # TODO: retry
+                        return {
+                            "error": str(e),
+                            "batch": response_data
+                        }
+                    pbar.update(len(chunk))
+        return response_data["batch_id"]
+
+    def status_work_order_batch(self, base_url, work_order_batch_id):
+        work_order_batch_url = self.make_work_order_batch_url(base_url)
+        res = self.session.get('{}/{}'.format(work_order_batch_url, work_order_batch_id))
+        if res.status_code == 200:
+            return res.json()
+        else:
+            return res.text
+
+    def delete_work_order(self, base_url, work_order_batch_id):
+        work_order_batch_url = self.make_work_order_batch_url(base_url)
+        res = self.session.delete('{}/{}'.format(work_order_batch_url, work_order_batch_id))
+        if res.status_code == 204:
+            return f"Work order batch {work_order_batch_id} deleted"
         else:
             return res.text
