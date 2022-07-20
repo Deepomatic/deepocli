@@ -139,28 +139,33 @@ class BlurImagePostprocessing(object):
         output_image = frame.output_image
         height = output_image.shape[0]
         width = output_image.shape[1]
+        skipped_pred = 0
         for pred in frame.predictions['outputs'][0]['labels']['predicted']:
             # Check that we have a bounding box
             roi = pred.get('roi')
             if roi is not None:
                 # Retrieve coordinates
                 xmin, ymin, xmax, ymax = get_coordinates_from_roi(roi, width, height)
-
-                # Draw
-                if self._method == 'black':
-                    cv2.rectangle(output_image, (xmin, ymin), (xmax, ymax), (0, 0, 0), -1)
-                elif self._method == 'gaussian':
-                    rectangle = output_image[ymin:ymax, xmin:xmax]
-                    rectangle = cv2.GaussianBlur(rectangle, (0, 0), self._strength)
-                    output_image[ymin:ymax, xmin:xmax] = rectangle
-                elif self._method == 'pixel':
-                    rectangle = output_image[ymin:ymax, xmin:xmax]
-                    small = cv2.resize(rectangle, (0, 0),
-                                       fx=1. / min((xmax - xmin), self._strength),
-                                       fy=1. / min((ymax - ymin), self._strength))
-                    rectangle = cv2.resize(small, ((xmax - xmin), (ymax - ymin)),
-                                           interpolation=cv2.INTER_NEAREST)
-                    output_image[ymin:ymax, xmin:xmax] = rectangle
+                if (xmax > xmin) and (ymax > ymin):
+                    # Draw
+                    if self._method == 'black':
+                        cv2.rectangle(output_image, (xmin, ymin), (xmax, ymax), (0, 0, 0), -1)
+                    elif self._method == 'gaussian':
+                        rectangle = output_image[ymin:ymax, xmin:xmax]
+                        rectangle = cv2.GaussianBlur(rectangle, (0, 0), self._strength)
+                        output_image[ymin:ymax, xmin:xmax] = rectangle
+                    elif self._method == 'pixel':
+                        rectangle = output_image[ymin:ymax, xmin:xmax]
+                        small = cv2.resize(rectangle, (0, 0),
+                                           fx=1. / min((xmax - xmin), self._strength),
+                                           fy=1. / min((ymax - ymin), self._strength))
+                        rectangle = cv2.resize(small, ((xmax - xmin), (ymax - ymin)),
+                                               interpolation=cv2.INTER_NEAREST)
+                        output_image[ymin:ymax, xmin:xmax] = rectangle
+                else:
+                    skipped_pred += 1
+        if skipped_pred > 0:
+            LOGGER.warning("Skipped {} predictions (invalid bbox)".format(skipped_pred))
 
 
 class PrepareInferenceThread(Thread):

@@ -1,10 +1,8 @@
-from ...utils import Command
+from ...utils import PlatformCommand
 
 
-class AppCommand(Command):
-    """
-        App related commands
-    """
+class DriveAppCommand(PlatformCommand):
+    """DriveApp related commands."""
 
     from .create import CreateCommand
     from .delete import DeleteCommand

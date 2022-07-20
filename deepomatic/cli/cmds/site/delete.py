@@ -3,14 +3,12 @@ from ...lib.site import SiteManager
 
 
 class DeleteCommand(Command):
-    """
-        Delete a Site
-    """
+    """Delete a Site."""
 
     def setup(self, subparsers):
         parser = super(DeleteCommand, self).setup(subparsers)
-        parser.add_argument('-i', '--id', required=True, type=str, help="Site id")
+        parser.add_argument('-i', '--site_id', required=True, type=str, help="Site id")
         return parser
 
-    def run(self, id, **kwargs):
-        return SiteManager().delete(id)
+    def run(self, site_id, **kwargs):
+        return SiteManager().delete(site_id)

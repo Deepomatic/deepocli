@@ -7,9 +7,50 @@ import re
 from deepomatic.cli.cmds import parser_helpers
 from deepomatic.cli.common import (SUPPORTED_IMAGE_INPUT_FORMAT, SUPPORTED_IMAGE_OUTPUT_FORMAT,
                                    SUPPORTED_PROTOCOLS_INPUT, SUPPORTED_VIDEO_INPUT_FORMAT,
-                                   SUPPORTED_VIDEO_OUTPUT_FORMAT)
+                                   SUPPORTED_VIDEO_OUTPUT_FORMAT, SUPPORTED_FOURCC,
+                                   SUPPORTED_VIDEO_OUTPUT_COLOR_SPACE)
+
 
 logger = logging.getLogger(__name__)
+
+
+class CommandResult:
+    """Wrapper arround Command results.
+
+    Attributes:
+        resource_name (str)
+        extra (str)
+        operation (str)
+        fields_filter (list)
+        data (dict)
+    """
+    def __init__(self, operation, resource_name, data, fields_filter=None, extra=None):
+        self.operation = operation
+        self.resource_name = resource_name
+        self.data = data
+        self.fields_filter = fields_filter or ['id']
+        self.extra = extra
+
+    def __repr__(self):
+        return str(self)
+
+    def __str__(self):
+        important_data = [
+            '{}={}'.format(field, self.data[field])
+            for field in self.fields_filter
+        ]
+        message = '[{}] {}: {}'.format(
+            self.operation,
+            self.resource_name,
+            ' '.join(important_data),
+        )
+        if self.extra:
+            message += f' {self.extra}'
+
+        return message
+
+    def to_json_str(self, *args, **kwargs):
+        return json.dumps(self.data, *args, **kwargs)
 
 
 class Command(object):
@@ -43,6 +84,30 @@ class Command(object):
 
     def run(self, *args, **kwargs):
         print(type(self).__name__, args, kwargs)
+
+
+class PlatformCommand(Command):
+    """Wrapper around Platform Command.
+
+    Add possiblity to format output as json.
+    """
+
+    def setup(self, subparsers):
+        parser = super().setup(subparsers)
+        parser.add_argument(
+            '--json-output',
+            dest='json_output',
+            action='store_true',
+            help='Output raw json from api.'
+        )
+        parser.add_argument(
+            '--json-output-indent',
+            dest='json_output_indent',
+            default=0,
+            type=int,
+            help='Indentation of json output.'
+        )
+        return parser
 
 
 def valid_path(file_path):
@@ -112,6 +177,11 @@ def setup_model_cmd_line_parser(mode, cmd, inference_parsers):
                            .format(', *'.join(SUPPORTED_IMAGE_OUTPUT_FORMAT),
                                    ', *'.join(SUPPORTED_VIDEO_OUTPUT_FORMAT)))
         group.add_argument('--output_fps', type=int, help="FPS used for output video reconstruction.", default=None)
+        group.add_argument('--fourcc', type=str, help="Codec used for output video reconstruction.",
+                           choices=set([fourcc for fourccs in SUPPORTED_FOURCC.values() for fourcc in fourccs]), default=None)
+        group.add_argument('--output_color_space', type=str,
+                           help="Mainly useful for option `-o stdout`. Convert the outputed frame into the specified color space.",
+                           choices=SUPPORTED_VIDEO_OUTPUT_COLOR_SPACE, default='BGR')
 
     # Define output group for draw blur noop
     if cmd in ['draw', 'blur', 'noop']:

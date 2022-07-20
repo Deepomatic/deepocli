@@ -4,7 +4,7 @@ from uuid import uuid4, UUID
 from deepomatic.cli.lib.site import SiteManager
 
 from contextlib import contextmanager
-from test_platform import app_version, call_deepo
+from test_platform import drive_app, drive_app_version, call_deepo
 import tempfile
 import shutil
 
@@ -149,13 +149,16 @@ def setup():
 
 @contextmanager
 def site():
-    with app_version() as (app_version_id, app_id):
-        args = "site create -n test_si -d xyz -v {}".format(app_version_id)
-        result = call_deepo(args)
-        _, site_id = result.split(':')
+    with drive_app() as drive_app_id:
+        with drive_app_version(drive_app_id) as drive_app_version_id:
+            args = "site create -n test_si -d xyz -v {}".format(drive_app_version_id)
+            result = call_deepo(args, json_output=False)
+            _, site_id = result.split(':')
 
-        yield site_id.strip(), app_version_id, app_id
-        call_deepo("site delete --id {}".format(site_id))
+            try:
+                yield site_id.strip(), drive_app_version_id, drive_app_id
+            finally:
+                call_deepo("site delete --id {}".format(site_id), json_output=False)
 
 
 class TestSite(object):
@@ -231,31 +234,31 @@ class TestSite(object):
             manager.uninstall(site_id)
             assert(site_id not in manager.list())
 
-    @pytest.mark.skip()
     def test_site(self, no_error_logs):
-        with app_version() as (app_version_id, app_id):
-            args = "site create -n test_si -d xyz -v {}".format(app_version_id)
-            result = call_deepo(args)
-            message, site_id = result.split(':')
-            assert message == 'New site created with id'
+        with drive_app() as drive_app_id:
+            with drive_app_version(drive_app_id) as drive_app_version_id:
+                args = "site create -n test_si -d xyz -v {}".format(drive_app_version_id)
+                result = call_deepo(args, json_output=False)
+                message, site_id = result.split(':')
+                assert message == 'New site created with id'
 
-            args = "site update --id {} --app_version_id {}".format(site_id, app_version_id)
-            message = call_deepo(args)
-            assert message == 'Site{} updated'.format(site_id)
+                args = "site update --site_id {} --drive_app_version_id {}".format(site_id, drive_app_version_id)
+                message = call_deepo(args, json_output=False)
+                assert message == 'Site{} updated'.format(site_id)
 
-            args = "site delete --id {}".format(site_id)
-            message = call_deepo(args)
-            assert message == 'Site{} deleted'.format(site_id)
+                args = "site delete --site_id {}".format(site_id)
+                message = call_deepo(args, json_output=False)
+                assert message == 'Site{} deleted'.format(site_id)
 
-    @pytest.mark.skip()
+    @pytest.mark.skip("Service creation deprecated.")
     def test_site_deployment_manifest(self, no_error_logs):
         for service in ['customer-api', 'camera-server']:
             with site() as (site_id, app_version_id, app_id):
                 # add extra service
-                call_deepo("platform service create -a {} -n {}".format(app_id, service))
+                call_deepo("platform service create -i {} -n {}".format(app_id, service), json_output=False)
 
                 args = "site manifest -i {} -t docker-compose".format(site_id)
-                message = call_deepo(args)
+                message = call_deepo(args, json_output=False)
                 assert message.startswith('version: "2.4"')
                 assert 'services:' in message
                 assert 'neural-worker:' in message
@@ -263,7 +266,7 @@ class TestSite(object):
                 assert '{}:'.format(service) in message
 
                 args = "site manifest -i {} -t gke".format(site_id)
-                message = call_deepo(args)
+                message = call_deepo(args, json_output=False)
                 assert message.startswith('apiVersion: apps/v1')
                 assert 'kind: StatefulSet' in message
                 assert 'containers:' in message
@@ -275,25 +278,25 @@ class TestSite(object):
 
     def test_work_order(self, no_error_logs):
         args = "site work-order create -n ciao --api_url {} -m hello:2".format(customer_api_url)
-        result = call_deepo(args, api_key=customer_api_key)
+        result = call_deepo(args, api_key=customer_api_key, json_output=False)
         work_order_id = result
         assert UUID(work_order_id, version=4) is not None
 
         args = "site work-order status -i {} --api_url {}".format(work_order_id, customer_api_url)
-        result = call_deepo(args, api_key=customer_api_key)
-        assert set(result.keys()) == set(['id', 'name', 'site_id', 'review_date',
+        result = call_deepo(args, api_key=customer_api_key, json_output=False)
+        assert set(result.keys()) >= set(['id', 'name', 'site_id', 'review_date',
                                           'first_analysis_id', 'latest_analysis_id',
                                           'create_date', 'update_date', 'tags',
                                           'assigned_user_id', 'engage_app_id', 'parameters',
-                                          'metadata', 'tasks', 'inputs'])
+                                          'metadata', 'tasks', 'task_groups', 'inputs'])
 
         image_url = "https://storage.googleapis.com/dp-product/documentation/ftth/pto-seule.jpg"
         args = "site work-order infer -i {} --api_url {} -e image_input@image@{} context@text@pto-photometre -m foo:bar".format(
             work_order_id, customer_api_url, image_url
         )
-        result = call_deepo(args, api_key=customer_api_key)
+        result = call_deepo(args, api_key=customer_api_key, json_output=False)
         assert len(result['tasks']) > 0
 
         args = "site work-order delete -i {} --api_url {}".format(work_order_id, customer_api_url)
-        result = call_deepo(args, api_key=customer_api_key)
+        result = call_deepo(args, api_key=customer_api_key, json_output=False)
         assert result == 'Work order deleted'

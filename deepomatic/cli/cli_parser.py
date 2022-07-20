@@ -4,6 +4,7 @@ import logging
 import argparse
 import argcomplete
 from .cmds import AVAILABLE_COMMANDS
+from .cmds.utils import CommandResult
 from .version import __version__, __title__
 
 
@@ -53,6 +54,11 @@ def run(args):
     logging.basicConfig(level=log_level, format=log_format)
 
     result = args.func(vars(args))
+
     if result:
-        print(result)
+        if isinstance(result, CommandResult) and args.json_output:
+            print(result.to_json_str(indent=args.json_output_indent))
+        else:
+            print(result)
+
     return result

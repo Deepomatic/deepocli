@@ -1,5 +1,7 @@
 import pytest
-from utils import init_files_setup, run_cmd, OUTPUTS
+import glob
+from PIL import Image
+from utils import init_files_setup, run_cmd, ctx_run_cmd, OUTPUTS
 
 
 # ------- Files setup ------------------------------------------------------------------------------------------------ #
@@ -7,10 +9,11 @@ from utils import init_files_setup, run_cmd, OUTPUTS
 
 # Retrieve inputs
 INPUTS = init_files_setup()
+CMD_PREFIX = ['platform', 'model', 'blur']
 
 
 def run_blur(*args, **kwargs):
-    run_cmd(['platform', 'model', 'blur'], *args, **kwargs)
+    run_cmd(CMD_PREFIX, *args, **kwargs)
 
 
 # ------- Image Input Tests ------------------------------------------------------------------------------------------ #
@@ -30,7 +33,7 @@ def run_blur(*args, **kwargs):
             'expect_nb_json': 3,
             'expect_nb_jsonl': 1,
             'expect_nb_image': 1,
-            'expect_nb_video': 1,
+            'expect_nb_video': 2,
             'expect_nb_subdir': 1,
             'expect_subir': {OUTPUTS['DIR']: {'expect_nb_image': 1}}
         })
@@ -57,7 +60,7 @@ def test_e2e_image_blur(outputs, expected, no_error_logs):
             'expect_nb_json': 43,
             'expect_nb_jsonl': 1,
             'expect_nb_image': 21,
-            'expect_nb_video': 1,
+            'expect_nb_video': 2,
             'expect_nb_subdir': 1,
             'expect_subir': {OUTPUTS['DIR']: {'expect_nb_image': 21}}
         })
@@ -65,6 +68,14 @@ def test_e2e_image_blur(outputs, expected, no_error_logs):
 )
 def test_e2e_video_blur(outputs, expected, no_error_logs):
     run_blur(INPUTS['VIDEO'], outputs, **expected)
+
+
+def test_e2e_video_blur_color_space(no_error_logs):
+    with ctx_run_cmd(CMD_PREFIX, INPUTS['VIDEO'], [OUTPUTS['IMAGE']],
+                     extra_opts=['--output_color_space', 'GRAY'], expect_nb_image=21) as tmpdir:
+        images = glob.glob('{}/*.jpg'.format(tmpdir))
+        image = Image.open(images[0])
+        assert image.mode == 'L'
 
 
 # ------- Directory Input Tests -------------------------------------------------------------------------------------- #
@@ -84,7 +95,7 @@ def test_e2e_video_blur(outputs, expected, no_error_logs):
             'expect_nb_json': 5,
             'expect_nb_jsonl': 1,
             'expect_nb_image': 2,
-            'expect_nb_video': 1,
+            'expect_nb_video': 2,
             'expect_nb_subdir': 1,
             'expect_subir': {OUTPUTS['DIR']: {'expect_nb_image': 2, 'expect_nb_subdir': 1}}
         })

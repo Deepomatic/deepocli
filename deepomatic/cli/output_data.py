@@ -7,13 +7,15 @@ import cv2
 import logging
 import traceback
 from .thread_base import Thread
-from .common import Empty, write_frame_to_disk, SUPPORTED_IMAGE_OUTPUT_FORMAT, SUPPORTED_VIDEO_OUTPUT_FORMAT
+from .common import (Empty, write_frame_to_disk, SUPPORTED_IMAGE_OUTPUT_FORMAT,
+                     SUPPORTED_VIDEO_OUTPUT_FORMAT, SUPPORTED_FOURCC, BGR_TO_COLOR_SPACE)
 from .cmds.studio_helpers.vulcan2studio import transform_json_from_vulcan_to_studio
 from .exceptions import DeepoUnknownOutputError, DeepoSaveJsonToFileError
 
 
 LOGGER = logging.getLogger(__name__)
 DEFAULT_OUTPUT_FPS = 25
+
 
 try:
     # https://stackoverflow.com/questions/908331/how-to-write-binary-data-to-stdout-in-python-3
@@ -77,6 +79,13 @@ class OutputThread(Thread):
         super(OutputThread, self).__init__(exit_event, input_queue,
                                            output_queue, current_messages)
         self.args = kwargs
+        # Opencv images are BGR by default, no need to convert
+        output_color_space_str = kwargs.get('output_color_space')
+        if output_color_space_str is None or output_color_space_str == 'BGR':
+            self.output_color_space = None
+        else:
+            self.output_color_space = BGR_TO_COLOR_SPACE[output_color_space_str]
+
         self.on_progress = on_progress
         self.postprocessing = postprocessing
         self.frames_to_check_first = {}
@@ -146,6 +155,10 @@ class OutputThread(Thread):
         else:
             frame.output_image = frame.image  # we output the original image
 
+        # Opencv images are BGR by default
+        if self.output_color_space is not None and frame.output_image is not None:
+            frame.output_image = cv2.cvtColor(frame.output_image, self.output_color_space)
+
         for output in self.outputs:
             output.output_frame(frame)
 
@@ -204,13 +217,21 @@ class VideoOutputData(OutputData):
     def __init__(self, descriptor, **kwargs):
         super(VideoOutputData, self).__init__(descriptor, **kwargs)
         ext = os.path.splitext(descriptor)[1].lower()
-        if ext == '.avi':
-            fourcc = cv2.VideoWriter_fourcc('X', 'V', 'I', 'D')
-        elif ext == '.mp4':
-            fourcc = cv2.VideoWriter_fourcc('m', 'p', '4', 'v')
-        else:
+        if ext not in SUPPORTED_FOURCC:
             raise Exception("Unsupported video output extension {}".format(ext))
-        self._fourcc = fourcc
+
+        FOURCC = SUPPORTED_FOURCC[ext]
+        # if fourcc is provided, try to use it
+        if kwargs.get('fourcc') is not None:
+            fourcc = kwargs['fourcc']
+        else:
+            # default to the first supported fourcc
+            fourcc = FOURCC[0]
+
+        if fourcc not in FOURCC:
+            LOGGER.warning("The specified fourcc {} might not be muxable into the container format {}".format(fourcc, ext))
+
+        self._fourcc = cv2.VideoWriter_fourcc(*fourcc)
         self._fps = kwargs['output_fps']
         self._writer = None
 
@@ -239,7 +260,7 @@ class StdOutputData(OutputData):
         if frame.output_image is None:
             print(json.dumps(frame.predictions))
         else:
-            write_bytes_to_stdout(frame.output_image[:, :, ::-1].tobytes())
+            write_bytes_to_stdout(frame.output_image.tobytes())
 
 
 class DisplayOutputData(OutputData):

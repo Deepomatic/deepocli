@@ -19,6 +19,21 @@ SUPPORTED_PROTOCOLS_INPUT = ['rtsp', 'http', 'https']
 SUPPORTED_IMAGE_OUTPUT_FORMAT = SUPPORTED_IMAGE_INPUT_FORMAT
 SUPPORTED_VIDEO_OUTPUT_FORMAT = ['.avi', '.mp4']
 
+BGR_TO_COLOR_SPACE = {
+    'RGB': cv2.COLOR_BGR2RGB,
+    'YUV': cv2.COLOR_BGR2YUV,
+    'YUV420': cv2.COLOR_BGR2YUV_I420,
+    'HSV': cv2.COLOR_BGR2HSV,
+    'GRAY': cv2.COLOR_BGR2GRAY,
+}
+
+SUPPORTED_VIDEO_OUTPUT_COLOR_SPACE = list(BGR_TO_COLOR_SPACE.keys()) + ['BGR']
+
+SUPPORTED_FOURCC = {
+    '.mp4': ['mp4v', 'avc1'],
+    '.avi': ['XVID', 'MJPG']
+}
+
 
 class TqdmToLogger(io.StringIO):
     """Tqdm output stream to play nice with logger."""

@@ -6,7 +6,9 @@ import tempfile
 import requests
 from contextlib import contextmanager
 from deepomatic.cli.cli_parser import run
+from deepomatic.cli.common import SUPPORTED_VIDEO_OUTPUT_FORMAT
 
+DEFAULT_RECOGNITION = '44411'
 
 # Define outputs
 OUTPUTS = {
@@ -14,6 +16,8 @@ OUTPUTS = {
     'WINDOW': 'window',
     'IMAGE': 'image_output%04d.jpg',
     'VIDEO': 'video_output.mp4',
+    'VIDEO_MP4': 'video_output.mp4',
+    'VIDEO_AVI': 'video_output.avi',
     'INT_WILDCARD_JSON': 'test_output%04d.json',
     'STR_WILDCARD_JSON': 'test_output%s.json',
     'NO_WILDCARD_JSON': 'test_output.json',
@@ -76,7 +80,7 @@ def check_directory(directory,
             nb_jsonl += 1
         elif path.endswith(('.jpg', '.jpeg')):
             nb_image += 1
-        elif path.endswith('.mp4'):
+        elif path.endswith(tuple(SUPPORTED_VIDEO_OUTPUT_FORMAT)):
             nb_video += 1
         elif os.path.isdir(os.path.join(directory, path)):
             nb_subdir += 1
@@ -191,8 +195,9 @@ def init_files_setup():
     return INPUTS
 
 
-def run_cmd(cmds, inp, outputs, *args, **kwargs):
-    reco_opts = [] if 'noop' in cmds else ['-r', '44411']
+@contextmanager
+def ctx_run_cmd(cmds, inp, outputs, *args, **kwargs):
+    reco_opts = [] if 'noop' in cmds else ['-r', DEFAULT_RECOGNITION]
     extra_opts = kwargs.pop('extra_opts', [])
     absolute_outputs = []
     with create_tmp_dir() as tmpdir:
@@ -207,6 +212,12 @@ def run_cmd(cmds, inp, outputs, *args, **kwargs):
                 absolute_outputs.append(os.path.join(tmpdir, output))
         run(cmds + ['-i', inp, '-o'] + absolute_outputs + reco_opts + extra_opts)
         check_directory(tmpdir, *args, **kwargs)
+        yield tmpdir
+
+
+def run_cmd(*args, **kwargs):
+    with ctx_run_cmd(*args, **kwargs):
+        pass
 
 
 @contextmanager
