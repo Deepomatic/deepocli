@@ -274,7 +274,7 @@ class SiteManager(object):
         else:
             return res.text
 
-    def delete_work_order(self, base_url, work_order_batch_id):
+    def delete_work_order_batch(self, base_url, work_order_batch_id):
         work_order_batch_url = self.make_work_order_batch_url(base_url)
         res = self.session.delete('{}/{}'.format(work_order_batch_url, work_order_batch_id))
         if res.status_code == 204:
