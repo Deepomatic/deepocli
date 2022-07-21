@@ -4,7 +4,7 @@ from ...utils import SiteManager
 
 class UploadCommand(Command):
     """
-        Upload a file for the batch
+        Upload a file at the provided upload_url
     """
 
     def setup(self, subparsers):

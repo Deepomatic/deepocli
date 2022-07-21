@@ -4,7 +4,7 @@ from ...utils import SiteManager
 
 class DeleteCommand(Command):
     """
-        Delete a work order
+        Delete a work order batch
     """
 
     def setup(self, subparsers):
