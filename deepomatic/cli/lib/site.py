@@ -235,10 +235,11 @@ class SiteManager(object):
         if file is None:
             return response_data
         upload_url = response_data["upload_url"]
-        self.upload_work_order_batch(upload_url, file)
-        return response_data["batch_id"]
+        batch_id = response_data["batch_id"]
+        self.upload_work_order_batch(upload_url, file, description=f"Uploading {batch_id}")
+        return batch_id
 
-    def upload_work_order_batch(self, upload_url, file, batch_id=None, chunk_size=262144 * 10):
+    def upload_work_order_batch(self, upload_url, file, description=None, chunk_size=262144 * 10):
         # TODO: resumable
         index = 0
         offset = 0
@@ -248,6 +249,8 @@ class SiteManager(object):
         content_size = os.stat(file).st_size
         with open(file, "rb") as f:
             with tqdm(total=content_size) as pbar:
+                if description is not None:
+                    pbar.set_description(description)
                 while True:
                     chunk = f.read(chunk_size)
                     if not chunk:
