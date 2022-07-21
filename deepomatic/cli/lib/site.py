@@ -236,10 +236,21 @@ class SiteManager(object):
             return response_data
         upload_url = response_data["upload_url"]
         batch_id = response_data["batch_id"]
-        self.upload_work_order_batch(upload_url, file, description=f"Uploading {batch_id}")
+        self.upload_work_order_batch_by_url(upload_url, file, description=f"Uploading {batch_id}", chunk_size=chunk_size)
         return batch_id
 
-    def upload_work_order_batch(self, upload_url, file, description=None, chunk_size=262144 * 10):
+    def upload_work_order_batch_by_id(self, base_url, batch_id, file=None, chunk_size=262144 * 10):
+        work_order_batch_url = self.make_work_order_batch_url(base_url)
+        res = self.session.get('{}/{}'.format(work_order_batch_url, batch_id))
+        response_data = res.json()
+        if file is None:
+            return response_data
+        upload_url = response_data["upload_url"]
+        batch_id = response_data["batch_id"]
+        self.upload_work_order_batch_by_url(upload_url, file, description=f"Uploading {batch_id}")
+        return batch_id
+
+    def upload_work_order_batch_by_url(self, upload_url, file, description=None, chunk_size=262144 * 10):
         # TODO: resumable
         index = 0
         offset = 0

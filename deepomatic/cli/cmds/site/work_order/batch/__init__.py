@@ -9,3 +9,4 @@ class BatchCommand(Command):
     from .create import CreateCommand
     from .status import StatusCommand
     from .delete import DeleteCommand
+    from .upload import UploadCommand
