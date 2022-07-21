@@ -234,7 +234,12 @@ class SiteManager(object):
         response_data = res.json()
         if file is None:
             return response_data
-        url = response_data["upload_url"]
+        upload_url = response_data["upload_url"]
+        self.upload_work_order_batch(upload_url, file)
+        return response_data["batch_id"]
+
+    def upload_work_order_batch(self, upload_url, file, batch_id=None, chunk_size=262144 * 10):
+        # TODO: resumable
         index = 0
         offset = 0
         headers = {
@@ -251,16 +256,15 @@ class SiteManager(object):
                     headers['Content-Range'] = 'bytes %s-%s/%s' % (index, offset - 1, content_size)
                     index = offset 
                     try:
-                        r = requests.put(url, data=chunk, headers=headers)
+                        r = requests.put(upload_url, data=chunk, headers=headers)
                         r.raise_for_status()
                     except Exception as e:
                         # TODO: retry
                         return {
-                            "error": str(e),
-                            "batch": response_data
+                            "error": str(e)
                         }
                     pbar.update(len(chunk))
-        return response_data["batch_id"]
+
 
     def status_work_order_batch(self, base_url, work_order_batch_id):
         work_order_batch_url = self.make_work_order_batch_url(base_url)
