@@ -251,17 +251,32 @@ class SiteManager(object):
         return batch_id
 
     def upload_work_order_batch_by_url(self, upload_url, file, description=None, chunk_size=262144 * 10):
-        # TODO: resumable
-        index = 0
-        offset = 0
         headers = {
             'content-type': 'application/octet-stream'
         }
         content_size = os.stat(file).st_size
+
+        # Call upload_url to retrieve actual status
+        response = requests.put(
+            upload_url,
+            headers={
+                "Content-Length": "0",
+                "Content-Range": f"bytes */{content_size}",
+                'content-type': 'application/octet-stream'
+            }
+        )
+
+        if "range" in response.headers:
+            index = int(response.headers.get("range").split("=")[1].split("-")[1]) + 1
+        else:
+            index = 0
+
         with open(file, "rb") as f:
-            with tqdm(total=content_size) as pbar:
+            f.seek(index)
+            with tqdm( total=content_size) as pbar:
                 if description is not None:
                     pbar.set_description(description)
+                pbar.update(index)
                 while True:
                     chunk = f.read(chunk_size)
                     if not chunk:
