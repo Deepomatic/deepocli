@@ -21,6 +21,7 @@ OUTPUTS = {
     'INT_WILDCARD_JSON': 'test_output%04d.json',
     'STR_WILDCARD_JSON': 'test_output%s.json',
     'NO_WILDCARD_JSON': 'test_output.json',
+    'JSONL': 'test_output.jsonl',
     'DIR': 'output_dir'
 }
 OUTPUTS['ALL'] = [output for output in list(OUTPUTS.values()) if output != 'window']
@@ -50,6 +51,7 @@ def create_tmp_dir():
 
 def check_directory(directory,
                     expect_nb_json=0,
+                    expect_nb_jsonl=0,
                     expect_nb_image=0,
                     expect_nb_video=0,
                     expect_nb_subdir=0,
@@ -57,6 +59,7 @@ def check_directory(directory,
                     expect_subir=None):
     # Start by checking main directory
     nb_json = 0
+    nb_jsonl = 0
     nb_image = 0
     nb_video = 0
     nb_subdir = 0
@@ -73,6 +76,8 @@ def check_directory(directory,
                         assert 'outputs' in data
                     elif isinstance(data, list):
                         assert len(data) == 0 or 'outputs' in data[0]
+        elif path.endswith('.jsonl'):
+            nb_jsonl += 1
         elif path.endswith(('.jpg', '.jpeg')):
             nb_image += 1
         elif path.endswith(tuple(SUPPORTED_VIDEO_OUTPUT_FORMAT)):
@@ -80,6 +85,7 @@ def check_directory(directory,
         elif os.path.isdir(os.path.join(directory, path)):
             nb_subdir += 1
     assert expect_nb_json == nb_json
+    assert expect_nb_jsonl == nb_jsonl
     assert expect_nb_image == nb_image
     assert expect_nb_video == nb_video
     assert expect_nb_subdir == nb_subdir
@@ -91,6 +97,7 @@ def check_directory(directory,
                 check_directory(
                     path,
                     expect_nb_json=expect_subir[path].get('json', 0),
+                    expect_nb_jsonl=expect_subir[path].get('jsonl', 0),
                     expect_nb_image=expect_subir[path].get('image', 0),
                     expect_nb_video=expect_subir[path].get('video', 0),
                     expect_nb_subdir=expect_subir[path].get('subdir', 0)

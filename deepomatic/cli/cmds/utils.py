@@ -173,8 +173,9 @@ def setup_model_cmd_line_parser(mode, cmd, inference_parsers):
         output_groups[cmd] = group
         group = output_groups[cmd]
         group.add_argument('-o', '--outputs', required=True, nargs='+', help="Output path, either an image (*{}),"
-                           " a video (*{}), a json (*.json) or a directory.".format(', *'.join(SUPPORTED_IMAGE_OUTPUT_FORMAT),
-                                                                                    ', *'.join(SUPPORTED_VIDEO_OUTPUT_FORMAT)))
+                           " a video (*{}), a json (*.json), a jsonl (*.jsonl) or a directory."
+                           .format(', *'.join(SUPPORTED_IMAGE_OUTPUT_FORMAT),
+                                   ', *'.join(SUPPORTED_VIDEO_OUTPUT_FORMAT)))
         group.add_argument('--output_fps', type=int, help="FPS used for output video reconstruction.", default=None)
         group.add_argument('--fourcc', type=str, help="Codec used for output video reconstruction.",
                            choices=set([fourcc for fourccs in SUPPORTED_FOURCC.values() for fourcc in fourccs]), default=None)
