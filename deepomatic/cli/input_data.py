@@ -3,7 +3,8 @@ import cv2
 import logging
 
 from .common import (SUPPORTED_IMAGE_INPUT_FORMAT, SUPPORTED_PROTOCOLS_INPUT,
-                     SUPPORTED_VIDEO_INPUT_FORMAT, clear_queue)
+                     SUPPORTED_VIDEO_INPUT_FORMAT, SUPPORTED_STUDIO_INPUT_FORMAT,
+                     clear_queue)
 from .exceptions import DeepoFPSError, DeepoInputError, DeepoVideoOpenError
 from .frame import Frame
 from .thread_base import Thread
