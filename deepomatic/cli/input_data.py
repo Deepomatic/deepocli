@@ -1,5 +1,8 @@
 import os
+import json
+import urllib.request
 import cv2
+import numpy as np
 import logging
 
 from .common import (SUPPORTED_IMAGE_INPUT_FORMAT, SUPPORTED_PROTOCOLS_INPUT,
@@ -8,6 +11,7 @@ from .common import (SUPPORTED_IMAGE_INPUT_FORMAT, SUPPORTED_PROTOCOLS_INPUT,
 from .exceptions import DeepoFPSError, DeepoInputError, DeepoVideoOpenError
 from .frame import Frame
 from .thread_base import Thread
+from .json_schema import validate_json, JSONSchemaType
 
 
 LOGGER = logging.getLogger(__name__)
@@ -26,6 +30,9 @@ def get_input(descriptor, kwargs):
             elif VideoInputData.is_valid(descriptor):
                 LOGGER.debug('Video input data detected for {}'.format(descriptor))
                 return VideoInputData(descriptor, **kwargs)
+            elif StudioInputData.is_valid(descriptor):
+                LOGGER.debug('Studio input data detected for {}'.format(descriptor))
+                return StudioInputData(descriptor, **kwargs)
             else:
                 raise DeepoInputError('Unsupported input file type')
         # Input directory containing images, videos, or json
@@ -125,6 +132,68 @@ class ImageInputData(InputData):
 
     def get_frame_count(self):
         return 1
+
+    def is_infinite(self):
+        return False
+
+
+class StudioInputData(InputData):
+    @classmethod
+    def is_valid(cls, descriptor):
+        _, ext = os.path.splitext(descriptor)
+        return os.path.exists(descriptor) and ext.lower() in SUPPORTED_STUDIO_INPUT_FORMAT
+
+    def __init__(self, descriptor, **kwargs):
+        super(StudioInputData, self).__init__(descriptor, **kwargs)
+        self._frames = []
+        self._studio_file_dir = os.path.dirname(self._descriptor)
+        self._name = 'studio_%s_%s' % ('%05d', self._reco)
+        self._iterator = None
+    
+    def __iter__(self):
+        self._frames = []
+        with open(self._descriptor) as f:
+            for line_i, line in enumerate(f.readlines()):
+                line = line.strip()
+                try:
+                    json_data = json.loads(line)
+                    is_valid, error, schema_type = validate_json(json_data)
+                    if schema_type == JSONSchemaType.STUDIO_HEADER:
+                        pass
+                    elif schema_type == JSONSchemaType.STUDIO_INPUT:
+                        images_data = json_data["data"]
+                        for image_data in images_data:
+                            if "file" in image_data:
+                                p = image_data.get("file")
+                                for path in [p, os.path.join(self._studio_file_dir, p), os.path.abspath(p)]:
+                                    if os.path.exists(path):
+                                        frame = cv2.imread(path)
+                                        break
+                            elif "url" in image_data:
+                                req = urllib.request.urlopen(image_data.get("url"))
+                                arr = np.asarray(bytearray(req.read()), dtype=np.uint8)
+                                frame = cv2.imdecode(arr, -1)
+                            else:
+                                raise ValueError("Unknown image data format")
+
+                            i = len(self._frames)
+                            frame = Frame(self._name % i, self._filename, frame, i, i)
+                            self._frames.append(frame)
+                    else:
+                        raise ValueError("json data does not match any supported format")
+                except Exception as e:
+                    LOGGER.warning("Error line %s: %s" % (line_i, str(e)))
+        self._iterator = iter(self._frames)
+        return self
+
+    def __next__(self):
+        return next(self._iterator)
+
+    def get_fps(self):
+        return 0
+
+    def get_frame_count(self):
+        return len(self._frames)
 
     def is_infinite(self):
         return False
