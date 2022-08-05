@@ -153,7 +153,7 @@ class StudioInputData(InputData):
     def __iter__(self):
         self._frames = []
         with open(self._descriptor) as f:
-            for line_i, line in enumerate(f.readlines()):
+            for line_i, line in enumerate(f):
                 line = line.strip()
                 try:
                     json_data = json.loads(line)
