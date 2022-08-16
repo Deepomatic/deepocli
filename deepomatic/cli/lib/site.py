@@ -228,9 +228,16 @@ class SiteManager(object):
         else:
             return res.text
 
-    def create_work_order_batch(self, base_url, file=None, chunk_size=262144 * 10):
+    def create_work_order_batch(self, base_url, file=None, name=None, chunk_size=262144 * 10):
         work_order_batch_url = self.make_work_order_batch_url(base_url)
-        res = self.session.post(work_order_batch_url)
+        data = {}
+        if file is not None:
+            filename, _ = os.path.splitext(os.path.basename(file))
+            data['filename'] = filename
+        if name:
+            data['filename'] = name
+        res = self.session.post(work_order_batch_url, json=data)
+        res.raise_for_status()
         response_data = res.json()
         if file is None:
             return response_data
