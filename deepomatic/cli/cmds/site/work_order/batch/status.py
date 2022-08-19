@@ -1,5 +1,6 @@
 from ...utils import Command, SiteManager
 
+
 class StatusCommand(Command):
     """
         Retrieve the work order batch status
