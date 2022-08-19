@@ -11,7 +11,7 @@ from deepomatic.api.http_helper import HTTPHelper
 from tqdm import tqdm
 
 DEEPOMATIC_SITE_PATH = os.path.join(os.path.expanduser('~'), '.deepomatic', 'sites')
-
+CHUNK_SIZE = 10 * 262144 # Chunk size must be a multiple of 262144
 
 def makedirs(folder, *args, **kwargs):
     # python2/3 compatible implementation of os.makedirs(exist_ok=True)
@@ -228,7 +228,7 @@ class SiteManager(object):
         else:
             return res.text
 
-    def create_work_order_batch(self, base_url, file=None, name=None, chunk_size=262144 * 10):
+    def create_work_order_batch(self, base_url, file=None, name=None, chunk_size=CHUNK_SIZE):
         work_order_batch_url = self.make_work_order_batch_url(base_url)
         data = {}
         if file is not None:
@@ -246,7 +246,7 @@ class SiteManager(object):
         self.upload_work_order_batch_by_url(upload_url, file, description=f"Uploading {batch_id}", chunk_size=chunk_size)
         return batch_id
 
-    def upload_work_order_batch_by_id(self, base_url, batch_id, file=None, chunk_size=262144 * 10):
+    def upload_work_order_batch_by_id(self, base_url, batch_id, file=None, chunk_size=CHUNK_SIZE):
         work_order_batch_url = self.make_work_order_batch_url(base_url)
         res = self.session.get('{}/{}'.format(work_order_batch_url, batch_id))
         response_data = res.json()
@@ -254,10 +254,10 @@ class SiteManager(object):
             return response_data
         upload_url = response_data["upload_url"]
         batch_id = response_data["batch_id"]
-        self.upload_work_order_batch_by_url(upload_url, file, description=f"Uploading {batch_id}")
+        self.upload_work_order_batch_by_url(upload_url, file, description=f"Uploading {batch_id}", chunk_size=chunk_size)
         return batch_id
 
-    def upload_work_order_batch_by_url(self, upload_url, file, description=None, chunk_size=262144 * 10):
+    def upload_work_order_batch_by_url(self, upload_url, file, description=None, chunk_size=CHUNK_SIZE):
         headers = {
             'content-type': 'application/octet-stream'
         }
