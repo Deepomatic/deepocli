@@ -229,6 +229,9 @@ class SiteManager(object):
             return res.text
 
     def create_work_order_batch(self, base_url, file=None, name=None, chunk_size=CHUNK_SIZE):
+        """
+            Create and upload the provided batch file
+        """
         work_order_batch_url = self.make_work_order_batch_url(base_url)
         data = {}
         if file is not None:
@@ -247,6 +250,9 @@ class SiteManager(object):
         return batch_id
 
     def upload_work_order_batch_by_id(self, base_url, batch_id, file=None, chunk_size=CHUNK_SIZE):
+        """
+            Upload a batch file from disk to google storage using the provided batch id.
+        """
         work_order_batch_url = self.make_work_order_batch_url(base_url)
         res = self.session.get('{}/{}'.format(work_order_batch_url, batch_id))
         response_data = res.json()
@@ -258,6 +264,11 @@ class SiteManager(object):
         return batch_id
 
     def upload_work_order_batch_by_url(self, upload_url, file, description=None, chunk_size=CHUNK_SIZE):
+        """
+            Upload a batch file from disk to google storage using the provided signed upload url.
+            The upload is resumable.
+        """
+
         headers = {
             'content-type': 'application/octet-stream'
         }
