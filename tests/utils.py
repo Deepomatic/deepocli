@@ -203,6 +203,7 @@ def download_workorder_batch():
 
     return download(tmpdir, base_test_url + 'batch.zip', 'batch.zip')
 
+
 @contextmanager
 def ctx_run_cmd(cmds, inp, outputs, *args, **kwargs):
     reco_opts = [] if 'noop' in cmds else ['-r', DEFAULT_RECOGNITION]

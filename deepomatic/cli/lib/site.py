@@ -11,7 +11,8 @@ from deepomatic.api.http_helper import HTTPHelper
 from tqdm import tqdm
 
 DEEPOMATIC_SITE_PATH = os.path.join(os.path.expanduser('~'), '.deepomatic', 'sites')
-CHUNK_SIZE = 10 * 262144 # Chunk size must be a multiple of 262144
+CHUNK_SIZE = 10 * 262144  # Chunk size must be a multiple of 262144
+
 
 def makedirs(folder, *args, **kwargs):
     # python2/3 compatible implementation of os.makedirs(exist_ok=True)
@@ -295,7 +296,7 @@ class SiteManager(object):
         with open(file, "rb") as f:
             # start reading file from where we left off
             f.seek(index)
-            with tqdm( total=content_size) as pbar:
+            with tqdm(total=content_size) as pbar:
                 if description is not None:
                     pbar.set_description(description)
                 pbar.update(index)
@@ -305,7 +306,7 @@ class SiteManager(object):
                         break
                     offset = index + len(chunk)
                     headers['Content-Range'] = 'bytes %s-%s/%s' % (index, offset - 1, content_size)
-                    index = offset 
+                    index = offset
                     try:
                         r = requests.put(upload_url, data=chunk, headers=headers)
                         r.raise_for_status()
@@ -315,7 +316,6 @@ class SiteManager(object):
                             "error": str(e)
                         }
                     pbar.update(len(chunk))
-
 
     def status_work_order_batch(self, base_url, work_order_batch_id):
         work_order_batch_url = self.make_work_order_batch_url(base_url)

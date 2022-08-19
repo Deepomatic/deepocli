@@ -14,6 +14,7 @@ customer_api_key = os.environ["DEEPOCLI_CUSTOMER_API_API_KEY"]
 
 batch_filepath = download_workorder_batch()
 
+
 def generate_site(name, app_version_id, desc):
     site_id = str(uuid4())
     app_id = str(uuid4())
