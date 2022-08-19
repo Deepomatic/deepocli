@@ -253,6 +253,7 @@ class SiteManager(object):
         """
             Upload a batch file from disk to google storage using the provided batch id.
         """
+        # retrieve the batch upload url
         work_order_batch_url = self.make_work_order_batch_url(base_url)
         res = self.session.get('{}/{}'.format(work_order_batch_url, batch_id))
         response_data = res.json()
@@ -260,6 +261,7 @@ class SiteManager(object):
             return response_data
         upload_url = response_data["upload_url"]
         batch_id = response_data["batch_id"]
+        # upload the batch using the upload url
         self.upload_work_order_batch_by_url(upload_url, file, description=f"Uploading {batch_id}", chunk_size=chunk_size)
         return batch_id
 
@@ -274,7 +276,7 @@ class SiteManager(object):
         }
         content_size = os.stat(file).st_size
 
-        # Call upload_url to retrieve actual status
+        # Call upload_url to retrieve how many bytes have already been received
         response = requests.put(
             upload_url,
             headers={
@@ -284,12 +286,14 @@ class SiteManager(object):
             }
         )
 
+        # check if upload has been resumed
         if "range" in response.headers:
             index = int(response.headers.get("range").split("=")[1].split("-")[1]) + 1
         else:
             index = 0
 
         with open(file, "rb") as f:
+            # start reading file from where we left off
             f.seek(index)
             with tqdm( total=content_size) as pbar:
                 if description is not None:
