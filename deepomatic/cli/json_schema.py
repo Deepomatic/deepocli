@@ -168,9 +168,9 @@ class JSONSchemaType:
                 "type": "array",
                 "items": {
                     "type": "object",
-                    "oneOf" : [
+                    "oneOf": [
                         {
-                            "type" : "object",
+                            "type": "object",
                             "required": ["file"],
                             "additionalProperties": False,
                             "properties": {
@@ -180,7 +180,7 @@ class JSONSchemaType:
                             }
                         },
                         {
-                            "type" : "object",
+                            "type": "object",
                             "required": ["url"],
                             "additionalProperties": False,
                             "properties": {

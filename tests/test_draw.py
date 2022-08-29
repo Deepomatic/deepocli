@@ -104,8 +104,6 @@ def test_e2e_directory_draw(outputs, expected, no_error_logs):
     run_draw(INPUTS['DIRECTORY'], outputs, **expected)
 
 
-
-
 # # ------- Studio Input Tests -------------------------------------------------------------------------------------- #
 
 

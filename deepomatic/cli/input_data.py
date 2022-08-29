@@ -149,7 +149,7 @@ class StudioInputData(InputData):
         self._studio_file_dir = os.path.dirname(self._descriptor)
         self._name = 'studio_%s_%s' % ('%05d', self._reco)
         self._iterator = None
-    
+
     def __iter__(self):
         self._frames = []
         with open(self._descriptor) as f:

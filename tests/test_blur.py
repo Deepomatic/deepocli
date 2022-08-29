@@ -105,8 +105,6 @@ def test_e2e_directory_blur(outputs, expected, no_error_logs):
     run_blur(INPUTS['DIRECTORY'], outputs, **expected)
 
 
-
-
 # # ------- Studio Input Tests -------------------------------------------------------------------------------------- #
 
 

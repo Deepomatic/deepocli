@@ -108,8 +108,6 @@ def test_e2e_directory_infer(outputs, expected, no_error_logs):
     run_infer(INPUTS['DIRECTORY'], outputs, **expected)
 
 
-
-
 # # ------- Studio Input Tests -------------------------------------------------------------------------------------- #
 
 
