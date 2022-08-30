@@ -124,7 +124,6 @@ def test_e2e_studio_infer(outputs, expected, no_error_logs):
     run_infer(INPUTS['STUDIO_JSON'], outputs, **expected)
 
 
-
 # # ------- Special Options Tests -------------------------------------------------------------------------------------- #
 
 
