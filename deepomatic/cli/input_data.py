@@ -214,7 +214,6 @@ class StudioInputData(InputData):
             except Exception as e:
                 LOGGER.warning("Error while loading image %s: %s" % (image, str(e)))
 
-
     def get_fps(self):
         return 0
 
