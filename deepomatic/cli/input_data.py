@@ -1,12 +1,19 @@
 import os
+import json
+import urllib.request
 import cv2
+import numpy as np
 import logging
+import errno
+from tqdm import tqdm
 
 from .common import (SUPPORTED_IMAGE_INPUT_FORMAT, SUPPORTED_PROTOCOLS_INPUT,
-                     SUPPORTED_VIDEO_INPUT_FORMAT, clear_queue)
+                     SUPPORTED_VIDEO_INPUT_FORMAT, SUPPORTED_STUDIO_INPUT_FORMAT, TqdmToLogger,
+                     clear_queue)
 from .exceptions import DeepoFPSError, DeepoInputError, DeepoVideoOpenError
 from .frame import Frame
 from .thread_base import Thread
+from .json_schema import validate_json, JSONSchemaType
 
 
 LOGGER = logging.getLogger(__name__)
@@ -25,6 +32,9 @@ def get_input(descriptor, kwargs):
             elif VideoInputData.is_valid(descriptor):
                 LOGGER.debug('Video input data detected for {}'.format(descriptor))
                 return VideoInputData(descriptor, **kwargs)
+            elif StudioInputData.is_valid(descriptor):
+                LOGGER.debug('Studio input data detected for {}'.format(descriptor))
+                return StudioInputData(descriptor, **kwargs)
             else:
                 raise DeepoInputError('Unsupported input file type')
         # Input directory containing images, videos, or json
@@ -124,6 +134,91 @@ class ImageInputData(InputData):
 
     def get_frame_count(self):
         return 1
+
+    def is_infinite(self):
+        return False
+
+
+class StudioInputData(InputData):
+    @classmethod
+    def is_valid(cls, descriptor):
+        _, ext = os.path.splitext(descriptor)
+        return os.path.exists(descriptor) and ext.lower() in SUPPORTED_STUDIO_INPUT_FORMAT
+
+    def __init__(self, descriptor, **kwargs):
+        super(StudioInputData, self).__init__(descriptor, **kwargs)
+        self._frames = []
+        self._studio_file_dir = os.path.dirname(self._descriptor)
+        self._name = 'studio_%s_%s' % ('%05d', self._reco)
+        self._iterator = None
+
+    def __iter__(self):
+        self._iterator = self._gen()
+        return self
+
+    def _gen(self):
+        self._frames = []
+        with open(self._descriptor) as f:
+            tqdmout = TqdmToLogger(LOGGER, level=logging.INFO)
+            for line_i, line in tqdm(enumerate(f), total=0, file=tqdmout, desc="Loading the input file..."):
+                line = line.strip()
+                try:
+                    json_data = json.loads(line)
+                    is_valid, error, schema_type = validate_json(json_data)
+                    if schema_type == JSONSchemaType.STUDIO_HEADER:
+                        pass
+                    elif schema_type == JSONSchemaType.STUDIO_INPUT:
+                        images_data = json_data["data"]
+                        for image_data in images_data:
+                            if "file" in image_data:
+                                p = image_data.get("file")
+                                for path in [p, os.path.join(self._studio_file_dir, p), os.path.abspath(p)]:
+                                    if os.path.exists(path):
+                                        self._frames.append(({
+                                            "file": path
+                                        }, len(self._frames)))
+                                        break
+                                else:
+                                    raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), p)
+                            elif "url" in image_data:
+                                self._frames.append(({
+                                    "url": image_data["url"]
+                                }, len(self._frames)))
+                            else:
+                                raise ValueError("Unknown image data format")
+                    else:
+                        raise ValueError("json data does not match any supported format")
+                except Exception as e:
+                    LOGGER.warning("Error line %s: %s" % (line_i, str(e)))
+        return iter(self._frames)
+
+    def __next__(self):
+        while True:
+            try:
+                image, index = next(self._iterator)
+                if "file" in image:
+                    path = image["file"]
+                    frame = cv2.imread(path)
+                elif "url" in image:
+                    url = image["url"]
+                    req = urllib.request.urlopen(url)
+                    arr = np.asarray(bytearray(req.read()), dtype=np.uint8)
+                    frame = cv2.imdecode(arr, -1)
+                else:
+                    raise ValueError("Unknown image data format")
+
+                frame = Frame(self._name % index, self._filename, frame, index, index)
+                return frame
+            except StopIteration as e:
+                raise e
+            except Exception as e:
+                LOGGER.warning("Error while loading image %s: %s" % (image, str(e)))
+
+    def get_fps(self):
+        return 0
+
+    def get_frame_count(self):
+        return len(self._frames)
 
     def is_infinite(self):
         return False

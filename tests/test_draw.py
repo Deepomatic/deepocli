@@ -104,6 +104,22 @@ def test_e2e_directory_draw(outputs, expected, no_error_logs):
     run_draw(INPUTS['DIRECTORY'], outputs, **expected)
 
 
+# # ------- Studio Input Tests -------------------------------------------------------------------------------------- #
+
+
+@pytest.mark.parametrize(
+    'outputs,expected',
+    [
+        ([OUTPUTS['IMAGE']], {'expect_nb_image': 1}),
+        ([OUTPUTS['VIDEO']], {'expect_nb_video': 1}),
+        ([OUTPUTS['STD']], {}),
+        ([OUTPUTS['DIR']], {'expect_nb_subdir': 1, 'expect_subir': {OUTPUTS['DIR']: {'expect_nb_image': 2, 'expect_nb_subdir': 1}}}),
+    ]
+)
+def test_e2e_studio_draw(outputs, expected, no_error_logs):
+    run_draw(INPUTS['STUDIO_JSON'], outputs, **expected)
+
+
 # ------- Special Options Tests -------------------------------------------------------------------------------------- #
 
 
