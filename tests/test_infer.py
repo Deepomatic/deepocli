@@ -108,6 +108,22 @@ def test_e2e_directory_infer(outputs, expected, no_error_logs):
     run_infer(INPUTS['DIRECTORY'], outputs, **expected)
 
 
+# # ------- Studio Input Tests -------------------------------------------------------------------------------------- #
+
+
+@pytest.mark.parametrize(
+    'outputs,expected',
+    [
+        ([OUTPUTS['IMAGE']], {'expect_nb_image': 1}),
+        ([OUTPUTS['VIDEO']], {'expect_nb_video': 1}),
+        ([OUTPUTS['STD']], {}),
+        ([OUTPUTS['DIR']], {'expect_nb_subdir': 1, 'expect_subir': {OUTPUTS['DIR']: {'expect_nb_image': 2, 'expect_nb_subdir': 1}}}),
+    ]
+)
+def test_e2e_studio_infer(outputs, expected, no_error_logs):
+    run_infer(INPUTS['STUDIO_JSON'], outputs, **expected)
+
+
 # # ------- Special Options Tests -------------------------------------------------------------------------------------- #
 
 
