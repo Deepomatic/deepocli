@@ -169,6 +169,8 @@ class StudioInputData(InputData):
                                     if os.path.exists(path):
                                         frame = cv2.imread(path)
                                         break
+                                else:
+                                    raise FileNotFoundError(path)
                             elif "url" in image_data:
                                 req = urllib.request.urlopen(image_data.get("url"))
                                 arr = np.asarray(bytearray(req.read()), dtype=np.uint8)
