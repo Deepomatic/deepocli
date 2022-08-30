@@ -4,6 +4,7 @@ import urllib.request
 import cv2
 import numpy as np
 import logging
+import errno
 from tqdm import tqdm
 
 from .common import (SUPPORTED_IMAGE_INPUT_FORMAT, SUPPORTED_PROTOCOLS_INPUT,
@@ -178,7 +179,7 @@ class StudioInputData(InputData):
                                         }, len(self._frames)))
                                         break
                                 else:
-                                    raise FileNotFoundError(p)
+                                    raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), p)
                             elif "url" in image_data:
                                 self._frames.append(({
                                     "url": image_data["url"]
