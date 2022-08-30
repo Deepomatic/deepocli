@@ -4,9 +4,10 @@ import urllib.request
 import cv2
 import numpy as np
 import logging
+from tqdm import tqdm
 
 from .common import (SUPPORTED_IMAGE_INPUT_FORMAT, SUPPORTED_PROTOCOLS_INPUT,
-                     SUPPORTED_VIDEO_INPUT_FORMAT, SUPPORTED_STUDIO_INPUT_FORMAT,
+                     SUPPORTED_VIDEO_INPUT_FORMAT, SUPPORTED_STUDIO_INPUT_FORMAT, TqdmToLogger,
                      clear_queue)
 from .exceptions import DeepoFPSError, DeepoInputError, DeepoVideoOpenError
 from .frame import Frame
@@ -157,7 +158,8 @@ class StudioInputData(InputData):
     def _gen(self):
         self._frames = []
         with open(self._descriptor) as f:
-            for line_i, line in enumerate(f):
+            tqdmout = TqdmToLogger(LOGGER, level=logging.INFO)
+            for line_i, line in tqdm(enumerate(f), total=0, file=tqdmout, desc="Loading the input file..."):
                 line = line.strip()
                 try:
                     json_data = json.loads(line)
