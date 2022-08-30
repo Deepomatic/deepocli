@@ -151,6 +151,10 @@ class StudioInputData(InputData):
         self._iterator = None
 
     def __iter__(self):
+        self._iterator = self._gen()
+        return self
+
+    def _gen(self):
         self._frames = []
         with open(self._descriptor) as f:
             for line_i, line in enumerate(f):
@@ -167,29 +171,46 @@ class StudioInputData(InputData):
                                 p = image_data.get("file")
                                 for path in [p, os.path.join(self._studio_file_dir, p), os.path.abspath(p)]:
                                     if os.path.exists(path):
-                                        frame = cv2.imread(path)
+                                        self._frames.append(({
+                                            "file": path
+                                        }, len(self._frames)))
                                         break
                                 else:
-                                    raise FileNotFoundError(path)
+                                    raise FileNotFoundError(p)
                             elif "url" in image_data:
-                                req = urllib.request.urlopen(image_data.get("url"))
-                                arr = np.asarray(bytearray(req.read()), dtype=np.uint8)
-                                frame = cv2.imdecode(arr, -1)
+                                self._frames.append(({
+                                    "url": image_data["url"]
+                                }, len(self._frames)))
                             else:
                                 raise ValueError("Unknown image data format")
-
-                            i = len(self._frames)
-                            frame = Frame(self._name % i, self._filename, frame, i, i)
-                            self._frames.append(frame)
                     else:
                         raise ValueError("json data does not match any supported format")
                 except Exception as e:
                     LOGGER.warning("Error line %s: %s" % (line_i, str(e)))
-        self._iterator = iter(self._frames)
-        return self
+        return iter(self._frames)
 
     def __next__(self):
-        return next(self._iterator)
+        while True:
+            try:
+                image, index = next(self._iterator)
+                if "file" in image:
+                    path = image["file"]
+                    frame = cv2.imread(path)
+                elif "url" in image:
+                    url = image["url"]
+                    req = urllib.request.urlopen(url)
+                    arr = np.asarray(bytearray(req.read()), dtype=np.uint8)
+                    frame = cv2.imdecode(arr, -1)
+                else:
+                    raise ValueError("Unknown image data format")
+
+                frame = Frame(self._name % index, self._filename, frame, index, index)
+                return frame
+            except StopIteration as e:
+                raise e
+            except Exception as e:
+                LOGGER.warning("Error while loading image %s: %s" % (image, str(e)))
+
 
     def get_fps(self):
         return 0
