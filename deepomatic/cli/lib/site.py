@@ -8,9 +8,12 @@ import subprocess
 
 from git import Repo
 from deepomatic.api.http_helper import HTTPHelper
+from tqdm import tqdm
 
+from deepomatic.cli.cmds.utils import CommandResult
 
 DEEPOMATIC_SITE_PATH = os.path.join(os.path.expanduser('~'), '.deepomatic', 'sites')
+CHUNK_SIZE = 10 * 262144  # Chunk size must be a multiple of 262144
 
 
 def makedirs(folder, *args, **kwargs):
@@ -184,6 +187,9 @@ class SiteManager(object):
     def make_work_order_url(self, base_url):
         return "{}/v0.2/work-orders".format(base_url)
 
+    def make_work_order_batch_url(self, base_url):
+        return "{}/v0.2/batches".format(base_url)
+
     def create_work_order(self, base_url, name, metadata):
         work_order_url = self.make_work_order_url(base_url)
         data = {
@@ -222,5 +228,117 @@ class SiteManager(object):
         res = self.session.post(input_data_url + '/', data=json.dumps(data))
         if res.status_code == 200:
             return res.json()
+        else:
+            return res.text
+
+    def create_work_order_batch(self, base_url, file=None, name=None, chunk_size=CHUNK_SIZE):
+        """
+            Create and upload the provided batch file
+        """
+        work_order_batch_url = self.make_work_order_batch_url(base_url)
+        data = {}
+        if file is not None:
+            filename, _ = os.path.splitext(os.path.basename(file))
+            data['filename'] = filename
+        if name:
+            data['filename'] = name
+        res = self.session.post(work_order_batch_url, json=data)
+        res.raise_for_status()
+        response_data = res.json()
+        if file is None:
+            return response_data
+        upload_url = response_data["upload_url"]
+        batch_id = response_data["batch_id"]
+        self.upload_work_order_batch_by_url(upload_url, file, description=f"Uploading {batch_id}", chunk_size=chunk_size)
+        return CommandResult("created", "workorder batch", {
+            "id": batch_id
+        })
+
+
+    def upload_work_order_batch_by_id(self, base_url, batch_id, file=None, chunk_size=CHUNK_SIZE):
+        """
+            Upload a batch file from disk to google storage using the provided batch id.
+        """
+        # retrieve the batch upload url
+        work_order_batch_url = self.make_work_order_batch_url(base_url)
+        res = self.session.get('{}/{}'.format(work_order_batch_url, batch_id))
+        response_data = res.json()
+        if file is None:
+            return response_data
+        upload_url = response_data["upload_url"]
+        batch_id = response_data["batch_id"]
+        # upload the batch using the upload url
+        self.upload_work_order_batch_by_url(upload_url, file, description=f"Uploading {batch_id}", chunk_size=chunk_size)
+        return CommandResult("uploaded", "workorder batch", {
+            "id": batch_id
+        })
+
+
+    def upload_work_order_batch_by_url(self, upload_url, file, description=None, chunk_size=CHUNK_SIZE):
+        """
+            Upload a batch file from disk to google storage using the provided signed upload url.
+            The upload is resumable.
+        """
+
+        headers = {
+            'content-type': 'application/octet-stream'
+        }
+        content_size = os.stat(file).st_size
+
+        # Call upload_url to retrieve how many bytes have already been received
+        response = requests.put(
+            upload_url,
+            headers={
+                "Content-Length": "0",
+                "Content-Range": f"bytes */{content_size}",
+                'content-type': 'application/octet-stream'
+            }
+        )
+
+        # check if upload has been resumed
+        if "range" in response.headers:
+            index = int(response.headers.get("range").split("=")[1].split("-")[1]) + 1
+        else:
+            index = 0
+
+        with open(file, "rb") as f:
+            # start reading file from where we left off
+            f.seek(index)
+            with tqdm(total=content_size) as pbar:
+                if description is not None:
+                    pbar.set_description(description)
+                pbar.update(index)
+                while True:
+                    chunk = f.read(chunk_size)
+                    if not chunk:
+                        break
+                    offset = index + len(chunk)
+                    headers['Content-Range'] = 'bytes %s-%s/%s' % (index, offset - 1, content_size)
+                    index = offset
+                    try:
+                        r = requests.put(upload_url, data=chunk, headers=headers)
+                        r.raise_for_status()
+                    except Exception as e:
+                        # TODO: retry
+                        return {
+                            "error": str(e)
+                        }
+                    pbar.update(len(chunk))
+
+    def status_work_order_batch(self, base_url, work_order_batch_id):
+        work_order_batch_url = self.make_work_order_batch_url(base_url)
+        res = self.session.get('{}/{}'.format(work_order_batch_url, work_order_batch_id))
+        if res.status_code == 200:
+            return CommandResult("deleted", "workorder batch", res.json())
+        else:
+            return res.text
+
+    def delete_work_order_batch(self, base_url, work_order_batch_id):
+        work_order_batch_url = self.make_work_order_batch_url(base_url)
+        res = self.session.delete('{}/{}'.format(work_order_batch_url, work_order_batch_id))
+        if res.status_code == 204:
+            return CommandResult("deleted", "workorder batch", {
+                "id": work_order_batch_id
+            })
         else:
             return res.text

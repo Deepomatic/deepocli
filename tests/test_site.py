@@ -5,11 +5,14 @@ from deepomatic.cli.lib.site import SiteManager
 
 from contextlib import contextmanager
 from test_platform import drive_app, drive_app_version, call_deepo
+from utils import download_workorder_batch
 import tempfile
 import shutil
 
 customer_api_url = os.environ["DEEPOCLI_CUSTOMER_API_API_URL"]
 customer_api_key = os.environ["DEEPOCLI_CUSTOMER_API_API_KEY"]
+
+batch_filepath = download_workorder_batch()
 
 
 def generate_site(name, app_version_id, desc):
@@ -300,3 +303,23 @@ class TestSite(object):
         args = "site work-order delete -i {} --api_url {}".format(work_order_id, customer_api_url)
         result = call_deepo(args, api_key=customer_api_key, json_output=False)
         assert result == 'Work order deleted'
+
+    def test_work_order_batch_create(self, no_error_logs):
+        args = "site work-order batch create -n deepocli-test-batch --api_url {}".format(customer_api_url)
+        result = call_deepo(args, api_key=customer_api_key, json_output=True)
+        work_order_batch_id = result["batch_id"]
+        assert UUID(work_order_batch_id, version=4) is not None
+
+        args = "site work-order batch status -i {} --api_url {}".format(work_order_batch_id, customer_api_url)
+        result = call_deepo(args, api_key=customer_api_key, json_output=True)
+        assert set(result.keys()) >= set(['status'])
+
+    def test_work_order_batch_create_and_upload(self, no_error_logs):
+        args = "site work-order batch create -n deepocli-test-batch -f {} --api_url {}".format(batch_filepath, customer_api_url)
+        result = call_deepo(args, api_key=customer_api_key, json_output=False)
+        work_order_batch_id = result
+        assert UUID(work_order_batch_id, version=4) is not None
+
+        args = "site work-order batch status -i {} --api_url {}".format(work_order_batch_id, customer_api_url)
+        result = call_deepo(args, api_key=customer_api_key, json_output=True)
+        assert set(result.keys()) >= set(['status'])

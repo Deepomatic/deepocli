@@ -1,13 +1,12 @@
-from ...utils import Command
+from ....utils import Command
 
 
-class WorkOrderCommand(Command):
+class BatchCommand(Command):
     """
         Work order related commands
     """
 
     from .create import CreateCommand
     from .status import StatusCommand
-    from .inference import InferCommand
     from .delete import DeleteCommand
-    from .batch import BatchCommand
+    from .upload import UploadCommand
