@@ -10,6 +10,8 @@ from git import Repo
 from deepomatic.api.http_helper import HTTPHelper
 from tqdm import tqdm
 
+from deepomatic.cli.cmds.utils import CommandResult
+
 DEEPOMATIC_SITE_PATH = os.path.join(os.path.expanduser('~'), '.deepomatic', 'sites')
 CHUNK_SIZE = 10 * 262144  # Chunk size must be a multiple of 262144
 
@@ -248,7 +250,10 @@ class SiteManager(object):
         upload_url = response_data["upload_url"]
         batch_id = response_data["batch_id"]
         self.upload_work_order_batch_by_url(upload_url, file, description=f"Uploading {batch_id}", chunk_size=chunk_size)
-        return batch_id
+        return CommandResult("created", "workorder batch", {
+            "id": batch_id
+        })
+
 
     def upload_work_order_batch_by_id(self, base_url, batch_id, file=None, chunk_size=CHUNK_SIZE):
         """
@@ -264,7 +269,10 @@ class SiteManager(object):
         batch_id = response_data["batch_id"]
         # upload the batch using the upload url
         self.upload_work_order_batch_by_url(upload_url, file, description=f"Uploading {batch_id}", chunk_size=chunk_size)
-        return batch_id
+        return CommandResult("uploaded", "workorder batch", {
+            "id": batch_id
+        })
+
 
     def upload_work_order_batch_by_url(self, upload_url, file, description=None, chunk_size=CHUNK_SIZE):
         """
@@ -321,7 +329,7 @@ class SiteManager(object):
         work_order_batch_url = self.make_work_order_batch_url(base_url)
         res = self.session.get('{}/{}'.format(work_order_batch_url, work_order_batch_id))
         if res.status_code == 200:
-            return res.json()
+            return CommandResult("deleted", "workorder batch", res.json())
         else:
             return res.text
 
@@ -329,6 +337,8 @@ class SiteManager(object):
         work_order_batch_url = self.make_work_order_batch_url(base_url)
         res = self.session.delete('{}/{}'.format(work_order_batch_url, work_order_batch_id))
         if res.status_code == 204:
-            return f"Work order batch {work_order_batch_id} deleted"
+            return CommandResult("deleted", "workorder batch", {
+                "id": work_order_batch_id
+            })
         else:
             return res.text
