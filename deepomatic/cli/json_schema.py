@@ -168,13 +168,28 @@ class JSONSchemaType:
                 "type": "array",
                 "items": {
                     "type": "object",
-                    "required": ["file"],
-                    "additionalProperties": False,
-                    "properties": {
-                        "file": {
-                            "type": "string"
+                    "oneOf": [
+                        {
+                            "type": "object",
+                            "required": ["file"],
+                            "additionalProperties": False,
+                            "properties": {
+                                "file": {
+                                    "type": "string"
+                                },
+                            }
+                        },
+                        {
+                            "type": "object",
+                            "required": ["url"],
+                            "additionalProperties": False,
+                            "properties": {
+                                "url": {
+                                    "type": "string"
+                                },
+                            }
                         }
-                    }
+                    ]
                 }
             },
             "metadata": {

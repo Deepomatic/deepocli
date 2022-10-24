@@ -12,6 +12,7 @@ Queue = queue.Queue
 Empty = queue.Empty
 
 LOGGER = logging.getLogger(__name__)
+SUPPORTED_STUDIO_INPUT_FORMAT = ['.txt']
 SUPPORTED_IMAGE_INPUT_FORMAT = ['.bmp', '.jpeg', '.jpg', '.jpe', '.png', '.tif', '.tiff']
 SUPPORTED_VIDEO_INPUT_FORMAT = ['.avi', '.mp4', '.webm', '.mjpg']
 SUPPORTED_FILE_INPUT_FORMAT = SUPPORTED_IMAGE_INPUT_FORMAT + SUPPORTED_VIDEO_INPUT_FORMAT
