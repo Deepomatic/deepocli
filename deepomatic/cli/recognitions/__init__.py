@@ -30,7 +30,7 @@ def get_workflow(args):
     elif model_command == 'noop':
         return None
     else:
-        raise DeepoWorkflowError("Couldn't get workflow based on args {}".format(args))
+        raise DeepoRecognitionError("Couldn't get recognition based on args {}".format(args))
 
 
 __all__ = ["get_workflow"]

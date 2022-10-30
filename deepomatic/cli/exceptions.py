@@ -14,7 +14,7 @@ class DeepoCLICredentialsError(DeepoCLIException):
     pass
 
 
-class DeepoWorkflowError(DeepoCLIException):
+class DeepoRecognitionError(DeepoCLIException):
     pass
 
 
