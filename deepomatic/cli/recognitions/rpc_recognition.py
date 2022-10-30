@@ -1,4 +1,4 @@
-from .workflow_abstraction import AbstractWorkflow
+from .recognition_abstraction import AbstractRecognition
 from ..exceptions import ResultInferenceError, ResultInferenceTimeout
 from ..exceptions import DeepoRPCRecognitionError, DeepoRPCUnavailableError
 
@@ -49,9 +49,9 @@ def requires_deepomatic_rpc(cls):
 
 
 @requires_deepomatic_rpc
-class RpcRecognition(AbstractWorkflow):
+class RpcRecognition(AbstractRecognition):
     @requires_deepomatic_rpc
-    class InferResult(AbstractWorkflow.AbstractInferResult):
+    class InferResult(AbstractRecognition.AbstractInferResult):
         def __init__(self, correlation_id, consumer):
             self._correlation_id = correlation_id
             self._consumer = consumer
@@ -119,7 +119,7 @@ class RpcRecognition(AbstractWorkflow):
         self.close_client(self._consume_client)
 
     def infer(self, encoded_image_bytes, push_client, _useless_frame_name):
-        # _useless_frame_name is used for the json workflow
+        # _useless_frame_name is used for the json recognition
         image_input = rpc.v07_ImageInput(source=rpc.BINARY_IMAGE_PREFIX + encoded_image_bytes)
         # forward_to parameter can be removed for images of worker nn with tag >= 0.7.8
         reply_to = self._response_queue.name

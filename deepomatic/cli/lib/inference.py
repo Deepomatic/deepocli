@@ -15,7 +15,7 @@ from deepomatic.cli.frame import CurrentFrames
 from deepomatic.cli.input_data import InputThread, VideoInputData, get_input
 from deepomatic.cli.output_data import OutputThread
 from deepomatic.cli.thread_base import QUEUE_MAX_SIZE, MainLoop, Pool, Thread, Greenlet
-from deepomatic.cli.workflow import get_workflow
+from deepomatic.cli.recognitions import get_recognition
 
 
 LOGGER = logging.getLogger(__name__)

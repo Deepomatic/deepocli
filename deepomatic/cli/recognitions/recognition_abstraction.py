@@ -1,7 +1,7 @@
 import os
 
 
-class AbstractWorkflow(object):
+class AbstractRecognition(object):
     class AbstractInferResult(object):
         def get_predictions(self):
             raise NotImplementedError()
