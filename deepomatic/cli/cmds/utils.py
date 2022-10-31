@@ -86,8 +86,8 @@ class Command(object):
         print(type(self).__name__, args, kwargs)
 
 
-class PlatformCommand(Command):
-    """Wrapper around Platform Command.
+class JsonOutputCommand(Command):
+    """Wrapper around Command for commands that output Json.
 
     Add possiblity to format output as json.
     """
