@@ -71,7 +71,7 @@ class SiteManager(object):
 
     def delete(self, site_id):
         self._client.delete('/sites/{}'.format(site_id))
-        return CommandResult("deleted", "site", site_id)
+        return CommandResult("deleted", "site", {"id": site_id})
 
     def current(self):
         return str(self._repo.head.reference)
@@ -210,7 +210,7 @@ class SiteManager(object):
         work_order_url = self.make_work_order_url(base_url)
         res = self.session.delete('{}/{}'.format(work_order_url, work_order_id))
         if res.status_code == 204:
-            return CommandResult("deleted", "work order", res.json())
+            return CommandResult("deleted", "work order", {"id": work_order_id})
         else:
             return res.text
 
