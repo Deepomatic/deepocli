@@ -1,8 +1,8 @@
-from ...utils import Command, BuildDict
+from ...utils import JsonOutputCommand, BuildDict
 from ..utils import SiteManager
 
 
-class CreateCommand(Command):
+class CreateCommand(JsonOutputCommand):
     """
         Create a new work order
     """

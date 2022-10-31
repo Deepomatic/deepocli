@@ -1,8 +1,8 @@
-from ...utils import Command
+from ...utils import JsonOutputCommand
 from ..utils import SiteManager
 
 
-class StatusCommand(Command):
+class StatusCommand(JsonOutputCommand):
     """
         Retrieve the work order status
     """
