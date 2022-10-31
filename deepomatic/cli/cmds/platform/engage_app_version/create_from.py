@@ -1,11 +1,11 @@
 from ...utils import (
-    PlatformCommand,
+    JsonOutputCommand,
     valid_path
 )
 from ..utils import EngagePlatformManager
 
 
-class CreateFromCommand(PlatformCommand):
+class CreateFromCommand(JsonOutputCommand):
     """Create an EngageAppVersion from an other one."""
 
     def setup(self, subparsers):

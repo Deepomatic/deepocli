@@ -1,8 +1,8 @@
-from ...utils import Command
+from ...utils import JsonOutputCommand
 from ..utils import SiteManager
 
 
-class DeleteCommand(Command):
+class DeleteCommand(JsonOutputCommand):
     """
         Delete a work order
     """

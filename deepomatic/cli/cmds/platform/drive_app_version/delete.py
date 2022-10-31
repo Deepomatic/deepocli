@@ -1,8 +1,8 @@
-from ...utils import PlatformCommand
+from ...utils import JsonOutputCommand
 from ..utils import DrivePlatformManager
 
 
-class DeleteCommand(PlatformCommand):
+class DeleteCommand(JsonOutputCommand):
     """Delete a DriveAppVersion."""
 
     def setup(self, subparsers):

@@ -1,11 +1,11 @@
 from ...utils import (
-    PlatformCommand,
+    JsonOutputCommand,
     valid_json
 )
 from ..utils import DrivePlatformManager
 
 
-class CreateCommand(PlatformCommand):
+class CreateCommand(JsonOutputCommand):
     """Create a new DriveAppVersion."""
 
     def setup(self, subparsers):

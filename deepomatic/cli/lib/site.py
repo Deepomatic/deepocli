@@ -9,6 +9,8 @@ import subprocess
 from git import Repo
 from deepomatic.api.http_helper import HTTPHelper
 
+from deepomatic.cli.cmds.utils import CommandResult
+
 
 DEEPOMATIC_SITE_PATH = os.path.join(os.path.expanduser('~'), '.deepomatic', 'sites')
 
@@ -57,7 +59,7 @@ class SiteManager(object):
             data['desc'] = description
 
         ret = self._client.post('/sites', data=data)
-        return "New site created with id: {}".format(ret['id'])
+        return CommandResult("created", "site", ret)
 
     def update(self, site_id, app_version_id):
         data = {
@@ -65,11 +67,11 @@ class SiteManager(object):
         }
 
         ret = self._client.patch('/sites/{}'.format(site_id), data=data)
-        return "Site {} updated".format(ret['id'])
+        return CommandResult("updated", "site", ret)
 
     def delete(self, site_id):
         self._client.delete('/sites/{}'.format(site_id))
-        return "Site {} deleted".format(site_id)
+        return CommandResult("deleted", "site", {"id": site_id})
 
     def current(self):
         return str(self._repo.head.reference)
@@ -192,7 +194,7 @@ class SiteManager(object):
         }
         res = self.session.post(work_order_url + '/', data=json.dumps(data))
         if res.status_code == 201:
-            return res.json()['id']
+            return CommandResult("created", "work order", res.json(), ["id"])
         else:
             return res.text
 
@@ -200,7 +202,7 @@ class SiteManager(object):
         work_order_url = self.make_work_order_url(base_url)
         res = self.session.get('{}/{}'.format(work_order_url, work_order_id))
         if res.status_code == 200:
-            return res.json()
+            return CommandResult("status", "work order", res.json())
         else:
             return res.text
 
@@ -208,7 +210,7 @@ class SiteManager(object):
         work_order_url = self.make_work_order_url(base_url)
         res = self.session.delete('{}/{}'.format(work_order_url, work_order_id))
         if res.status_code == 204:
-            return "Work order deleted"
+            return CommandResult("deleted", "work order", {"id": work_order_id})
         else:
             return res.text
 
@@ -221,6 +223,6 @@ class SiteManager(object):
         }
         res = self.session.post(input_data_url + '/', data=json.dumps(data))
         if res.status_code == 200:
-            return res.json()
+            return CommandResult("inference", "work order", res.json())
         else:
             return res.text

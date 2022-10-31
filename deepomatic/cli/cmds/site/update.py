@@ -1,8 +1,8 @@
-from ..utils import Command
+from ..utils import JsonOutputCommand
 from ...lib.site import SiteManager
 
 
-class UpdateCommand(Command):
+class UpdateCommand(JsonOutputCommand):
     """
         Update an existing site
     """

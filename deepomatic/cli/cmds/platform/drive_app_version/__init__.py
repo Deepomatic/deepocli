@@ -1,7 +1,7 @@
-from ...utils import PlatformCommand
+from ...utils import Command
 
 
-class DriveAppVersionCommand(PlatformCommand):
+class DriveAppVersionCommand(Command):
     """DriveApp version related commands."""
 
     from .create import CreateCommand

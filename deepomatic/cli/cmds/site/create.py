@@ -1,8 +1,8 @@
-from ..utils import Command
+from ..utils import JsonOutputCommand
 from ...lib.site import SiteManager
 
 
-class CreateCommand(Command):
+class CreateCommand(JsonOutputCommand):
     """Create a new site."""
 
     def setup(self, subparsers):

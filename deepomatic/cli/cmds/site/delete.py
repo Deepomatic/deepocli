@@ -1,8 +1,8 @@
-from ..utils import Command
+from ..utils import JsonOutputCommand
 from ...lib.site import SiteManager
 
 
-class DeleteCommand(Command):
+class DeleteCommand(JsonOutputCommand):
     """Delete a Site."""
 
     def setup(self, subparsers):

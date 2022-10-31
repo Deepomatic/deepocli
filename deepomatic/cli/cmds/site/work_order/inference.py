@@ -1,4 +1,4 @@
-from ...utils import Command, BuildDict, valid_path
+from ...utils import BuildDict, JsonOutputCommand, valid_path
 from ..utils import SiteManager
 
 import argparse
@@ -57,7 +57,7 @@ class BuildCustomerAPIInput(argparse.Action):
         setattr(namespace, self.dest, entries)
 
 
-class InferCommand(Command):
+class InferCommand(JsonOutputCommand):
     """
         Make an inference on a work order
     """
