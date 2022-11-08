@@ -13,12 +13,13 @@ from .add_images import DEFAULT_USER_AGENT_PREFIX
 
 
 LOGGER = logging.getLogger(__name__)
+REQUEST_TIMEOUT = float(os.getenv("REQUEST_TIMEOUT", "40."))
 
 
 class DrivePlatformManager(object):
     def __init__(self, client_cls=HTTPHelper):
         self.drive_client = client_cls(
-            requests_timeout=40.
+            requests_timeout=REQUEST_TIMEOUT
         )
 
     def create_app(self, name, description, services):
@@ -96,7 +97,7 @@ class EngagePlatformManager(object):
             host=ENGAGE_API_URL,
             user_agent_prefix=user_agent_prefix,
             version="",
-            requests_timeout=40.
+            requests_timeout=REQUEST_TIMEOUT
         )
 
         self.engage_app_endpoint = "{}/apps".format(FS_URL_PREFIX)
