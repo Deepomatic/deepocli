@@ -17,7 +17,9 @@ LOGGER = logging.getLogger(__name__)
 
 class DrivePlatformManager(object):
     def __init__(self, client_cls=HTTPHelper):
-        self.drive_client = client_cls()
+        self.drive_client = client_cls(
+            requests_timeout=40.
+        )
 
     def create_app(self, name, description, services):
         data_app = {
@@ -93,7 +95,8 @@ class EngagePlatformManager(object):
         self.engage_client = client_cls(
             host=ENGAGE_API_URL,
             user_agent_prefix=user_agent_prefix,
-            version=""
+            version="",
+            requests_timeout=40.
         )
 
         self.engage_app_endpoint = "{}/apps".format(FS_URL_PREFIX)
