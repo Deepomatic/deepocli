@@ -9,7 +9,7 @@ import subprocess
 from git import Repo
 from deepomatic.api.http_helper import HTTPHelper
 
-from deepomatic.cli.common import REQUEST_DEFAULT_TIMEOUT
+from deepomatic.cli.common import REQUESTS_DEFAULT_TIMEOUT
 
 
 DEEPOMATIC_SITE_PATH = os.path.join(os.path.expanduser('~'), '.deepomatic', 'sites')
@@ -37,10 +37,10 @@ def makedirs(folder, *args, **kwargs):
 
 
 class SiteManager(object):
-    def __init__(self, path=DEEPOMATIC_SITE_PATH, client_cls=HTTPHelper):
+    def __init__(self, path=DEEPOMATIC_SITE_PATH):
         makedirs(path)
         self._repo = Repo.init(path)
-        self._client = client_cls(requests_timeout=REQUEST_DEFAULT_TIMEOUT)
+        self._client = HTTPHelper(requests_timeout=REQUESTS_DEFAULT_TIMEOUT)
 
         api_key = os.getenv('DEEPOMATIC_API_KEY')
         self.session = requests.Session()

@@ -6,8 +6,9 @@ try:
 except ImportError:
     FileExistsError = OSError
 
+from deepomatic.api.http_helper import HTTPHelper
 from deepomatic.cli.cmds.utils import CommandResult
-from deepomatic.cli.common import REQUEST_DEFAULT_TIMEOUT
+from deepomatic.cli.common import REQUESTS_DEFAULT_TIMEOUT
 
 from .add_images import DEFAULT_USER_AGENT_PREFIX
 
@@ -16,9 +17,9 @@ LOGGER = logging.getLogger(__name__)
 
 
 class DrivePlatformManager(object):
-    def __init__(self, client_cls=HTTPHelper):
-        self.drive_client = client_cls(
-            requests_timeout=REQUEST_DEFAULT_TIMEOUT
+    def __init__(self):
+        self.drive_client = HTTPHelper(
+            requests_timeout=REQUESTS_DEFAULT_TIMEOUT
         )
 
     def create_app(self, name, description, services):
@@ -79,7 +80,7 @@ class DrivePlatformManager(object):
 
 
 class EngagePlatformManager(object):
-    def __init__(self, client_cls=HTTPHelper):
+    def __init__(self):
         try:
             ENGAGE_API_URL = os.environ['ENGAGE_API_URL']
         except KeyError as e:
@@ -92,11 +93,11 @@ class EngagePlatformManager(object):
             raise SystemExit(e, "environment variable ORGANIZATION_SLUG is missing.")
 
         user_agent_prefix = DEFAULT_USER_AGENT_PREFIX
-        self.engage_client = client_cls(
+        self.engage_client = HTTPHelper(
             host=ENGAGE_API_URL,
             user_agent_prefix=user_agent_prefix,
             version="",
-            requests_timeout=REQUEST_DEFAULT_TIMEOUT
+            requests_timeout=REQUESTS_DEFAULT_TIMEOUT
         )
 
         self.engage_app_endpoint = "{}/apps".format(FS_URL_PREFIX)
