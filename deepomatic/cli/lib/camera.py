@@ -4,6 +4,8 @@ from contextlib import contextmanager
 from deepomatic.api.http_helper import HTTPHelper
 from ..version import __title__, __version__
 
+from deepomatic.cli.common import REQUEST_DEFAULT_TIMEOUT
+
 
 ###############################################################################
 
@@ -20,7 +22,7 @@ CLIENT = None
 class Client(HTTPHelper):
     def __init__(self, **kwargs):
         super(Client, self).__init__(user_agent_prefix=DEFAULT_USER_AGENT_PREFIX,
-                                     version=None, **kwargs)
+                                     version=None, requests_timeout=REQUEST_DEFAULT_TIMEOUT, **kwargs)
 
     def _setup_host(self, host, verify_ssl):
         if host is None:
