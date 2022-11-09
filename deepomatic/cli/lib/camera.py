@@ -2,17 +2,17 @@ import os
 import logging
 from contextlib import contextmanager
 from deepomatic.api.http_helper import HTTPHelper
-from ..version import __title__, __version__
 
-from deepomatic.cli.common import REQUESTS_DEFAULT_TIMEOUT
+from deepomatic.cli.common import (
+    DEFAULT_USER_AGENT_PREFIX,
+    REQUESTS_DEFAULT_TIMEOUT
+)
 
 
 ###############################################################################
 
 
 LOGGER = logging.getLogger(__name__)
-
-DEFAULT_USER_AGENT_PREFIX = '{}/{}'.format(__title__, __version__)
 
 CLIENT = None
 

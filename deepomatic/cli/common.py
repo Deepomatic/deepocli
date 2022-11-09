@@ -7,6 +7,8 @@ try:
 except ImportError:
     import queue as queue
 
+from deepomatic.cli.version import __title__, __version__
+
 Full = queue.Full
 Queue = queue.Queue
 Empty = queue.Empty
@@ -20,6 +22,7 @@ SUPPORTED_PROTOCOLS_INPUT = ['rtsp', 'http', 'https']
 SUPPORTED_IMAGE_OUTPUT_FORMAT = SUPPORTED_IMAGE_INPUT_FORMAT
 SUPPORTED_VIDEO_OUTPUT_FORMAT = ['.avi', '.mp4']
 REQUESTS_DEFAULT_TIMEOUT = float(os.getenv("REQUEST_TIMEOUT", "40."))
+DEFAULT_USER_AGENT_PREFIX = '{}/{}'.format(__title__, __version__)
 
 BGR_TO_COLOR_SPACE = {
     'RGB': cv2.COLOR_BGR2RGB,

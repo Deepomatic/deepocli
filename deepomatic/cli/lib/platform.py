@@ -8,9 +8,8 @@ except ImportError:
 
 from deepomatic.api.http_helper import HTTPHelper
 from deepomatic.cli.cmds.utils import CommandResult
-from deepomatic.cli.common import REQUESTS_DEFAULT_TIMEOUT
+from deepomatic.cli.common import REQUESTS_DEFAULT_TIMEOUT, DEFAULT_USER_AGENT_PREFIX
 
-from .add_images import DEFAULT_USER_AGENT_PREFIX
 
 
 LOGGER = logging.getLogger(__name__)
@@ -19,7 +18,8 @@ LOGGER = logging.getLogger(__name__)
 class DrivePlatformManager(object):
     def __init__(self):
         self.drive_client = HTTPHelper(
-            requests_timeout=REQUESTS_DEFAULT_TIMEOUT
+            requests_timeout=REQUESTS_DEFAULT_TIMEOUT,
+            user_agent_prefix=DEFAULT_USER_AGENT_PREFIX
         )
 
     def create_app(self, name, description, services):
@@ -97,7 +97,8 @@ class EngagePlatformManager(object):
             host=ENGAGE_API_URL,
             user_agent_prefix=user_agent_prefix,
             version="",
-            requests_timeout=REQUESTS_DEFAULT_TIMEOUT
+            requests_timeout=REQUESTS_DEFAULT_TIMEOUT,
+            user_agent_prefix=DEFAULT_USER_AGENT_PREFIX
         )
 
         self.engage_app_endpoint = "{}/apps".format(FS_URL_PREFIX)
