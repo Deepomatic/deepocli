@@ -140,7 +140,8 @@ def tmp():
 @contextmanager
 def setup():
     tmp_dir = tempfile.mkdtemp()
-    manager = SiteManager(path=tmp_dir, client_cls=MockApi)
+    manager = SiteManager(path=tmp_dir)
+    manager._client = MockApi()
     try:
         yield manager
     finally:
