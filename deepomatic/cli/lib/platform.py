@@ -97,8 +97,7 @@ class EngagePlatformManager(object):
             host=ENGAGE_API_URL,
             user_agent_prefix=user_agent_prefix,
             version="",
-            requests_timeout=REQUESTS_DEFAULT_TIMEOUT,
-            user_agent_prefix=DEFAULT_USER_AGENT_PREFIX
+            requests_timeout=REQUESTS_DEFAULT_TIMEOUT
         )
 
         self.engage_app_endpoint = "{}/apps".format(FS_URL_PREFIX)
