@@ -8,17 +8,14 @@ from tqdm import tqdm
 from deepomatic.api.http_helper import HTTPHelper
 from deepomatic.cli.cmds.studio_helpers.file import DatasetFiles, UploadImageGreenlet
 from deepomatic.cli.cmds.studio_helpers.task import Task
-from deepomatic.cli.common import TqdmToLogger, Queue, SUPPORTED_FILE_INPUT_FORMAT
+from deepomatic.cli.common import TqdmToLogger, Queue, SUPPORTED_FILE_INPUT_FORMAT, REQUESTS_DEFAULT_TIMEOUT, DEFAULT_USER_AGENT_PREFIX
 from deepomatic.cli.thread_base import Pool, MainLoop, CurrentMessages
-from deepomatic.cli.version import __title__, __version__
 
 ###############################################################################
 
 GREENLET_NUMBER = int(os.getenv('DEEPOMATIC_CLI_ADD_IMAGES_CONCURRENCY', 5))
 LOGGER = logging.getLogger(__name__)
 API_HOST = os.getenv('STUDIO_URL', 'https://studio.deepomatic.com/api/')
-DEFAULT_USER_AGENT_PREFIX = user_agent_prefix = '{}/{}'.format(
-    __title__, __version__)
 
 ###############################################################################
 
@@ -26,7 +23,7 @@ DEFAULT_USER_AGENT_PREFIX = user_agent_prefix = '{}/{}'.format(
 class Client(object):
     def __init__(self, api_key=None, user_agent_prefix=DEFAULT_USER_AGENT_PREFIX, pool_maxsize=GREENLET_NUMBER):
         self.http_helper = HTTPHelper(api_key=api_key, host=API_HOST, user_agent_prefix=user_agent_prefix,
-                                      pool_maxsize=pool_maxsize, version=None)
+                                      pool_maxsize=pool_maxsize, version=None, requests_timeout=REQUESTS_DEFAULT_TIMEOUT)
         self.task = Task(self.http_helper)
 
 

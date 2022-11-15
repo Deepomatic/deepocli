@@ -1,5 +1,6 @@
 import os
 import pytest
+from unittest.mock import patch
 from uuid import uuid4, UUID
 from deepomatic.cli.lib.site import SiteManager
 
@@ -140,11 +141,13 @@ def tmp():
 @contextmanager
 def setup():
     tmp_dir = tempfile.mkdtemp()
-    manager = SiteManager(path=tmp_dir, client_cls=MockApi)
-    try:
-        yield manager
-    finally:
-        shutil.rmtree(tmp_dir, ignore_errors=True)
+
+    with patch("deepomatic.cli.lib.site.HTTPHelper", new=MockApi):
+        manager = SiteManager(path=tmp_dir)
+        try:
+            yield manager
+        finally:
+            shutil.rmtree(tmp_dir, ignore_errors=True)
 
 
 @contextmanager

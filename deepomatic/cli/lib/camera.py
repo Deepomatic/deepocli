@@ -2,15 +2,17 @@ import os
 import logging
 from contextlib import contextmanager
 from deepomatic.api.http_helper import HTTPHelper
-from ..version import __title__, __version__
+
+from deepomatic.cli.common import (
+    DEFAULT_USER_AGENT_PREFIX,
+    REQUESTS_DEFAULT_TIMEOUT
+)
 
 
 ###############################################################################
 
 
 LOGGER = logging.getLogger(__name__)
-
-DEFAULT_USER_AGENT_PREFIX = '{}/{}'.format(__title__, __version__)
 
 CLIENT = None
 
@@ -20,7 +22,7 @@ CLIENT = None
 class Client(HTTPHelper):
     def __init__(self, **kwargs):
         super(Client, self).__init__(user_agent_prefix=DEFAULT_USER_AGENT_PREFIX,
-                                     version=None, **kwargs)
+                                     version=None, requests_timeout=REQUESTS_DEFAULT_TIMEOUT, **kwargs)
 
     def _setup_host(self, host, verify_ssl):
         if host is None:
