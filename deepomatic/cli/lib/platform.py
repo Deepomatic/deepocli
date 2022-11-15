@@ -11,7 +11,6 @@ from deepomatic.cli.cmds.utils import CommandResult
 from deepomatic.cli.common import REQUESTS_DEFAULT_TIMEOUT, DEFAULT_USER_AGENT_PREFIX
 
 
-
 LOGGER = logging.getLogger(__name__)
 
 
