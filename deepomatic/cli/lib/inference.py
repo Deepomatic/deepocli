@@ -15,7 +15,7 @@ from deepomatic.cli.frame import CurrentFrames
 from deepomatic.cli.input_data import InputThread, VideoInputData, get_input
 from deepomatic.cli.output_data import OutputThread
 from deepomatic.cli.thread_base import QUEUE_MAX_SIZE, MainLoop, Pool, Thread, Greenlet
-from deepomatic.cli.workflow import get_workflow
+from deepomatic.cli.recognitions import get_recognition
 
 
 LOGGER = logging.getLogger(__name__)
@@ -182,17 +182,17 @@ class PrepareInferenceThread(Thread):
 
 
 class SendInferenceGreenlet(Greenlet):
-    def __init__(self, exit_event, input_queue, output_queue, current_messages, workflow):
+    def __init__(self, exit_event, input_queue, output_queue, current_messages, recognition):
         super(SendInferenceGreenlet, self).__init__(exit_event, input_queue, output_queue, current_messages)
-        self.workflow = workflow
-        self.push_client = workflow.new_client()
+        self.recognition = recognition
+        self.push_client = recognition.new_client()
 
     def close(self):
-        self.workflow.close_client(self.push_client)
+        self.recognition.close_client(self.push_client)
 
     def process_msg(self, frame):
         try:
-            frame.inference_async_result = self.workflow.infer(frame.buf_bytes, self.push_client, frame.name)
+            frame.inference_async_result = self.recognition.infer(frame.buf_bytes, self.push_client, frame.name)
             return frame
         except SendInferenceError as e:
             self.current_messages.forget_frame(frame)
@@ -201,9 +201,9 @@ class SendInferenceGreenlet(Greenlet):
 
 
 class ResultInferenceGreenlet(Greenlet):
-    def __init__(self, exit_event, input_queue, output_queue, current_messages, workflow, **kwargs):
+    def __init__(self, exit_event, input_queue, output_queue, current_messages, recognition, **kwargs):
         super(ResultInferenceGreenlet, self).__init__(exit_event, input_queue, output_queue, current_messages)
-        self.workflow = workflow
+        self.recognition = recognition
         self.threshold = kwargs.get('threshold')
 
     def fill_predictions(self, predictions, new_predicted, new_discarded):
@@ -270,9 +270,9 @@ class InferManager(object):
         tqdmout = TqdmToLogger(LOGGER, level=LOGGER.getEffectiveLevel())
         pbar = tqdm(total=max_value, file=tqdmout, desc='Input processing', smoothing=0)
 
-        # Initialize workflow for mutual use between send inference pool and result inference pool
+        # Initialize recognition for mutual use between send inference pool and result inference pool
         try:
-            workflow = get_workflow(kwargs)
+            recognition = get_recognition(kwargs)
         except DeepoCLICredentialsError as e:
             LOGGER.error(str(e))
             sys.exit(1)
@@ -281,7 +281,7 @@ class InferManager(object):
         # avoid to pushes too many requests to rabbitmq when we are already waiting for many results
 
         nb_queue = 2  # input => prepare inference => output
-        if workflow:
+        if recognition:
             nb_queue += 2  # prepare inference => send inference => result inference
 
         queues = [Queue(maxsize=QUEUE_MAX_SIZE) for _ in range(nb_queue)]
@@ -296,12 +296,12 @@ class InferManager(object):
             Pool(1, PrepareInferenceThread, thread_args=(exit_event, queues[0], queues[1], current_frames)),
         ]
 
-        if workflow:
+        if recognition:
             pools.extend([
                 # Send inference
-                Pool(5, SendInferenceGreenlet, thread_args=(exit_event, queues[1], queues[2], current_frames, workflow)),
+                Pool(5, SendInferenceGreenlet, thread_args=(exit_event, queues[1], queues[2], current_frames, recognition)),
                 # Gather inference predictions from the worker(s)
-                Pool(1, ResultInferenceGreenlet, thread_args=(exit_event, queues[2], queues[3], current_frames, workflow),
+                Pool(1, ResultInferenceGreenlet, thread_args=(exit_event, queues[2], queues[3], current_frames, recognition),
                      thread_kwargs=kwargs),
             ])
 
@@ -309,7 +309,7 @@ class InferManager(object):
         pools.append(Pool(1, OutputThread, thread_args=(exit_event, queues[-1], None, current_frames, pbar.update, postprocessing),
                           thread_kwargs=kwargs))
 
-        loop = MainLoop(pools, queues, pbar, exit_event, current_frames, lambda: workflow.close() if workflow else None)
+        loop = MainLoop(pools, queues, pbar, exit_event, current_frames, lambda: recognition.close() if recognition else None)
 
         try:
             stop_asked = loop.run_forever()

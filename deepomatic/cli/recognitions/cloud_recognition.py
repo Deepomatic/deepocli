@@ -1,5 +1,6 @@
 import logging
-from .workflow_abstraction import AbstractWorkflow
+
+from .recognition_abstraction import AbstractRecognition
 from ..exceptions import (SendInferenceError,
                           ResultInferenceError,
                           ResultInferenceTimeout)
@@ -13,9 +14,9 @@ from deepomatic.api.exceptions import TaskError, TaskTimeout, BadStatus, Deepoma
 LOGGER = logging.getLogger(__name__)
 
 
-class CloudRecognition(AbstractWorkflow):
+class CloudRecognition(AbstractRecognition):
 
-    class InferResult(AbstractWorkflow.AbstractInferResult):
+    class InferResult(AbstractRecognition.AbstractInferResult):
         def __init__(self, task):
             self._task = task
 
@@ -65,7 +66,7 @@ class CloudRecognition(AbstractWorkflow):
             self._model = self._client.RecognitionVersion.retrieve(recognition_version_id)
 
     def infer(self, encoded_image_bytes, _useless_push_client, _useless_frame_name):
-        # _useless_push_client and _useless_frame_name are used for the rpc and json workflows
+        # _useless_push_client and _useless_frame_name are used for the rpc and json recognitions
         try:
             return self.InferResult(self._model.inference(
                 inputs=[deepomatic.api.inputs.ImageInput(encoded_image_bytes, encoding="binary")],

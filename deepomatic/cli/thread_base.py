@@ -378,7 +378,7 @@ class MainLoop(object):
             gevent.signal_handler(gevent.signal.SIGINT, lambda: signal.SIG_IGN)
             gevent.signal_handler(gevent.signal.SIGTERM, lambda: signal.SIG_IGN)
             # Makes sure threads finish properly so that
-            # we can make sure the workflow is not used and can be closed
+            # we can make sure the recognition is not used and can be closed
             for pool in self.pools:
                 pool.join()
 

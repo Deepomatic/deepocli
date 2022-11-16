@@ -1,6 +1,6 @@
 import json
 import logging
-from .workflow_abstraction import AbstractWorkflow
+from .recognition_abstraction import AbstractRecognition
 from ..json_schema import validate_json, JSONSchemaType
 from ..cmds.studio_helpers.vulcan2studio import transform_json_from_studio_to_vulcan
 from ..exceptions import DeepoPredictionJsonError, DeepoOpenJsonError, SendInferenceError
@@ -9,9 +9,9 @@ from ..exceptions import DeepoPredictionJsonError, DeepoOpenJsonError, SendInfer
 LOGGER = logging.getLogger(__name__)
 
 
-class JsonRecognition(AbstractWorkflow):
+class JsonRecognition(AbstractRecognition):
 
-    class InferResult(AbstractWorkflow.AbstractInferResult):
+    class InferResult(AbstractRecognition.AbstractInferResult):
         def __init__(self, frame_name, frame_pred):
             self.frame_name = frame_name
             self.frame_pred = frame_pred
@@ -52,7 +52,7 @@ class JsonRecognition(AbstractWorkflow):
         pass
 
     def infer(self, _useless_encoded_image_bytes, _useless_push_client, frame_name):
-        # _useless_encoded_image_bytes and _useless_push_client are used only for rpc and cloud workflows
+        # _useless_encoded_image_bytes and _useless_push_client are used only for rpc and cloud recognitions
         try:
             frame_pred = self._all_predictions[frame_name]
         except KeyError:
