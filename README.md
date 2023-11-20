@@ -104,8 +104,3 @@ BGR color space is not supported by `cvlc`, so we have to convert the stream to 
 ```bash
 deepo platform model draw -i $input_video_path -o stdout -r $model_id --output_color_space RGB | cvlc --demux=rawvideo --rawvid-fps=15 --rawvid-width=1280 --rawvid-height=720 --rawvid-chroma=RV24 - --sout "#transcode{vcodec=$codec}:std{access=file,dst=$output_video_path}" vlc://quit
 ```
-
-
-# Bugs
-
-Please send bug reports to support@deepomatic.com
